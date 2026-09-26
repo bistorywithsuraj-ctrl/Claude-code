@@ -7,8 +7,10 @@ from playwright.async_api import async_playwright
 
 HERE = os.path.dirname(os.path.abspath(__file__))
 FF = imageio_ffmpeg.get_ffmpeg_exe()
-URL = 'file://' + os.path.join(HERE, 'intro.html')
-FPS, DUR = 30, 72
+PAGE = os.environ.get('PAGE', os.path.join(HERE, 'intro.html'))
+URL = 'file://' + os.path.abspath(PAGE)
+OUT = os.environ.get('OUT', HERE)
+FPS, DUR = 30, int(os.environ.get('DUR', 72))
 
 async def page_for(pw):
     b = await pw.chromium.launch(executable_path='/opt/pw-browsers/chromium-1194/chrome-linux/chrome',
@@ -25,15 +27,15 @@ async def grab(p, t, fmt='jpeg', q=0.95):
 async def stills(ts):
     async with async_playwright() as pw:
         b, p = await page_for(pw)
-        os.makedirs(os.path.join(HERE, 'stills'), exist_ok=True)
+        os.makedirs(os.path.join(OUT, 'stills'), exist_ok=True)
         for t in ts:
             d = await grab(p, float(t), 'png')
-            open(os.path.join(HERE, 'stills', f't{float(t):05.1f}.png'), 'wb').write(base64.b64decode(d.split(',')[1]))
+            open(os.path.join(OUT, 'stills', f't{float(t):05.1f}.png'), 'wb').write(base64.b64decode(d.split(',')[1]))
         await b.close()
 
 async def chunk(pw, i, f0, f1):
     b, p = await page_for(pw)
-    out = os.path.join(HERE, f'seg{i}.mp4')
+    out = os.path.join(OUT, f'seg{i}.mp4')
     proc = subprocess.Popen([FF, '-loglevel', 'error', '-y', '-f', 'image2pipe', '-framerate', str(FPS), '-i', '-',
                              '-c:v', 'libx264', '-preset', 'slow', '-crf', '15', '-pix_fmt', 'yuv420p', out], stdin=subprocess.PIPE)
     for f in range(f0, f1):
@@ -47,10 +49,10 @@ async def video(n):
     total = FPS * DUR; step = -(-total // n)
     async with async_playwright() as pw:
         segs = await asyncio.gather(*[chunk(pw, i, i * step, min(total, (i + 1) * step)) for i in range(n)])
-    lst = os.path.join(HERE, 'segs.txt')
+    lst = os.path.join(OUT, 'segs.txt')
     open(lst, 'w').write(''.join(f"file '{s}'\n" for s in segs))
     subprocess.run([FF, '-loglevel', 'error', '-y', '-f', 'concat', '-safe', '0', '-i', lst, '-c', 'copy',
-                    os.path.join(HERE, 'video_silent.mp4')], check=True)
+                    os.path.join(OUT, 'video_silent.mp4')], check=True)
 
 if __name__ == '__main__':
     if sys.argv[1] == 'stills': asyncio.run(stills(sys.argv[2:]))
