@@ -1,0 +1,599 @@
+<!doctype html>
+<html><head><meta charset="utf-8"><title>F1 Economics Intro</title>
+<style>
+@font-face{font-family:IT;src:url(fonts/inter-tight-latin-900-normal.woff2);font-weight:900}
+@font-face{font-family:IT;src:url(fonts/inter-tight-latin-800-normal.woff2);font-weight:800}
+@font-face{font-family:IT;src:url(fonts/inter-tight-latin-700-normal.woff2);font-weight:700}
+@font-face{font-family:IT;src:url(fonts/inter-tight-latin-500-normal.woff2);font-weight:500}
+@font-face{font-family:IT;src:url(fonts/inter-tight-latin-400-normal.woff2);font-weight:400}
+@font-face{font-family:SER;src:url(fonts/instrument-serif-latin-400-italic.woff2);font-style:italic}
+@font-face{font-family:SER;src:url(fonts/instrument-serif-latin-400-normal.woff2);font-style:normal}
+@font-face{font-family:MONO;src:url(fonts/jetbrains-mono-latin-500-normal.woff2);font-weight:500}
+@font-face{font-family:MONO;src:url(fonts/jetbrains-mono-latin-700-normal.woff2);font-weight:700}
+html,body{margin:0;background:#000}
+canvas{display:block;width:100vw;height:auto}
+</style></head>
+<body><canvas id="c" width="1920" height="1080"></canvas>
+<script>
+// ============================================================
+//  THE ECONOMICS OF FORMULA 1 — cold-open / intro
+//  Every frame is a pure function of t (seconds): render(t)
+// ============================================================
+const W = 1920, H = 1080, FPS = 30, DURATION = 72;
+const cv = document.getElementById('c');
+const ctx = cv.getContext('2d');
+
+// ---------- palette ----------
+const C = {
+  bg: '#0B0F0D', bg2: '#101613', ink: '#EEEBE2', dim: '#8C948E', faint: '#2A322D',
+  green: '#3DDC84', greenDeep: '#1E7A4A', red: '#E8342B', gold: '#E8C872'
+};
+
+// ---------- math / easing ----------
+const clamp = (x, a = 0, b = 1) => Math.min(b, Math.max(a, x));
+const lerp = (a, b, p) => a + (b - a) * p;
+const inv = (a, b, x) => clamp((x - a) / (b - a));
+const E = {
+  outExpo: p => p >= 1 ? 1 : 1 - Math.pow(2, -10 * p),
+  inOutExpo: p => p <= 0 ? 0 : p >= 1 ? 1 : p < .5 ? Math.pow(2, 20 * p - 10) / 2 : (2 - Math.pow(2, -20 * p + 10)) / 2,
+  outCubic: p => 1 - Math.pow(1 - p, 3),
+  inOutCubic: p => p < .5 ? 4 * p * p * p : 1 - Math.pow(-2 * p + 2, 3) / 2,
+  inCubic: p => p * p * p,
+  outBack: p => { const c1 = 1.70158, c3 = c1 + 1; return 1 + c3 * Math.pow(p - 1, 3) + c1 * Math.pow(p - 1, 2); },
+  outQuint: p => 1 - Math.pow(1 - p, 5),
+};
+// progress between a and b with easing
+const P = (t, a, b, e = E.outExpo) => e(inv(a, b, t));
+
+// seeded RNG
+function rng(seed) { let s = seed >>> 0; return () => { s = (s * 1664525 + 1013904223) >>> 0; return s / 4294967296; }; }
+
+// ---------- text helpers ----------
+function font(size, w = 800, fam = 'IT', style = '') { return `${style} ${w} ${size}px ${fam}`.trim(); }
+
+// Word-by-word mask reveal (slides up from a clip line). Returns total width.
+function reveal(str, x, y, opt) {
+  const o = Object.assign({ size: 64, w: 800, fam: 'IT', style: '', color: C.ink, t: 0, t0: 0, stagger: .06, dur: .7,
+    align: 'left', out: 1e9, outDur: .4, track: 0 }, opt);
+  ctx.save();
+  ctx.font = font(o.size, o.w, o.fam, o.style);
+  ctx.textBaseline = 'alphabetic';
+  const words = str.split(' ');
+  const space = ctx.measureText(' ').width;
+  const widths = words.map(w => ctx.measureText(w).width + o.track * w.length);
+  const total = widths.reduce((a, b) => a + b, 0) + space * (words.length - 1);
+  let cx = o.align === 'center' ? x - total / 2 : o.align === 'right' ? x - total : x;
+  const lh = o.size * 1.25;
+  words.forEach((wd, i) => {
+    const p = E.outExpo(inv(o.t0 + i * o.stagger, o.t0 + i * o.stagger + o.dur, o.t));
+    const q = E.inCubic(inv(o.out + i * o.stagger * .5, o.out + i * o.stagger * .5 + o.outDur, o.t));
+    if (p > 0 && q < 1) {
+      ctx.save();
+      ctx.beginPath(); ctx.rect(cx - 10, y - o.size * 1.05, widths[i] + 20, lh * 1.05); ctx.clip();
+      ctx.fillStyle = typeof o.color === 'function' ? o.color(i) : o.color;
+      const dy = (1 - p) * lh - q * lh;
+      if (o.track) { ctx.letterSpacing = o.track + 'px'; }
+      ctx.fillText(wd, cx, y + dy);
+      ctx.restore();
+    }
+    cx += widths[i] + space;
+  });
+  ctx.restore();
+  return total;
+}
+
+function label(str, x, y, opt = {}) {
+  const o = Object.assign({ size: 20, color: C.dim, align: 'left', alpha: 1, w: 500, track: 3 }, opt);
+  if (o.alpha <= 0) return;
+  ctx.save(); ctx.globalAlpha *= o.alpha; ctx.font = font(o.size, o.w, 'MONO');
+  ctx.letterSpacing = o.track + 'px'; ctx.fillStyle = o.color; ctx.textAlign = o.align; ctx.textBaseline = 'alphabetic';
+  ctx.fillText(str, x, y); ctx.restore();
+}
+
+// Typewriter/scramble for mono labels
+function typeLabel(str, x, y, t, t0, cps = 40, opt = {}) {
+  const n = Math.floor(clamp((t - t0) * cps, 0, str.length));
+  if (n <= 0) return;
+  const cursor = n < str.length && Math.floor(t * 8) % 2 === 0 ? '▌' : '';
+  label(str.slice(0, n) + cursor, x, y, opt);
+}
+
+function fmtMoney(v) { // v in millions
+  if (v >= 1000) return '$' + (v / 1000).toFixed(v >= 10000 ? 0 : 2).replace(/\.?0+$/, '') + 'B';
+  return '$' + Math.round(v) + 'M';
+}
+
+function roundRect(x, y, w, h, r) { ctx.beginPath(); ctx.roundRect(x, y, w, h, r); }
+
+// ---------- global texture layers ----------
+const grain = [];
+(function makeGrain() {
+  const r = rng(7);
+  for (let k = 0; k < 8; k++) {
+    const g = document.createElement('canvas'); g.width = 960; g.height = 540;
+    const gx = g.getContext('2d'); const id = gx.createImageData(960, 540);
+    for (let i = 0; i < id.data.length; i += 4) {
+      const v = r() * 255; id.data[i] = id.data[i + 1] = id.data[i + 2] = v; id.data[i + 3] = 255;
+    }
+    gx.putImageData(id, 0, 0); grain.push(g);
+  }
+})();
+
+function background(t, tint = 0) {
+  ctx.fillStyle = C.bg; ctx.fillRect(0, 0, W, H);
+  // soft glow
+  const g = ctx.createRadialGradient(W * .5, H * .45, 50, W * .5, H * .5, W * .75);
+  g.addColorStop(0, tint ? 'rgba(61,220,132,0.10)' : 'rgba(40,60,50,0.35)'); g.addColorStop(1, 'rgba(0,0,0,0)');
+  ctx.fillStyle = g; ctx.fillRect(0, 0, W, H);
+  // drifting blueprint grid
+  ctx.save(); ctx.strokeStyle = 'rgba(238,235,226,0.035)'; ctx.lineWidth = 1;
+  const off = (t * 6) % 80;
+  ctx.beginPath();
+  for (let x = -80 + off; x < W + 80; x += 80) { ctx.moveTo(x, 0); ctx.lineTo(x, H); }
+  for (let y = -80 + off * .5; y < H + 80; y += 80) { ctx.moveTo(0, y); ctx.lineTo(W, y); }
+  ctx.stroke(); ctx.restore();
+}
+
+function finishingLayers(t) {
+  // vignette
+  const v = ctx.createRadialGradient(W / 2, H / 2, H * .35, W / 2, H / 2, W * .72);
+  v.addColorStop(0, 'rgba(0,0,0,0)'); v.addColorStop(1, 'rgba(0,0,0,0.62)');
+  ctx.fillStyle = v; ctx.fillRect(0, 0, W, H);
+  // film grain
+  ctx.save(); ctx.globalCompositeOperation = 'overlay'; ctx.globalAlpha = .10;
+  const fi = Math.floor(t * FPS) % grain.length;
+  ctx.drawImage(grain[fi], 0, 0, W, H); ctx.restore();
+  // letterbox hairlines / frame counter HUD
+  label('THE ECONOMICS OF F1', 60, 58, { size: 15, alpha: .45 * inv(1, 2, t) * (1 - inv(62.5, 63.5, t)), track: 4 });
+  const tc = new Date(t * 1000).toISOString().substr(14, 8).replace('.', ':');
+  label('EP.01 — ' + tc, W - 60, 58, { size: 15, alpha: .45 * inv(1, 2, t) * (1 - inv(62.5, 63.5, t)), align: 'right', track: 4 });
+}
+
+// ---------- circuit path (stylized, original shape) ----------
+const TRACK_PTS = [[0.14,0.62],[0.2,0.35],[0.33,0.22],[0.46,0.3],[0.52,0.2],[0.7,0.16],[0.86,0.26],[0.84,0.44],
+  [0.7,0.5],[0.76,0.66],[0.88,0.74],[0.8,0.86],[0.56,0.84],[0.46,0.68],[0.34,0.8],[0.2,0.82]];
+function catmull(pts, n) {
+  const out = []; const L = pts.length;
+  for (let i = 0; i < L; i++) {
+    const p0 = pts[(i - 1 + L) % L], p1 = pts[i], p2 = pts[(i + 1) % L], p3 = pts[(i + 2) % L];
+    for (let k = 0; k < n; k++) {
+      const s = k / n, s2 = s * s, s3 = s2 * s;
+      out.push([0.5 * ((2 * p1[0]) + (-p0[0] + p2[0]) * s + (2 * p0[0] - 5 * p1[0] + 4 * p2[0] - p3[0]) * s2 + (-p0[0] + 3 * p1[0] - 3 * p2[0] + p3[0]) * s3),
+                0.5 * ((2 * p1[1]) + (-p0[1] + p2[1]) * s + (2 * p0[1] - 5 * p1[1] + 4 * p2[1] - p3[1]) * s2 + (-p0[1] + 3 * p1[1] - 3 * p2[1] + p3[1]) * s3)]);
+    }
+  }
+  out.push(out[0]); return out;
+}
+const TRACK = catmull(TRACK_PTS, 40);
+const TRACK_LEN = (() => { const c = [0]; for (let i = 1; i < TRACK.length; i++) c.push(c[i - 1] + Math.hypot(TRACK[i][0] - TRACK[i - 1][0], TRACK[i][1] - TRACK[i - 1][1])); return c; })();
+function trackPoint(u, bx, by, bw, bh) { // u in [0,1)
+  u = ((u % 1) + 1) % 1; const target = u * TRACK_LEN[TRACK_LEN.length - 1];
+  let i = 1; while (TRACK_LEN[i] < target) i++;
+  const f = (target - TRACK_LEN[i - 1]) / (TRACK_LEN[i] - TRACK_LEN[i - 1] || 1);
+  return [bx + lerp(TRACK[i - 1][0], TRACK[i][0], f) * bw, by + lerp(TRACK[i - 1][1], TRACK[i][1], f) * bh];
+}
+function drawTrack(p0, p1, bx, by, bw, bh, style) {
+  const steps = 400; ctx.beginPath();
+  for (let k = 0; k <= steps; k++) { const [x, y] = trackPoint(lerp(p0, p1, k / steps), bx, by, bw, bh); k ? ctx.lineTo(x, y) : ctx.moveTo(x, y); }
+  Object.assign(ctx, style); ctx.stroke();
+}
+function car(u, bx, by, bw, bh, alpha = 1, color = C.red, trail = .07) {
+  ctx.save(); ctx.globalAlpha = alpha;
+  for (let k = 30; k >= 0; k--) {
+    const [x, y] = trackPoint(u - trail * k / 30, bx, by, bw, bh);
+    ctx.fillStyle = color; ctx.globalAlpha = alpha * (1 - k / 30) * .5;
+    ctx.beginPath(); ctx.arc(x, y, 7 * (1 - k / 40), 0, 7); ctx.fill();
+  }
+  const [x, y] = trackPoint(u, bx, by, bw, bh);
+  ctx.globalAlpha = alpha; ctx.shadowColor = color; ctx.shadowBlur = 30;
+  ctx.fillStyle = '#fff'; ctx.beginPath(); ctx.arc(x, y, 7, 0, 7); ctx.fill();
+  ctx.restore();
+}
+
+// ---------- camera ----------
+function camera(scale, cx = W / 2, cy = H / 2, dx = 0, dy = 0) {
+  ctx.translate(cx + dx, cy + dy); ctx.scale(scale, scale); ctx.translate(-cx, -cy);
+}
+
+// =====================================================================
+//  SCENES  (start, end in seconds; draw(localTime, sceneDuration))
+// =====================================================================
+const SCENES = [];
+const scene = (a, b, fn) => SCENES.push({ a, b, fn });
+
+// ---------- S1 · Cold open: the $180M sale ----------
+scene(0, 7, (t, d) => {
+  const bx = 980, by = 150, bw = 820, bh = 800;
+  ctx.save();
+  camera(lerp(1.06, 1.0, E.outCubic(inv(0, 7, t))));
+  const fadeIn = inv(0, 1.2, t);
+  ctx.globalAlpha = fadeIn;
+  // shadow track (asphalt)
+  drawTrack(0, P(t, .3, 3.2, E.inOutCubic), bx, by, bw, bh, { lineWidth: 34, strokeStyle: 'rgba(238,235,226,0.05)', lineCap: 'round', lineJoin: 'round' });
+  drawTrack(0, P(t, .3, 3.2, E.inOutCubic), bx, by, bw, bh, { lineWidth: 2, strokeStyle: 'rgba(238,235,226,0.55)', lineCap: 'round' });
+  ctx.setLineDash([]);
+  // start/finish marker
+  const [sx, sy] = trackPoint(0, bx, by, bw, bh);
+  ctx.globalAlpha = fadeIn * inv(2.8, 3.3, t);
+  for (let i = 0; i < 6; i++) for (let j = 0; j < 2; j++) { ctx.fillStyle = (i + j) % 2 ? C.ink : '#000'; ctx.fillRect(sx - 24 + i * 8, sy - 8 + j * 8, 8, 8); }
+  ctx.globalAlpha = 1;
+  // car laps
+  if (t > 2.6) car(E.inOutCubic(inv(2.6, 7.5, t)) * 1.35, bx, by, bw, bh, inv(2.6, 3.0, t));
+  // corner annotation
+  const [ax, ay] = trackPoint(.37, bx, by, bw, bh);
+  const aa = inv(3.4, 3.8, t);
+  if (aa > 0) {
+    ctx.strokeStyle = 'rgba(238,235,226,.35)'; ctx.lineWidth = 1; ctx.globalAlpha = aa;
+    ctx.beginPath(); ctx.moveTo(ax, ay); ctx.lineTo(ax + 60, ay - 60); ctx.lineTo(ax + 180, ay - 60); ctx.stroke();
+    ctx.globalAlpha = 1;
+    typeLabel('TEAM FOR SALE', ax + 66, ay - 70, t, 3.6, 30, { size: 14, color: C.ink });
+  }
+  ctx.restore();
+
+  // headline copy
+  label('AUGUST 2020', 140, 330, { size: 18, color: C.green, alpha: inv(.6, 1.0, t) * (1 - inv(6.4, 6.8, t)), track: 6 });
+  reveal('In 2020, a Formula 1 team', 140, 420, { size: 64, t, t0: .8, out: 6.3 });
+  reveal('was sold for about', 140, 500, { size: 64, t, t0: 1.3, out: 6.35 });
+  // money counter
+  const cnt = E.outCubic(inv(2.2, 3.6, t));
+  const a = inv(2.1, 2.4, t) * (1 - inv(6.4, 6.8, t));
+  ctx.save(); ctx.globalAlpha = a; ctx.font = font(190, 900); ctx.fillStyle = C.green;
+  ctx.shadowColor = 'rgba(61,220,132,.35)'; ctx.shadowBlur = 40;
+  ctx.fillText('$' + Math.round(180 * cnt) + 'M', 132, 700 + (1 - E.outExpo(inv(2.1, 2.8, t))) * 60);
+  ctx.restore();
+  label('≈ €152M · WILLIAMS RACING → DORILTON CAPITAL', 142, 770, { size: 16, alpha: inv(3.7, 4.2, t) * (1 - inv(6.3, 6.7, t)) });
+});
+
+// ---------- S2 · Dead last: 2019 standings ----------
+const STAND = [['Mercedes', 739], ['Ferrari', 504], ['Red Bull', 417], ['McLaren', 145], ['Renault', 91],
+  ['Toro Rosso', 85], ['Racing Point', 73], ['Alfa Romeo', 57], ['Haas', 28], ['Williams', 1]];
+scene(7, 14, (t, d) => {
+  const focus = E.inOutCubic(inv(3.4, 4.6, t));
+  ctx.save();
+  camera(lerp(1, 1.07, focus), 960, 840);
+  label("2019 CONSTRUCTORS' CHAMPIONSHIP · FINAL POINTS", 360, 238, { size: 16, alpha: inv(.3, .7, t) });
+  const top = 250, rh = 62, x0 = 360, maxW = 1000;
+  STAND.forEach(([name, pts], i) => {
+    const y = top + i * rh; const tA = .35 + i * .08;
+    const p = E.outExpo(inv(tA, tA + 1.1, t));
+    const last = i === 9;
+    const dim = last ? 1 : lerp(1, .28, focus);
+    ctx.save(); ctx.globalAlpha = inv(tA, tA + .3, t) * dim;
+    ctx.font = font(15, 700, 'MONO'); ctx.fillStyle = C.dim; ctx.fillText(String(i + 1).padStart(2, '0'), x0, y + 38);
+    ctx.font = font(30, 700); ctx.fillStyle = last ? C.ink : C.ink; ctx.fillText(name, x0 + 60, y + 40);
+    const bw = Math.max(4, pts / 739 * maxW) * p;
+    ctx.fillStyle = last ? C.red : (i === 0 ? C.green : 'rgba(238,235,226,.18)');
+    roundRect(x0 + 330, y + 16, bw, 30, 3); ctx.fill();
+    ctx.font = font(22, 700, 'MONO'); ctx.fillStyle = last ? C.red : C.dim;
+    ctx.fillText(Math.round(pts * p) + (last ? ' POINT' : ''), x0 + 330 + bw + 16, y + 40);
+    ctx.restore();
+  });
+  // highlight box around Williams
+  const hb = E.outExpo(inv(4.3, 5.1, t));
+  if (hb > 0) {
+    const y = top + 9 * rh;
+    const bw_ = 1440, bh_ = rh - 6, per = 2 * (bw_ + bh_);
+    ctx.save(); ctx.strokeStyle = C.red; ctx.lineWidth = 3; ctx.setLineDash([per, per]); ctx.lineDashOffset = per * (1 - hb);
+    ctx.strokeRect(x0 - 24, y + 2, bw_, bh_); ctx.fillStyle = `rgba(232,52,43,${.08 * hb})`; ctx.fillRect(x0 - 24, y + 2, bw_, bh_); ctx.restore();
+  }
+  ctx.restore();
+  // copy (outside camera)
+  reveal('It had almost no sponsors.', 140, 150, { size: 60, t, t0: .3, out: 6.4, color: C.ink });
+  reveal('It finished dead last.', 140, 1000, { size: 60, t, t0: 4.4, out: 6.4, color: i => i >= 2 ? C.red : C.ink });
+  label('0 POINTS THE FOLLOWING SEASON, TOO.', 1780, 990, { size: 16, align: 'right', alpha: inv(5.2, 5.6, t) * (1 - inv(6.3, 6.6, t)) });
+});
+
+// ---------- S3 · $180M → $3B+ (area comparison) ----------
+scene(14, 22, (t, d) => {
+  reveal('Today, the most valuable teams', 140, 175, { size: 60, t, t0: .2, out: 7.3 });
+  reveal('are worth more than $3 billion.', 140, 250, { size: 60, t, t0: .45, out: 7.35,
+    color: i => i >= 4 ? C.green : C.ink });
+  const base = 960; const bigS = 620, smS = bigS / Math.sqrt(3000 / 180);
+  const sx = 170, bx = sx + smS + 70;
+  // small square
+  const s1 = E.outBack(inv(1.0, 1.6, t));
+  ctx.save(); ctx.globalAlpha = 1 - inv(7.2, 7.6, t);
+  ctx.fillStyle = C.ink; ctx.fillRect(sx, base - smS * s1, smS, smS * s1);
+  label('$180M', sx, base + 36, { size: 20, color: C.ink, alpha: inv(1.4, 1.8, t) });
+  label('2020', sx, base + 62, { size: 15, alpha: inv(1.4, 1.8, t) });
+  // big square grows
+  const s2 = E.inOutExpo(inv(2.2, 3.6, t));
+  if (s2 > 0) {
+    ctx.fillStyle = 'rgba(61,220,132,.16)'; ctx.fillRect(bx, base - bigS * s2, bigS * s2, bigS * s2);
+    ctx.strokeStyle = C.green; ctx.lineWidth = 3; ctx.strokeRect(bx, base - bigS * s2, bigS * s2, bigS * s2);
+  }
+  // subdivide into small-square units
+  const g = inv(3.8, 5.2, t);
+  if (g > 0) {
+    const n = Math.ceil(bigS / smS); let k = 0;
+    for (let r = 0; r < n; r++) for (let c = 0; c < n; c++) {
+      const cellA = clamp(g * 22 - k * .9); k++;
+      const x = bx + c * smS, y = base - (r + 1) * smS;
+      const w = Math.min(smS, bx + bigS - x), h = Math.min(smS, y + smS - (base - bigS));
+      if (cellA <= 0) continue;
+      ctx.fillStyle = `rgba(238,235,226,${.10 * cellA})`; ctx.strokeStyle = `rgba(11,15,13,${cellA})`; ctx.lineWidth = 3;
+      const yy = Math.max(y, base - bigS);
+      ctx.fillRect(x + 3, yy + 3, w - 6, (y + smS) - yy - 6);
+    }
+  }
+  label('$3B+', bx, base + 36, { size: 20, color: C.green, alpha: inv(3.0, 3.4, t) });
+  label('2025 · TOP TEAM VALUATIONS', bx, base + 62, { size: 15, alpha: inv(3.0, 3.4, t) });
+  ctx.restore();
+  // multiplier
+  const m = E.outExpo(inv(5.0, 5.8, t)); const ma = inv(5.0, 5.3, t) * (1 - inv(7.2, 7.6, t));
+  ctx.save(); ctx.globalAlpha = ma; ctx.font = font(260, 900); ctx.fillStyle = C.green;
+  ctx.textAlign = 'right'; ctx.shadowColor = 'rgba(61,220,132,.4)'; ctx.shadowBlur = 50;
+  ctx.fillText('~' + Math.round(17 * m) + '×', 1790, 720 + (1 - m) * 40); ctx.restore();
+  label('IN ABOUT FIVE YEARS', 1784, 780, { size: 20, align: 'right', color: C.ink, alpha: inv(5.6, 6.0, t) * (1 - inv(7.2, 7.6, t)) });
+});
+
+// ---------- S4 · Not a sports story ----------
+scene(22, 28, (t, d) => {
+  ctx.save(); camera(lerp(1, 1.05, inv(0, 6, t)));
+  reveal("That's not a", W / 2, 330, { size: 70, fam: 'SER', style: 'italic', w: 400, t, t0: .1, align: 'center', out: 5.3, color: C.dim });
+  const sa = inv(.3, .5, t) * (1 - inv(5.3, 5.7, t));
+  // SPORTS STORY
+  ctx.save(); ctx.font = font(170, 900); ctx.textAlign = 'center';
+  const dimP = inv(2.0, 2.4, t);
+  ctx.globalAlpha = sa; ctx.fillStyle = dimP ? `rgba(238,235,226,${lerp(1, .25, dimP)})` : C.ink;
+  ctx.fillText('SPORTS STORY.', W / 2, 520 + (1 - E.outExpo(inv(.3, 1.1, t))) * 80);
+  ctx.restore();
+  // strike
+  const st = E.inOutExpo(inv(1.4, 2.0, t));
+  if (st > 0) {
+    ctx.save(); ctx.globalAlpha = 1 - inv(5.3, 5.7, t); ctx.strokeStyle = C.red; ctx.lineWidth = 16; ctx.lineCap = 'round';
+    ctx.beginPath(); ctx.moveTo(360, 468); ctx.lineTo(lerp(360, 1560, st), 468 - 14 * st); ctx.stroke(); ctx.restore();
+  }
+  reveal("It's a", W / 2, 660, { size: 70, fam: 'SER', style: 'italic', w: 400, t, t0: 2.2, align: 'center', out: 5.3, color: C.dim });
+  const ba = inv(2.5, 2.7, t) * (1 - inv(5.3, 5.7, t));
+  ctx.save(); ctx.globalAlpha = ba; ctx.font = font(170, 900); ctx.textAlign = 'center'; ctx.fillStyle = C.green;
+  ctx.shadowColor = 'rgba(61,220,132,.35)'; ctx.shadowBlur = 50;
+  ctx.fillText('BUSINESS STORY.', W / 2, 850 + (1 - E.outExpo(inv(2.5, 3.3, t))) * 80); ctx.restore();
+  label('— AND ONE OF THE STRANGEST TURNAROUNDS OF THE DECADE —', W / 2, 950, { size: 18, align: 'center', color: C.ink, alpha: inv(3.6, 4.1, t) * (1 - inv(5.3, 5.6, t)) });
+  ctx.restore();
+});
+
+// ---------- S5 · The money pit ----------
+function brick(x, y, w, h, shade = 0) {
+  ctx.fillStyle = shade ? '#1f6b43' : '#2a8a57'; roundRect(x, y, w, h, 3); ctx.fill();
+  ctx.fillStyle = 'rgba(255,255,255,.10)'; ctx.fillRect(x + 4, y + 3, w - 8, 3);
+  ctx.strokeStyle = 'rgba(11,15,13,.55)'; ctx.lineWidth = 2; ctx.strokeRect(x + 10, y + 5, w - 20, h - 10);
+  ctx.fillStyle = 'rgba(11,15,13,.35)'; ctx.beginPath(); ctx.ellipse(x + w / 2, y + h / 2, 14, h / 2 - 5, 0, 0, 7); ctx.fill();
+  ctx.fillStyle = C.gold; ctx.fillRect(x + w / 2 - 40, y, 12, h);  // bank band
+}
+scene(28, 37, (t, d) => {
+  reveal('For decades, F1 was a', 140, 330, { size: 64, t, t0: .15, out: 8.3 });
+  reveal('money pit.', 140, 460, { size: 140, fam: 'SER', style: 'italic', w: 400, t, t0: .5, out: 8.35, color: C.green });
+  reveal('Top teams spent over $400 million a year…', 140, 610, { size: 40, w: 700, t, t0: 2.0, out: 8.3, color: C.ink });
+  reveal('…just to drive in circles.', 140, 675, { size: 40, w: 700, t, t0: 5.3, out: 8.3, color: C.dim });
+  // tower of cash: 40 bricks × $10M
+  const tx = 1120, base = 980, bw = 300, bh = 17, N = 40;
+  const out = inv(8.2, 8.7, t);
+  let landed = 0;
+  for (let i = 0; i < N; i++) {
+    const t0 = 1.9 + i * .085;
+    const p = inv(t0, t0 + .35, t);
+    if (p <= 0) continue;
+    const yT = base - (i + 1) * (bh + 2);
+    const y = lerp(-60, yT, E.outBack(p)) + out * 900 * (1 + i * .02);
+    const jitter = (rng(i + 3)() - .5) * 10;
+    brick(tx + jitter, y, bw, bh, i % 2);
+    if (p >= 1) landed++;
+  }
+  // counter
+  const val = landed * 10;
+  ctx.save(); ctx.globalAlpha = inv(1.9, 2.1, t) * (1 - out); ctx.font = font(84, 900); ctx.fillStyle = C.ink; ctx.textAlign = 'left';
+  ctx.fillText('$' + val + 'M' + (landed === N ? '+' : ''), tx + bw + 40, base - landed * (bh + 2) + 30); ctx.restore();
+  label('PER YEAR · TOP TEAMS · PRE-2021 (EST.)', tx + bw + 44, base - landed * (bh + 2) + 64, { size: 13, alpha: inv(2.3, 2.6, t) * (1 - out), track: 2 });
+  // ground line
+  ctx.strokeStyle = 'rgba(238,235,226,.25)'; ctx.lineWidth = 2; ctx.beginPath(); ctx.moveTo(1100, base + 2); ctx.lineTo(1800, base + 2); ctx.stroke();
+  // "in circles" loop
+  const la = inv(5.4, 5.8, t) * (1 - out);
+  if (la > 0) {
+    ctx.save(); ctx.globalAlpha = la; const cx = 700, cy = 820, r = 60;
+    ctx.strokeStyle = 'rgba(238,235,226,.3)'; ctx.lineWidth = 2; ctx.setLineDash([6, 8]); ctx.beginPath(); ctx.arc(cx, cy, r, 0, 7); ctx.stroke(); ctx.setLineDash([]);
+    const ang = (t - 5.4) * 6;
+    for (let k = 14; k >= 0; k--) { const a = ang - k * .07; ctx.globalAlpha = la * (1 - k / 14); ctx.fillStyle = C.red; ctx.beginPath(); ctx.arc(cx + Math.cos(a) * r, cy + Math.sin(a) * r, 8 - k * .4, 0, 7); ctx.fill(); }
+    ctx.globalAlpha = la; label('LAP ' + (1 + Math.floor((t - 5.4) * 6 / (2 * Math.PI))), cx, cy + 6, { size: 16, align: 'center', color: C.ink });
+    ctx.restore();
+  }
+});
+
+// ---------- S6 · Three things changed ----------
+function iconOwner(cx, cy, p) { // contract + stamp
+  ctx.save(); ctx.strokeStyle = C.ink; ctx.lineWidth = 4; ctx.lineJoin = 'round';
+  roundRect(cx - 55, cy - 70, 110, 140, 6); ctx.stroke();
+  for (let i = 0; i < 4; i++) { ctx.beginPath(); ctx.moveTo(cx - 35, cy - 40 + i * 20); ctx.lineTo(cx - 35 + 70 * clamp(p * 2 - i * .2), cy - 40 + i * 20); ctx.stroke(); }
+  const s = E.outBack(inv(.55, .9, p));
+  if (s > 0) { ctx.translate(cx + 40, cy + 45); ctx.rotate(-.25); ctx.scale(s, s);
+    ctx.strokeStyle = C.green; ctx.lineWidth = 5; ctx.beginPath(); ctx.arc(0, 0, 40, 0, 7); ctx.stroke();
+    ctx.fillStyle = C.green; ctx.font = font(26, 900); ctx.textAlign = 'center'; ctx.fillText('$8B', 0, 9); }
+  ctx.restore();
+}
+function iconShow(cx, cy, p) { // screen + play
+  ctx.save(); ctx.strokeStyle = C.ink; ctx.lineWidth = 4; roundRect(cx - 90, cy - 60, 180, 110, 8); ctx.stroke();
+  ctx.beginPath(); ctx.moveTo(cx - 30, cy + 72); ctx.lineTo(cx + 30, cy + 72); ctx.stroke();
+  const s = E.outBack(inv(.2, .6, p)); ctx.translate(cx, cy - 5); ctx.scale(s, s);
+  ctx.fillStyle = C.red; ctx.beginPath(); ctx.moveTo(-16, -24); ctx.lineTo(26, 0); ctx.lineTo(-16, 24); ctx.closePath(); ctx.fill();
+  ctx.restore();
+  // audience dots rising
+  for (let i = 0; i < 9; i++) { const q = inv(.4 + i * .05, .8 + i * .05, p); if (q <= 0) continue;
+    ctx.fillStyle = `rgba(61,220,132,${q})`; ctx.beginPath(); ctx.arc(cx - 80 + i * 20, cy + 95 - q * 8, 6, 0, 7); ctx.fill(); }
+}
+function iconCap(cx, cy, p) { // bars hitting a ceiling
+  const hs = [70, 150, 120, 60], capY = cy - 30;
+  hs.forEach((h, i) => { const hh = h * E.outExpo(inv(i * .1, .5 + i * .1, p)); const x = cx - 80 + i * 42;
+    const capped = Math.min(hh, cy + 70 - capY);
+    ctx.fillStyle = C.ink; ctx.fillRect(x, cy + 70 - capped, 30, capped);
+    if (hh > capped) { const cut = inv(.8, 1, p); ctx.fillStyle = `rgba(232,52,43,${.8 - .6 * cut})`; ctx.fillRect(x, cy + 70 - hh - cut * 20, 30, hh - capped); } });
+  const lw = E.inOutExpo(inv(.45, .8, p));
+  ctx.strokeStyle = C.red; ctx.lineWidth = 5; ctx.beginPath(); ctx.moveTo(cx - 100, capY); ctx.lineTo(cx - 100 + 200 * lw, capY); ctx.stroke();
+  label('CAP', cx + 104, capY + 6, { size: 14, color: C.red, alpha: inv(.7, .9, p), align: 'left', track: 2 });
+}
+const CARDS = [
+  { n: '01', yr: '2017', title: 'New owners', body: ['Liberty Media buys F1', 'in a deal worth ~$8 billion.'], icon: iconOwner },
+  { n: '02', yr: '2019', title: 'A TV show', body: ["Netflix's Drive to Survive", 'turns drivers into characters.'], icon: iconShow },
+  { n: '03', yr: '2021', title: 'A budget cap', body: ['Team spending is capped,', 'starting at $145M in 2021.'], icon: iconCap },
+];
+scene(37, 47, (t, d) => {
+  reveal('Then, three things changed.', W / 2, 200, { size: 70, t, t0: .2, align: 'center', out: 9.3,
+    color: i => i === 1 ? C.green : C.ink });
+  const out = inv(9.2, 9.8, t);
+  CARDS.forEach((c, i) => {
+    const t0 = 1.2 + i * 1.9; const p = E.outExpo(inv(t0, t0 + 1.0, t));
+    if (p <= 0) return;
+    const x = 150 + i * 560, y = 300 + (1 - p) * 120 + out * (60 + i * 30), w = 500, h = 600;
+    ctx.save(); ctx.globalAlpha = inv(t0, t0 + .4, t) * (1 - out);
+    ctx.fillStyle = 'rgba(238,235,226,.045)'; roundRect(x, y, w, h, 14); ctx.fill();
+    ctx.strokeStyle = 'rgba(238,235,226,.14)'; ctx.lineWidth = 1.5; roundRect(x, y, w, h, 14); ctx.stroke();
+    ctx.fillStyle = C.green; ctx.fillRect(x, y, w * E.inOutExpo(inv(t0 + .2, t0 + 1.2, t)), 4);
+    label(c.n, x + 34, y + 58, { size: 20, color: C.green, track: 2 });
+    label(c.yr, x + w - 34, y + 58, { size: 20, color: C.dim, align: 'right', track: 2 });
+    c.icon(x + w / 2, y + 220, inv(t0 + .3, t0 + 1.8, t));
+    ctx.font = font(52, 800); ctx.fillStyle = C.ink; ctx.fillText(c.title, x + 34, y + 420);
+    ctx.font = font(26, 500); ctx.fillStyle = C.dim;
+    c.body.forEach((ln, k) => ctx.fillText(ln, x + 34, y + 475 + k * 36));
+    ctx.restore();
+  });
+});
+
+// ---------- S7 · Revenue > $3B ----------
+const REV = [[2017, 1783], [2018, 1827], [2019, 2022], [2020, 1145], [2021, 2136], [2022, 2573], [2023, 3222], [2024, 3411]];
+scene(47, 55, (t, d) => {
+  reveal('Now, F1 brings in over', 140, 190, { size: 60, t, t0: .2, out: 7.3 });
+  reveal('$3 billion a year.', 140, 290, { size: 96, w: 900, t, t0: .45, out: 7.35, color: C.green });
+  const x0 = 800, base = 900, bw = 92, gap = 42, scale = 560 / 3500;
+  const out = inv(7.2, 7.7, t);
+  // gridlines
+  [1000, 2000, 3000].forEach((v, k) => { const y = base - v * scale; const a = inv(.4 + k * .1, .9 + k * .1, t) * (1 - out);
+    ctx.strokeStyle = `rgba(238,235,226,${.10 * a})`; ctx.lineWidth = 1; ctx.beginPath(); ctx.moveTo(x0 - 20, y); ctx.lineTo(x0 + 8 * (bw + gap), y); ctx.stroke();
+    label('$' + v / 1000 + 'B', x0 - 34, y + 6, { size: 15, align: 'right', alpha: a }); });
+  REV.forEach(([yr, v], i) => {
+    const t0 = .9 + i * .22; const p = E.outExpo(inv(t0, t0 + 1.2, t)) * (1 - E.inCubic(out));
+    const x = x0 + i * (bw + gap), h = v * scale * p; const last = i === REV.length - 1, covid = yr === 2020;
+    ctx.fillStyle = last ? C.green : covid ? 'rgba(232,52,43,.7)' : 'rgba(238,235,226,.22)';
+    ctx.fillRect(x, base - h, bw, h);
+    label(String(yr), x + bw / 2, base + 34, { size: 16, align: 'center', alpha: inv(t0, t0 + .3, t) * (1 - out), color: last ? C.ink : C.dim, track: 1 });
+    if (last || covid) label(fmtMoney(v * p), x + bw / 2, base - h - 16, { size: 18, align: 'center', color: last ? C.green : C.red, alpha: inv(t0 + .6, t0 + 1, t) * (1 - out), w: 700, track: 1 });
+  });
+  label('COVID', x0 + 3 * (bw + gap) + bw / 2, base - 1145 * scale - 44, { size: 13, align: 'center', color: C.red, alpha: inv(2.3, 2.7, t) * (1 - out) });
+  label('FORMULA 1 PRIMARY REVENUE · SOURCE: LIBERTY MEDIA ANNUAL REPORTS', 140, 1000, { size: 14, alpha: inv(1.5, 2.0, t) * (1 - out), track: 2 });
+  // side stat
+  reveal('Cities pay up to ~$60M', 140, 520, { size: 40, w: 700, t, t0: 3.6, out: 7.2, color: C.ink });
+  reveal('just to host a single race.', 140, 572, { size: 40, w: 700, t, t0: 3.8, out: 7.2, color: C.dim });
+  label('REPORTED HOSTING FEES, TOP OF RANGE', 140, 620, { size: 13, alpha: inv(4.5, 5, t) * (1 - out) });
+});
+
+// ---------- S8 · Where does the money go? (flow) ----------
+const SRC = [['TV RIGHTS', 360], ['RACE HOSTING FEES', 560], ['SPONSORSHIP', 760]];
+const DST = [['THE 10 TEAMS', 430], ['THE OWNERS', 690]];
+function bez(p0, p1, p2, p3, s) { const u = 1 - s; return [u*u*u*p0[0] + 3*u*u*s*p1[0] + 3*u*s*s*p2[0] + s*s*s*p3[0], u*u*u*p0[1] + 3*u*u*s*p1[1] + 3*u*s*s*p2[1] + s*s*s*p3[1]]; }
+scene(55, 64, (t, d) => {
+  const zoom = E.inCubic(inv(7.6, 9, t));
+  ctx.save(); camera(lerp(1, 9, zoom), 960, 560);
+  reveal('So where does all that money come from —', W / 2, 170, { size: 54, t, t0: .2, align: 'center', out: 7.2 });
+  reveal('and who actually keeps it?', W / 2, 240, { size: 54, t, t0: 3.2, align: 'center', out: 7.2, color: i => i >= 2 ? C.green : C.ink });
+  const hub = [960, 560];
+  // hub
+  const hp = E.outBack(inv(.6, 1.2, t));
+  ctx.save(); ctx.translate(...hub); ctx.scale(hp, hp);
+  const pulse = 1 + .03 * Math.sin(t * 6);
+  ctx.fillStyle = C.green; ctx.shadowColor = 'rgba(61,220,132,.6)'; ctx.shadowBlur = 60;
+  ctx.beginPath(); ctx.arc(0, 0, 105 * pulse, 0, 7); ctx.fill(); ctx.shadowBlur = 0;
+  ctx.fillStyle = C.bg; ctx.font = font(56, 900); ctx.textAlign = 'center'; ctx.fillText('F1', 0, 20);
+  ctx.restore();
+  const flows = [];
+  SRC.forEach(([n, y], i) => flows.push({ a: [480, y], b: [hub[0] - 110, hub[1]], t0: 1.0 + i * .3, left: true, name: n, col: C.ink }));
+  DST.forEach(([n, y], i) => flows.push({ a: [hub[0] + 110, hub[1]], b: [1440, y], t0: 3.4 + i * .4, left: false, name: n, col: C.green }));
+  flows.forEach((f, i) => {
+    const dp = E.inOutCubic(inv(f.t0, f.t0 + .9, t)); if (dp <= 0) return;
+    const c1 = [lerp(f.a[0], f.b[0], .5), f.a[1]], c2 = [lerp(f.a[0], f.b[0], .5), f.b[1]];
+    ctx.strokeStyle = 'rgba(238,235,226,.18)'; ctx.lineWidth = 2; ctx.beginPath();
+    for (let k = 0; k <= 60; k++) { const [x, y] = bez(f.a, c1, c2, f.b, k / 60 * dp); k ? ctx.lineTo(x, y) : ctx.moveTo(x, y); } ctx.stroke();
+    // flowing coins
+    if (dp >= 1) for (let k = 0; k < 5; k++) {
+      const s = ((t - f.t0 - .9) * .55 + k / 5) % 1; const [x, y] = bez(f.a, c1, c2, f.b, s);
+      ctx.fillStyle = f.left ? C.gold : C.green; ctx.globalAlpha = Math.sin(s * Math.PI);
+      ctx.beginPath(); ctx.arc(x, y, 7, 0, 7); ctx.fill(); ctx.globalAlpha = 1;
+    }
+    // node label
+    const la = inv(f.t0, f.t0 + .4, t);
+    const nx = f.left ? f.a[0] - 20 : f.b[0] + 20, ny = f.left ? f.a[1] : f.b[1];
+    ctx.fillStyle = f.left ? C.ink : C.green; ctx.globalAlpha = la; ctx.beginPath(); ctx.arc(f.left ? f.a[0] : f.b[0], ny, 8, 0, 7); ctx.fill(); ctx.globalAlpha = 1;
+    label(f.name, nx, ny + 7, { size: 20, align: f.left ? 'right' : 'left', color: f.left ? C.ink : C.green, alpha: la, w: 700, track: 3 });
+  });
+  // question marks on destinations
+  DST.forEach(([n, y], i) => { const q = E.outBack(inv(4.6 + i * .3, 5.1 + i * .3, t)); if (q <= 0) return;
+    ctx.save(); ctx.translate(1720, y - 4); ctx.scale(q, q);
+    ctx.font = font(60, 400, 'SER', 'italic'); ctx.fillStyle = C.gold; ctx.textAlign = 'left'; ctx.fillText('?', 0, 20); ctx.restore(); });
+  ctx.restore();
+  // hub zoom fills screen with green
+  if (zoom > 0.6) { ctx.fillStyle = `rgba(61,220,132,${inv(.6, 1, zoom)})`; ctx.fillRect(0, 0, W, H); }
+});
+
+// ---------- S9 · Title card ----------
+scene(64, 72, (t, d) => {
+  // green → dark flash transition
+  ctx.fillStyle = C.bg; ctx.fillRect(0, 0, W, H);
+  const g = 1 - E.outCubic(inv(0, .9, t));
+  // checkered band sweeps
+  const band = E.inOutExpo(inv(.3, 1.4, t));
+  ctx.save(); ctx.globalAlpha = .9 * (1 - inv(6.8, 7.8, t));
+  const sq = 22; const y0 = 690;
+  for (let i = 0; i < 90; i++) for (let j = 0; j < 2; j++) {
+    const x = i * sq; if (x > W * band) break;
+    ctx.fillStyle = (i + j) % 2 ? C.ink : '#050706'; ctx.fillRect(x, y0 + j * sq, sq, sq);
+  }
+  ctx.restore();
+  // big track outline drifting behind
+  ctx.save(); ctx.globalAlpha = .18 * (1 - inv(6.8, 7.8, t));
+  drawTrack(0, E.inOutCubic(inv(.4, 3.2, t)), 360, 60, 1200, 960, { lineWidth: 3, strokeStyle: C.green, lineCap: 'round' });
+  ctx.restore();
+  if (t > 1.6) car(E.inOutCubic(inv(1.6, 8, t)) * .9 + .05, 360, 60, 1200, 960, .5 * (1 - inv(6.8, 7.8, t)), C.green, .1);
+  const out = inv(6.8, 7.8, t);
+  ctx.save(); ctx.globalAlpha = 1 - out;
+  typeLabel('THE ECONOMICS OF', W / 2 - 250, 400, t, .9, 26, { size: 30, color: C.green, track: 14, w: 700 });
+  ctx.restore();
+  const s = 1 + .03 * inv(1, 8, t);
+  ctx.save(); ctx.translate(W / 2, 560); ctx.scale(s, s); ctx.translate(-W / 2, -560); ctx.globalAlpha = 1 - out;
+  reveal('FORMULA 1', W / 2, 620, { size: 240, w: 900, t, t0: 1.3, stagger: .12, align: 'center', dur: .9, color: C.ink });
+  ctx.restore();
+  ctx.save(); ctx.globalAlpha = 1 - out;
+  reveal('How the fastest sport on Earth learned to print money.', W / 2, 830, { size: 50, fam: 'SER', style: 'italic', w: 400, t, t0: 2.6, stagger: .05, align: 'center', color: C.dim });
+  ctx.restore();
+  if (g > 0) { ctx.fillStyle = `rgba(61,220,132,${g})`; ctx.fillRect(0, 0, W, H); }
+});
+
+// ---------- transitions: diagonal whip wipes between scenes ----------
+const WIPES = [7, 14, 22, 28, 37, 47, 55];
+function wipes(t) {
+  for (const w of WIPES) {
+    const p = inv(w - .45, w + .45, t); if (p <= 0 || p >= 1) continue;
+    const e = E.inOutExpo(p); const sk = 300;
+    [[C.green, 0], [C.bg2, .12]].forEach(([col, lag]) => {
+      const q = E.inOutExpo(clamp((p - lag) / (1 - lag)));
+      const x = lerp(-W - sk, W + sk, q);
+      ctx.fillStyle = col; ctx.beginPath();
+      ctx.moveTo(x, 0); ctx.lineTo(x + W, 0); ctx.lineTo(x + W - sk, H); ctx.lineTo(x - sk, H); ctx.closePath(); ctx.fill();
+    });
+  }
+}
+
+// ---------- master render ----------
+window.render = function (t) {
+  ctx.setTransform(1, 0, 0, 1, 0, 0); ctx.globalAlpha = 1; ctx.letterSpacing = '0px';
+  background(t, t > 64);
+  for (const s of SCENES) {
+    if (t >= s.a && t < s.b) { ctx.save(); s.fn(t - s.a, s.b - s.a); ctx.restore(); }
+  }
+  wipes(t);
+  finishingLayers(t);
+  // global fade in/out
+  const fo = inv(0, .6, t) * (1 - inv(71.2, 72, t));
+  if (fo < 1) { ctx.fillStyle = `rgba(0,0,0,${1 - fo})`; ctx.fillRect(0, 0, W, H); }
+};
+window.ready = document.fonts.ready.then(() => Promise.all(['900 20px IT', '800 20px IT', '700 20px IT', '500 20px IT', 'italic 400 20px SER', '500 20px MONO', '700 20px MONO'].map(f => document.fonts.load(f))));
+window.DURATION = DURATION; window.FPS = FPS;
+// live preview when opened directly in a browser
+if (!navigator.webdriver) { const t0 = performance.now(); window.ready.then(() => { const loop = () => { render(((performance.now() - t0) / 1000) % DURATION); requestAnimationFrame(loop); }; loop(); }); }
+</script></body></html>
