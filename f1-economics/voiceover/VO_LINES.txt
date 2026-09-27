@@ -1,0 +1,66 @@
+# One narration line per row: <id><TAB><text>. Save audio as voiceover/audio/<id>.wav
+
+# COLD OPEN: "THE LAST RACE" (0:00 – 1:30)
+001	On a Sunday in September 2020, at Monza in Italy, a team principal walked out of the Formula 1 paddock for the last time.
+002	Her name was Claire Williams. Her father, Frank, had started the team in his twenties and built it into one of the most successful teams in the history of the sport: nine constructors' championships and seven drivers' titles.
+003	But by 2020 Williams was finishing last almost every weekend. It had lost its title sponsor. It was losing money. So the family did the only thing it could: it sold the team to an American investment firm for around 150 million euros.
+004	It looked like the end of an era. It was actually the bottom of the market.
+005	Five years later, the most valuable Formula 1 teams are reportedly worth more than three billion dollars each. Investors are now paying hundreds of millions just for a slice of teams that, a decade ago, couldn't pay their bills.
+006	So what happened? How did a sport that was bleeding money become one of the hottest investments in the world?
+007	To understand it, you have to go back to the man who owned the whole thing.
+
+# CHAPTER 1: "BERNIE'S EMPIRE" (1:30 – 3:30)
+008	For forty years, Formula 1 was essentially run by one man: Bernie Ecclestone, a former used-car dealer from south-east England.
+009	In the 1970s, the teams were chaotic, broke and constantly arguing with the circuits about money. Bernie offered them a deal: let me negotiate for all of you.
+010	He bundled every race into a single package and sold it to television networks around the world. Nobody had really done that in motorsport before. And he quietly made sure that the commercial rights (the TV money, the race contracts, the trackside advertising) ended up controlled by his companies.
+011	Here's the business model in one picture.
+012	The teams did the expensive part. The owner of the rights collected the money. And Bernie was very, very good at collecting.
+013	That attitude would come back to haunt the sport. But first, Bernie sold it.
+
+# CHAPTER 2: "THE PRIVATE EQUITY YEARS" (3:30 – 5:30)
+014	In 2006, the private equity firm CVC Capital Partners bought control of Formula 1. CVC did what private equity does: it borrowed heavily against the business, raised prices wherever it could, and paid itself large dividends.
+015	Race hosting fees rose. TV deals moved from free-to-air channels behind pay walls. That meant more money in the short term and fewer new fans in the long term.
+016	Meanwhile, the teams were stuck in an arms race. There was no limit on spending, and the fastest way to win was to outspend everyone.
+017	For the big manufacturers, like Mercedes, Ferrari and Red Bull, that was fine. For everyone else, it was a death sentence.
+018	Between 2012 and 2017, three teams collapsed. Others survived on pay drivers, whose families or sponsors paid for the seat.
+019	And the prize money wasn't shared evenly. Ferrari reportedly received a "heritage" payment of tens of millions a year just for being Ferrari.
+020	The rich teams got richer. The poor teams went bust. And the owner collected the rent. By 2016, the sport's TV audience was falling. It needed someone new.
+
+# CHAPTER 3: "THE $8 BILLION BET" (5:30 – 7:30)
+021	In January 2017, an American company called Liberty Media completed its takeover of Formula 1, in a deal that valued the business at around eight billion dollars including debt.
+022	Liberty is run by people who think about sport the way Americans do: as media. They own the Atlanta Braves baseball team and a big stake in SiriusXM radio. When they looked at Formula 1, they saw something bizarre.
+023	A global sport with hundreds of millions of fans… that barely existed on the internet.
+024	Bernie Ecclestone was moved aside. Liberty opened the doors: highlights went on YouTube, teams were allowed on social media, and a streaming service, F1 TV, launched.
+025	But the thing that truly changed Formula 1 wasn't a race, or a rule, or a car. It was a television show.
+
+# CHAPTER 4: "DRIVE TO SURVIVE" (7:30 – 9:30)
+026	In 2019, Netflix released Formula 1: Drive to Survive. It didn't really follow the races. It followed the people: the rivalries, the egos, the swearing.
+027	Guenther Steiner, the manager of a small American team, became a genuine celebrity.
+028	The show did something no amount of racing could: it gave new fans characters to care about before they understood the sport.
+029	And America, the one market F1 had never cracked, suddenly fell in love.
+030	Within a few years the calendar had three American races: Austin, Miami and Las Vegas. In Las Vegas, Liberty didn't just sell the race. It became the promoter, building a permanent pit building on the Strip.
+
+# CHAPTER 5: "THE CAP THAT CREATED FRANCHISES" (9:30 – 11:30)
+031	In 2021, Formula 1 introduced something that would have been unthinkable in the Ecclestone era: a spending limit. The budget cap started at 145 million dollars a year.
+032	Driver salaries and the top executives' pay are excluded, but almost everything that makes a car fast is inside the cap.
+033	Overnight, the economics of owning a team flipped. Before, a team was a cost center. The only way to be competitive was to burn money. Now costs were capped, prize money was growing, and there were only ten seats at the table.
+034	That's exactly how American sports franchises work. And franchises go up in value.
+035	Look at McLaren. In 2020, during the pandemic, it was borrowing money and selling its own headquarters to survive. Its racing team took outside investment from American investors. A few years later, McLaren was winning championships again.
+036	Now the price of entry tells the story. New teams have to pay an anti-dilution fee, compensation to the existing teams for shrinking their share of the prize money. When General Motors' Cadillac team joined for 2026, it reportedly paid far more.
+
+# CHAPTER 6: "FOLLOW THE MONEY" (11:30 – 13:30)
+037	So where does all this money actually come from?
+038	In 2024, Formula 1 brought in about 3.4 billion dollars. [Liberty 10-K] Roughly a third comes from each stream.
+039	Then roughly half of what's left after costs gets paid back to the teams as prize money, under the Concorde Agreement.
+040	But the most controversial number is the hosting fee. Classic European tracks pay the least. The highest fees, reportedly 50 to 60 million dollars a year, come from governments in the Gulf.
+041	Critics call it sportswashing: countries using a glamorous sport to improve their image. F1 argues it brings investment and attention.
+
+# CHAPTER 7: "WHO WON?" (13:30 – 15:00)
+042	So who actually wins in the new Formula 1?
+043	Liberty Media's shareholders: they bought F1 for about eight billion dollars. It's now worth several times that.
+044	The teams: former money pits have become some of the most valuable assets in sport.
+045	The drivers: their salaries sit outside the cap, and the best are paid tens of millions a year.
+046	And the fans? They got more races, more drama and more access. They also got more expensive tickets, and a sport where Saturday night in Las Vegas can cost more than a month's rent.
+047	Remember Williams? The team that sold for about 150 million euros at the very bottom of the market? Its new owners have poured money in, hired a former Mercedes strategist as boss, and signed a world-class driver.
+048	For fifty years, the fastest cars in the world were attached to one of the slowest-moving businesses in sport. It took an American media company, a reality show and a spending limit to make Formula 1 do the one thing it had never managed…
+049	…turn speed into profit.
