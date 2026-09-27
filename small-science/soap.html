@@ -1,0 +1,282 @@
+<!doctype html>
+<html><head><meta charset="utf-8"><title>Small Science · Soap</title>
+<style>
+@font-face{font-family:IT;src:url(fonts/inter-tight-latin-900-normal.woff2);font-weight:900}
+@font-face{font-family:IT;src:url(fonts/inter-tight-latin-800-normal.woff2);font-weight:800}
+@font-face{font-family:IT;src:url(fonts/inter-tight-latin-700-normal.woff2);font-weight:700}
+@font-face{font-family:IT;src:url(fonts/inter-tight-latin-500-normal.woff2);font-weight:500}
+@font-face{font-family:SER;src:url(fonts/instrument-serif-latin-400-normal.woff2)}
+@font-face{font-family:SER;src:url(fonts/instrument-serif-latin-400-italic.woff2);font-style:italic}
+@font-face{font-family:MONO;src:url(fonts/jetbrains-mono-latin-500-normal.woff2);font-weight:500}
+@font-face{font-family:MONO;src:url(fonts/jetbrains-mono-latin-700-normal.woff2);font-weight:700}
+html,body{margin:0;background:#000}canvas{display:block;width:100vw;height:auto}
+</style></head><body><canvas id="c" width="1920" height="1080"></canvas>
+<script>
+const W = 1920, H = 1080, FPS = 30, DURATION = 82;
+const cv = document.getElementById('c'), ctx = cv.getContext('2d');
+const C = {
+  paper: '#E3E1DB', paper2: '#D6D3CB', ink: '#161616', ink2: '#4A4A46', mute: '#8A877F',
+  yellow: '#F6D646', green: '#2E8B57', greenDark: '#1F6440', white: '#FBFAF6', red: '#D6453D',
+  oxy: '#D6453D', hyd: '#FBFAF6', oil: '#E0A43A', oilDark: '#B87E1E', water: '#6FB7D8', skin: '#F0C7A0'
+};
+</script>
+<script src="lib/paper.js"></script>
+<script>
+// =====================================================================
+//  SMALL SCIENCE · Ep.1 — How does soap actually clean your hands?
+//  Original mascot: "Pip" — a paper-cutout kid scientist.
+// =====================================================================
+
+// ---------------------------------------------------------------- mascot
+// talking: mouth flaps; point: arm angle (radians) or null; blink every ~3 s
+function pip(x, y, s, t, opt = {}) {
+  const o = Object.assign({ talking: false, point: null, seed: 1 }, opt);
+  ctx.save(); ctx.translate(x + wob(t, o.seed, 1.5), y + wob(t, o.seed + 1, 1.5)); ctx.scale(s, s);
+  ctx.rotate(wob(t, o.seed + 2, .012));
+  const outline = (fn) => { ctx.save(); shadow(true, 14, 6, .25); ctx.lineJoin = 'round'; ctx.strokeStyle = C.white; ctx.lineWidth = 10; fn(); ctx.stroke(); ctx.fill(); shadow(false); ctx.restore(); };
+  // body: green paper coat
+  ctx.fillStyle = C.green; outline(() => { ctx.beginPath(); ctx.moveTo(-70, 60); ctx.quadraticCurveTo(-80, 200, -75, 250); ctx.lineTo(75, 250); ctx.quadraticCurveTo(80, 200, 70, 60); ctx.quadraticCurveTo(0, 30, -70, 60); ctx.closePath(); });
+  ctx.fillStyle = C.yellow; ctx.beginPath(); ctx.moveTo(-18, 58); ctx.lineTo(0, 110); ctx.lineTo(18, 58); ctx.closePath(); ctx.fill();   // collar/tie
+  ctx.fillStyle = 'rgba(0,0,0,.15)'; ctx.fillRect(-4, 110, 8, 140);
+  // pointing arm
+  if (o.point !== null) {
+    ctx.save(); ctx.translate(60, 95); ctx.rotate(o.point + Math.sin(t * 5) * .04);
+    ctx.fillStyle = C.green; outline(() => { ctx.beginPath(); ctx.roundRect(0, -16, 120, 32, 16); });
+    ctx.fillStyle = C.skin; outline(() => { ctx.beginPath(); ctx.arc(128, 0, 18, 0, 7); }); ctx.restore();
+  }
+  // head
+  ctx.fillStyle = C.skin; outline(() => { ctx.beginPath(); ctx.ellipse(0, -20, 78, 84, 0, 0, 7); });
+  // hair: a single swooping paper tuft
+  ctx.fillStyle = '#2B2622'; ctx.beginPath(); ctx.moveTo(-78, -30); ctx.quadraticCurveTo(-80, -110, 0, -106); ctx.quadraticCurveTo(70, -110, 80, -40);
+  ctx.quadraticCurveTo(40, -80, -10, -70); ctx.quadraticCurveTo(-40, -60, -78, -30); ctx.fill();
+  ctx.beginPath(); ctx.moveTo(10, -104); ctx.quadraticCurveTo(40, -150, 70, -130); ctx.quadraticCurveTo(40, -125, 26, -100); ctx.fill();
+  // glasses
+  ctx.strokeStyle = C.ink; ctx.lineWidth = 6; ctx.fillStyle = 'rgba(255,255,255,.35)';
+  [-30, 30].forEach(ex => { ctx.beginPath(); ctx.arc(ex, -18, 26, 0, 7); ctx.fill(); ctx.stroke(); });
+  ctx.beginPath(); ctx.moveTo(-4, -18); ctx.lineTo(4, -18); ctx.stroke();
+  // eyes (blink)
+  const blink = (t % 3.1) < .12;
+  ctx.fillStyle = C.ink; [-30, 30].forEach(ex => { if (blink) ctx.fillRect(ex - 9, -19, 18, 4); else { ctx.beginPath(); ctx.arc(ex + 3, -16, 7, 0, 7); ctx.fill(); } });
+  // cheeks
+  ctx.fillStyle = 'rgba(214,69,61,.3)'; [-52, 52].forEach(cx => { ctx.beginPath(); ctx.arc(cx, 16, 12, 0, 7); ctx.fill(); });
+  // mouth
+  const open = o.talking ? Math.abs(Math.sin(t * 13)) * (0.5 + .5 * Math.abs(Math.sin(t * 3.7))) : 0;
+  ctx.fillStyle = '#5A1E1A'; ctx.beginPath(); ctx.ellipse(0, 30, 16, 3 + open * 13, 0, 0, 7); ctx.fill();
+  ctx.restore();
+}
+
+// ---------------------------------------------------------------- molecules
+function paperDot(x, y, r, fill) { ctx.beginPath(); ctx.arc(x, y, r, 0, 7); ctx.fillStyle = C.white; ctx.fill(); ctx.beginPath(); ctx.arc(x, y, r - 3, 0, 7); ctx.fillStyle = fill; ctx.fill(); }
+function water(x, y, s, rot) {  // H2O, 104.5° bond angle
+  ctx.save(); ctx.translate(x, y); ctx.rotate(rot); ctx.scale(s, s);
+  const a = 104.5 / 2 * Math.PI / 180;
+  paperDot(Math.sin(a) * 26, Math.cos(a) * 26, 12, C.hyd); paperDot(-Math.sin(a) * 26, Math.cos(a) * 26, 12, C.hyd);
+  paperDot(0, 0, 20, C.oxy); ctx.restore();
+}
+function zigzag(len, n, amp) { ctx.beginPath(); for (let i = 0; i <= n; i++) { const x = i / n * len, y = (i % 2 ? amp : -amp); i ? ctx.lineTo(x, y) : ctx.moveTo(x, y); } }
+function oilChain(x, y, s, rot) {
+  ctx.save(); ctx.translate(x, y); ctx.rotate(rot); ctx.scale(s, s); ctx.lineCap = 'round'; ctx.lineJoin = 'round';
+  zigzag(120, 8, 9); ctx.strokeStyle = C.white; ctx.lineWidth = 16; ctx.stroke(); ctx.strokeStyle = C.oil; ctx.lineWidth = 9; ctx.stroke(); ctx.restore();
+}
+function soapMol(x, y, s, rot, headCol = C.green) {  // head at origin, tail extends along +x
+  ctx.save(); ctx.translate(x, y); ctx.rotate(rot); ctx.scale(s, s); ctx.lineCap = 'round'; ctx.lineJoin = 'round';
+  ctx.save(); ctx.translate(18, 0); zigzag(130, 9, 9); ctx.strokeStyle = C.white; ctx.lineWidth = 16; ctx.stroke(); ctx.strokeStyle = C.oil; ctx.lineWidth = 9; ctx.stroke(); ctx.restore();
+  paperDot(0, 0, 24, headCol); ctx.restore();
+}
+
+// ---------------------------------------------------------------- props
+function hand(x, y, s) {  // simple original paper hand, palm up
+  ctx.save(); ctx.translate(x, y); ctx.scale(s, s); ctx.fillStyle = C.skin; shadow(true, 20, 10, .25);
+  ctx.beginPath(); ctx.roundRect(-150, -120, 300, 260, 110); ctx.fill();
+  [[-120, -250, 52, 170], [-58, -300, 54, 210], [4, -300, 54, 210], [66, -265, 52, 180]].forEach(([fx, fy, fw, fh]) => { ctx.beginPath(); ctx.roundRect(fx, fy, fw, fh, 27); ctx.fill(); });
+  ctx.save(); ctx.translate(150, 0); ctx.rotate(-.7); ctx.beginPath(); ctx.roundRect(-10, -40, 150, 58, 29); ctx.fill(); ctx.restore();
+  shadow(false); ctx.strokeStyle = 'rgba(160,100,70,.35)'; ctx.lineWidth = 4;
+  ctx.beginPath(); ctx.moveTo(-100, -30); ctx.quadraticCurveTo(0, 20, 110, -40); ctx.stroke();
+  ctx.beginPath(); ctx.moveTo(-60, 60); ctx.quadraticCurveTo(10, 30, 90, 70); ctx.stroke();
+  ctx.restore();
+}
+function grease(x, y, s, t) { ctx.save(); ctx.translate(x, y); ctx.scale(s, s); ctx.fillStyle = C.oilDark; ctx.globalAlpha = .9; const r = rng(4);
+  ctx.beginPath(); for (let i = 0; i <= 14; i++) { const a = i / 14 * 6.283, rr = 70 + (r() - .5) * 40 + wob(t, i, 3); i ? ctx.lineTo(Math.cos(a) * rr, Math.sin(a) * rr * .7) : ctx.moveTo(Math.cos(a) * rr, Math.sin(a) * rr * .7); } ctx.closePath(); ctx.fill();
+  ctx.fillStyle = 'rgba(255,255,255,.35)'; ctx.beginPath(); ctx.ellipse(-20, -18, 22, 8, -.3, 0, 7); ctx.fill(); ctx.restore(); }
+function label(text, x, y, t, t0, opt = {}) {  // green card label that pops in
+  const p = E.outBack(inv(t0, t0 + .45, t)); if (p <= 0) return;
+  ctx.save(); ctx.translate(x, y); ctx.rotate((opt.rot || 0) * Math.PI / 180); ctx.scale(p, p);
+  ctx.font = font(opt.size || 30, 800); const w = ctx.measureText(text).width + 50;
+  greenCard(w, (opt.size || 30) + 40, [{ text, size: opt.size || 30, w: 800 }], opt.seed || 7, { pad: 25 });
+  ctx.restore();
+}
+function arrow(x1, y1, x2, y2, p) { ctx.save(); ctx.strokeStyle = C.ink; ctx.lineWidth = 5; ctx.lineCap = 'round'; ctx.setLineDash([12, 10]);
+  const x = lerp(x1, x2, p), y = lerp(y1, y2, p); ctx.beginPath(); ctx.moveTo(x1, y1); ctx.lineTo(x, y); ctx.stroke(); ctx.setLineDash([]);
+  if (p > .95) { const a = Math.atan2(y2 - y1, x2 - x1); ctx.beginPath(); ctx.moveTo(x2, y2); ctx.lineTo(x2 - Math.cos(a - .5) * 22, y2 - Math.sin(a - .5) * 22); ctx.moveTo(x2, y2); ctx.lineTo(x2 - Math.cos(a + .5) * 22, y2 - Math.sin(a + .5) * 22); ctx.stroke(); }
+  ctx.restore(); }
+
+// deterministic water field
+const WATERS = (() => { const r = rng(99), a = []; for (let i = 0; i < 70; i++) a.push({ x: r() * W, y: 120 + r() * (H - 260), ph: r() * 6.28, sp: .6 + r() * .8, rot: r() * 6.28 }); return a; })();
+function waterField(t, avoid = null, alpha = 1, drift = 0) {
+  ctx.save(); ctx.globalAlpha = alpha;
+  WATERS.forEach((w, i) => {
+    let x = w.x + Math.sin(t * w.sp + w.ph) * 18 + drift * t * 60, y = w.y + Math.cos(t * w.sp * 1.3 + w.ph) * 14;
+    x = ((x % (W + 100)) + W + 100) % (W + 100) - 50;
+    if (avoid) { const dx = x - avoid.x, dy = y - avoid.y, d = Math.hypot(dx, dy); if (d < avoid.r) { x = avoid.x + dx / d * avoid.r; y = avoid.y + dy / d * avoid.r; } }
+    water(x, y, .8, w.rot + Math.sin(t * 2 + i) * .4);
+  }); ctx.restore();
+}
+function oilBlob(x, y, r, t, n = 14, seed = 5) { const g = rng(seed); for (let i = 0; i < n; i++) { const a = g() * 6.28, d = Math.sqrt(g()) * r; oilChain(x + Math.cos(a) * d - 55 + wob(t, i + seed, 3), y + Math.sin(a) * d + wob(t, i + 40, 3), .9, g() * 6.28); } }
+
+// ---------------------------------------------------------------- captions (VO)
+cap(0.5, 5.2, "You've got greasy hands. So you rinse them under the tap…", ['greasy']);
+cap(5.2, 9.0, '…and the grease just sits there. Why?', ['Why?']);
+cap(9.4, 14.5, 'Zoom way in. Water molecules love sticking to each other.', ['each', 'other']);
+cap(14.5, 19.8, 'But oil molecules? Water pushes right past them. Oil and water don\'t mix.', ["don't", 'mix']);
+cap(20.3, 26.5, 'Enter soap. Each soap molecule has two very different ends.', ['two', 'ends']);
+cap(26.5, 33.6, 'A head that loves water… and a long tail that hates water but loves oil.', ['loves', 'water', 'oil']);
+cap(34.3, 41.0, 'When you scrub, the tails dive into the grease to hide from the water.', ['tails', 'grease']);
+cap(41.0, 49.6, 'They surround it completely, trapping the oil inside a tiny ball called a micelle.', ['micelle']);
+cap(50.3, 56.0, 'Now the outside is all water-loving heads, so water can grab it…', ['water-loving']);
+cap(56.0, 61.6, '…and wash the whole thing down the drain.', ['drain']);
+cap(62.3, 67.0, 'Bonus: many viruses wear a coat made of fat.', ['fat']);
+cap(67.0, 71.6, 'Soap pries that coat apart. That\'s why scrubbing for 20 seconds matters.', ['20', 'seconds']);
+cap(72.3, 78.0, 'Soap: a molecule that lets water and oil finally get along.', ['get', 'along']);
+
+// ---------------------------------------------------------------- scenes
+// S1 · the problem at the sink
+scene(0, 9.4, t => {
+  place(t, .1, 1180, 1500, 0, 11, () => hand(0, 0, 1.25), { from: 'down', dur: .8 });
+  // tap + stream
+  place(t, .3, 1180, 140, 0, 12, () => { shadow(true); ctx.fillStyle = '#9AA3A6'; ctx.beginPath(); ctx.roundRect(-220, -60, 260, 70, 20); ctx.fill(); ctx.fillRect(-10, -20, 60, 90); shadow(false); }, { from: 'up' });
+  if (t > 1.2) { ctx.save(); ctx.strokeStyle = C.water; ctx.lineWidth = 6; ctx.lineCap = 'round';
+    for (let k = 0; k < 7; k++) { const x = 1180 + 20 + (k - 3) * 9, off = ((t * 900 + k * 70) % 140); ctx.globalAlpha = .8; ctx.setLineDash([40, 30]); ctx.lineDashOffset = -off; ctx.beginPath(); ctx.moveTo(x, 210); ctx.lineTo(x, 560); ctx.stroke(); } ctx.restore(); }
+  grease(1150, 640, 1.2 * E.outBack(inv(.9, 1.4, t)), t);
+  // water beads rolling around the grease
+  if (t > 2.4) for (let k = 0; k < 9; k++) { const a = k / 9 * 6.28 + t * .6, rr = 150 + Math.sin(t * 3 + k) * 8; ctx.fillStyle = C.water; ctx.globalAlpha = .85;
+    ctx.beginPath(); ctx.ellipse(1150 + Math.cos(a) * rr, 640 + Math.sin(a) * rr * .7, 14, 11, 0, 0, 7); ctx.fill(); ctx.globalAlpha = 1; }
+  hiText('WHY WON\'T IT', 120, 300, 90, t, 5.4, { w: 900 }); hiText('WASH OFF?', 120, 400, 90, t, 5.8, { w: 900 });
+  pip(330, 700, .95, t, { talking: t > .5 && t < 9, point: -.25 });
+  // zoom-through into the grease
+  const z = E.inCubic(inv(8.4, 9.4, t)); if (z > 0) { ctx.fillStyle = `rgba(184,126,30,${z})`; ctx.beginPath(); ctx.arc(1150, 640, z * 2200, 0, 7); ctx.fill(); }
+});
+
+// S2 · microscopic: water vs oil
+scene(9.4, 20.3, t => {
+  const reveal = 1 - E.outCubic(inv(0, .7, t)); if (reveal > 0) { ctx.fillStyle = `rgba(184,126,30,${reveal})`; ctx.fillRect(0, 0, W, H); }
+  const oilIn = inv(4.6, 5.4, t);
+  waterField(t, oilIn > 0 ? { x: 1180, y: 520, r: 260 * oilIn + 1 } : null, inv(.3, 1.0, t));
+  if (oilIn > 0) { ctx.save(); ctx.globalAlpha = oilIn; oilBlob(1180, 520, 170, t); ctx.restore(); }
+  // hydrogen-bond hints between neighbours
+  if (t > 2 && t < 5) { ctx.save(); ctx.strokeStyle = C.ink2; ctx.setLineDash([4, 8]); ctx.lineWidth = 2; ctx.globalAlpha = inv(2, 2.5, t) * (1 - inv(4.5, 5, t));
+    for (let i = 0; i < 30; i++) { const a = WATERS[i], b = WATERS[(i * 7 + 3) % 70]; const ax = a.x + Math.sin(t * a.sp + a.ph) * 18, ay = a.y + Math.cos(t * a.sp * 1.3 + a.ph) * 14, bx = b.x + Math.sin(t * b.sp + b.ph) * 18, by = b.y + Math.cos(t * b.sp * 1.3 + b.ph) * 14;
+      if (Math.hypot(ax - bx, ay - by) < 220) { ctx.beginPath(); ctx.moveTo(ax, ay); ctx.lineTo(bx, by); ctx.stroke(); } } ctx.restore(); }
+  label('WATER  H₂O', 330, 190, t, 1.0, { rot: -3 });
+  label('OIL', 1180, 250, t, 5.6, { rot: 2, seed: 9 });
+  place(t, 6.2, 1560, 880, 3, 14, () => { whitePaper(420, 120, 14); ctx.font = font(34, 800); ctx.fillStyle = C.ink; ctx.textAlign = 'center'; ctx.fillText('Oil + water = ✗', 0, 12); }, { from: 'right' });
+});
+
+// S3 · meet the soap molecule
+scene(20.3, 34.3, t => {
+  const s = 3.2 * E.outBack(inv(.4, 1.2, t)); const bob = Math.sin(t * 1.6) * 8;
+  if (s > 0) soapMol(700, 520 + bob, s, 0);
+  // head label
+  if (t > 6.4) { arrow(560, 300, 690, 450, E.outCubic(inv(6.4, 7.0, t))); label('HEAD · loves water', 520, 250, t, 6.6, { rot: -3 }); hiText('hydrophilic', 390, 340, 36, t, 7.2, { fam: 'SER', style: 'italic', w: 400 }); }
+  if (t > 9.2) { arrow(1300, 780, 1150, 580, E.outCubic(inv(9.2, 9.8, t))); label('TAIL · loves oil', 1330, 830, t, 9.4, { rot: 2, seed: 8 }); hiText('hydrophobic', 1200, 920, 36, t, 10.0, { fam: 'SER', style: 'italic', w: 400 }); }
+  pip(1620, 520, .9, t, { talking: true, point: Math.PI + .3, seed: 3 });
+  // little water & oil friends showing preference
+  if (t > 7.5) { water(760, 380 + bob, .9, t); }
+  if (t > 10.2) { oilChain(1040, 650 + bob, .9, .2); }
+});
+
+// S4 · micelle formation
+const N_SOAP = 18;
+scene(34.3, 50.3, t => {
+  const cx = 960, cy = 540; waterField(t + 20, { x: cx, y: cy, r: 330 }, .8);
+  oilBlob(cx, cy, 110, t, 12, 7);
+  for (let i = 0; i < N_SOAP; i++) {
+    const a = i / N_SOAP * 6.283 + .15, t0 = .6 + (i % 6) * .35 + Math.floor(i / 6) * .5;
+    const p = E.inOutCubic(inv(t0, t0 + 2.2, t)); const d = lerp(900, 250, p);
+    const x = cx + Math.cos(a) * d, y = cy + Math.sin(a) * d;
+    soapMol(x, y, 1.1, a + Math.PI + wob(t, i, .06));   // tail points inward toward the oil
+  }
+  const ring = E.outCubic(inv(7.2, 8.4, t));
+  if (ring > 0) { ctx.save(); ctx.strokeStyle = C.green; ctx.lineWidth = 8; ctx.setLineDash([22, 14]); ctx.lineDashOffset = -t * 40; ctx.beginPath(); ctx.arc(cx, cy, 305, -Math.PI / 2, -Math.PI / 2 + ring * 6.283); ctx.stroke(); ctx.restore(); }
+  label('MICELLE', cx, cy - 390, t, 8.2, { size: 44, rot: -2 });
+  if (t > 9.4) { hiText('oil trapped inside', 1360, 900, 44, t, 9.6, { fam: 'SER', style: 'italic', w: 400 }); }
+  pip(230, 800, .8, t, { talking: true, point: -.4, seed: 5 });
+});
+
+// S5 · rinse: micelles ride the water down the drain
+scene(50.3, 62.3, t => {
+  // flowing water bands
+  ctx.save(); for (let k = 0; k < 9; k++) { ctx.strokeStyle = `rgba(111,183,216,${.25 + (k % 3) * .1})`; ctx.lineWidth = 26; ctx.lineCap = 'round'; ctx.setLineDash([180, 90]); ctx.lineDashOffset = -t * 500 - k * 60;
+    ctx.beginPath(); ctx.moveTo(-100, 200 + k * 70); ctx.bezierCurveTo(700, 200 + k * 70, 1200, 500 + k * 30, 1600, 820); ctx.stroke(); } ctx.restore();
+  // drain
+  ctx.save(); ctx.translate(1640, 860); shadow(true); ctx.fillStyle = '#9AA3A6'; ctx.beginPath(); ctx.ellipse(0, 0, 150, 60, 0, 0, 7); ctx.fill(); shadow(false);
+  ctx.fillStyle = C.ink2; for (let i = -3; i <= 3; i++) { ctx.beginPath(); ctx.roundRect(i * 34 - 8, -30, 16, 60, 8); ctx.fill(); } ctx.restore();
+  // micelles travelling along the flow
+  for (let m = 0; m < 5; m++) {
+    const u = ((t * .16 + m * .22) % 1.1); if (u > 1) continue;
+    const bx = (s) => { const q = 1 - s; return q * q * q * -100 + 3 * q * q * s * 700 + 3 * q * s * s * 1200 + s * s * s * 1600; };
+    const by = (s) => { const q = 1 - s, y0 = 300 + m * 90; return q * q * q * y0 + 3 * q * q * s * y0 + 3 * q * s * s * (560) + s * s * s * 840; };
+    const x = bx(u), y = by(u), sc = .45 * (1 - Math.max(0, u - .85) * 5);
+    if (sc <= 0) continue;
+    ctx.save(); ctx.translate(x, y); ctx.rotate(t * 1.5 + m); ctx.scale(sc, sc); oilBlob(0, 0, 70, t, 6, m + 20);
+    for (let i = 0; i < 12; i++) { const a = i / 12 * 6.283; soapMol(Math.cos(a) * 190, Math.sin(a) * 190, 1, a + Math.PI); } ctx.restore();
+  }
+  label('WATER GRABS THE HEADS', 520, 150, t, .6, { rot: -2 });
+  pip(260, 860, .7, t, { talking: true, point: -.1, seed: 6 });
+});
+
+// S6 · bonus: soap vs a virus's fatty coat
+scene(62.3, 72.3, t => {
+  const cx = 1100, cy = 520, R = 230; const burst = E.inOutCubic(inv(5.2, 7.2, t));
+  // lipid envelope: ring of small head-tail pairs; spikes
+  for (let i = 0; i < 44; i++) {
+    const a = i / 44 * 6.283; const frag = Math.floor(i / 6); const fa = frag / 7.3 * 6.283 + .3;
+    const ox = Math.cos(fa) * burst * 360, oy = Math.sin(fa) * burst * 360, rr = burst * (frag - 3) * .4;
+    ctx.save(); ctx.translate(cx + ox, cy + oy); ctx.rotate(rr); ctx.translate(-cx, -cy);
+    paperDot(cx + Math.cos(a) * R, cy + Math.sin(a) * R, 13, C.oil);
+    paperDot(cx + Math.cos(a) * (R - 40), cy + Math.sin(a) * (R - 40), 10, C.oil);
+    if (i % 4 === 0) { ctx.strokeStyle = C.red; ctx.lineWidth = 7; ctx.beginPath(); ctx.moveTo(cx + Math.cos(a) * (R + 12), cy + Math.sin(a) * (R + 12)); ctx.lineTo(cx + Math.cos(a) * (R + 55), cy + Math.sin(a) * (R + 55)); ctx.stroke(); paperDot(cx + Math.cos(a) * (R + 62), cy + Math.sin(a) * (R + 62), 13, C.red); }
+    ctx.restore();
+  }
+  // genetic material inside
+  ctx.save(); ctx.globalAlpha = 1 - burst * .6; ctx.strokeStyle = C.ink2; ctx.lineWidth = 5; ctx.beginPath(); for (let k = 0; k < 60; k++) { const a = k / 60 * 12, r = 40 + k * 1.5; k ? ctx.lineTo(cx + Math.cos(a) * r * .9, cy + Math.sin(a) * r * .7) : ctx.moveTo(cx, cy); } ctx.stroke(); ctx.restore();
+  // soap molecules wedging in
+  for (let i = 0; i < 10; i++) { const a = i / 10 * 6.283 + .3; const p = E.inOutCubic(inv(1.2 + i * .15, 3.6 + i * .15, t)); const d = lerp(820, R + 20, p);
+    soapMol(cx + Math.cos(a) * d, cy + Math.sin(a) * d, 1.1, a + Math.PI); }
+  label('FATTY COAT', 1100, 150, t, .7, { rot: 2 });
+  hiText('20 SECONDS', 140, 380, 110, t, 5.4, { w: 900 }); ctx.save(); ctx.globalAlpha = inv(5.8, 6.2, t); ctx.font = font(34, 700); ctx.fillStyle = C.ink2; ctx.fillText('of scrubbing gives soap time to work', 150, 450); ctx.restore();
+  pip(300, 820, .75, t, { talking: true, point: -.35, seed: 8 });
+});
+
+// S7 · end card
+scene(72.3, 82, t => {
+  place(t, .2, W / 2, 250, -2, 90, () => label('SMALL SCIENCE', 0, 0, 1, 0, { size: 54 }), { from: 'up' });
+  place(t, .6, W / 2, 470, 0, 91, () => { ctx.font = font(130, 900); ctx.fillStyle = C.ink; ctx.textAlign = 'center'; ctx.fillText('How soap works', 0, 40); }, { from: 'down' });
+  hiText('Ep. 1 · a molecule with two personalities', W / 2, 600, 46, t, 1.4, { fam: 'SER', style: 'italic', w: 400, align: 'center' });
+  pip(W / 2 - 520, 800, .8, t, { talking: t < 5.7, seed: 9 });
+  for (let i = 0; i < 6; i++) soapMol(1300 + i * 70, 820 + Math.sin(t * 2 + i) * 20, .9, -Math.PI / 2 + Math.sin(t + i) * .2);
+  place(t, 2.4, 1500, 960, 2, 92, () => { whitePaper(560, 90, 92); ctx.font = font(26, 700, 'MONO'); ctx.fillStyle = C.ink; ctx.textAlign = 'center'; ctx.letterSpacing = '2px'; ctx.fillText('NEXT: WHY DOES ICE FLOAT?', 0, 10); }, { from: 'right' });
+});
+
+// paper push transitions (S1→S2 uses the zoom-through instead)
+const CUTS = [20.3, 34.3, 50.3, 62.3, 72.3];
+function transitions(t) {
+  for (const c of CUTS) { const p = inv(c - .35, c + .35, t); if (p <= 0 || p >= 1) continue;
+    const x = lerp(-W * 1.2, W * 1.2, E.inOutCubic(p));
+    ctx.save(); ctx.translate(x + W / 2, H / 2); ctx.rotate(-.04); shadow(true, 40, 0, .35);
+    ctx.fillStyle = C.green; ctx.fillRect(-W / 2 - 200, -H, W + 100, H * 2); shadow(false);
+    ctx.drawImage(TEX.card, -W / 2 - 200, -H / 2 - 100, W + 100, H + 200); ctx.restore(); }
+}
+
+window.render = function (t) {
+  ctx.setTransform(1, 0, 0, 1, 0, 0); ctx.globalAlpha = 1; ctx.letterSpacing = '0px'; ctx.textAlign = 'left'; ctx.setLineDash([]);
+  ctx.drawImage(TEX.bg, 0, 0);
+  for (const s of SCENES) if (t >= s.a && t < s.b) { ctx.save(); s.fn(t - s.a); ctx.restore(); }
+  ctx.setLineDash([]); transitions(t); captions(t);
+  ctx.save(); ctx.globalCompositeOperation = 'overlay'; ctx.globalAlpha = .07; ctx.drawImage(grainFrames[Math.floor(t * 12) % grainFrames.length], 0, 0, W, H); ctx.restore();
+  const v = ctx.createRadialGradient(W / 2, H / 2, H * .45, W / 2, H / 2, W * .75); v.addColorStop(0, 'rgba(0,0,0,0)'); v.addColorStop(1, 'rgba(60,50,30,.2)'); ctx.fillStyle = v; ctx.fillRect(0, 0, W, H);
+  const fo = inv(0, .4, t) * (1 - inv(DURATION - 1, DURATION, t)); if (fo < 1) { ctx.fillStyle = `rgba(0,0,0,${1 - fo})`; ctx.fillRect(0, 0, W, H); }
+};
+window.DURATION = DURATION; window.FPS = FPS;
+window.ready = document.fonts.ready.then(() => Promise.all(['900 20px IT', '800 20px IT', '700 20px IT', '500 20px IT', '400 20px SER', 'italic 400 20px SER', '500 20px MONO', '700 20px MONO'].map(f => document.fonts.load(f)))).then(buildTextures);
+if (!navigator.webdriver) { const t0 = performance.now(); window.ready.then(() => { const loop = () => { render(((performance.now() - t0) / 1000) % DURATION); requestAnimationFrame(loop); }; loop(); }); }
+</script></body></html>

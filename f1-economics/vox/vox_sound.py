@@ -1,7 +1,7 @@
 """Soundtrack for the Vox-style cold open: soft plucked bed + paper foley. 120 BPM (cuts land on beats)."""
 import numpy as np, wave, os
 src = open(os.path.join(os.path.dirname(__file__), '..', 'source', 'sound.py')).read()
-exec(src.split('# ---------------- arrangement')[0].replace('DUR = 72.0', 'DUR = 90.0'))
+exec(src.split('# ---------------- arrangement')[0].replace('SR, DUR = 48000, 72.0', 'SR, DUR = 48000, 90.0'))
 
 def pluck(freq, dur=1.2):
     n = int(dur * SR); t = np.arange(n) / SR

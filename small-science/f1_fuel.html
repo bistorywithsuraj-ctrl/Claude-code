@@ -1,0 +1,205 @@
+<!doctype html>
+<html><head><meta charset="utf-8"><title>Small Science · F1 Fuel</title>
+<style>
+@font-face{font-family:IT;src:url(fonts/inter-tight-latin-900-normal.woff2);font-weight:900}
+@font-face{font-family:IT;src:url(fonts/inter-tight-latin-800-normal.woff2);font-weight:800}
+@font-face{font-family:IT;src:url(fonts/inter-tight-latin-700-normal.woff2);font-weight:700}
+@font-face{font-family:IT;src:url(fonts/inter-tight-latin-500-normal.woff2);font-weight:500}
+@font-face{font-family:SER;src:url(fonts/instrument-serif-latin-400-normal.woff2)}
+@font-face{font-family:SER;src:url(fonts/instrument-serif-latin-400-italic.woff2);font-style:italic}
+@font-face{font-family:MONO;src:url(fonts/jetbrains-mono-latin-500-normal.woff2);font-weight:500}
+@font-face{font-family:MONO;src:url(fonts/jetbrains-mono-latin-700-normal.woff2);font-weight:700}
+html,body{margin:0;background:#000}canvas{display:block;width:100vw;height:auto}
+</style></head><body><canvas id="c" width="1920" height="1080"></canvas>
+<script>
+const W = 1920, H = 1080, FPS = 30, DURATION = 84;
+const cv = document.getElementById('c'), ctx = cv.getContext('2d');
+const C = {
+  paper: '#E3E1DB', paper2: '#D6D3CB', ink: '#161616', ink2: '#4A4A46', mute: '#8A877F',
+  yellow: '#F6D646', green: '#2E8B57', greenDark: '#1F6440', white: '#FBFAF6', red: '#D6453D',
+  fuel: '#E0A43A', fuelDark: '#B87E1E', skin: '#F0C7A0', steel: '#9AA3A6', tyre: '#232323'
+};
+</script>
+<script src="lib/paper.js"></script>
+<script src="lib/characters.js"></script>
+<script>
+// =====================================================================
+//  SMALL SCIENCE · F1 — How does an F1 car finish 300 km without refuelling?
+//  Facts: refuelling banned from 2010 · max race fuel 110 kg (2022–25 rules)
+//  · fuel ≈ 0.75 kg/L · race ≈ 305 km · PU thermal efficiency > 50 %
+//  · rule of thumb ≈ 0.03 s per lap per kg of fuel
+// =====================================================================
+
+// ---------------------------------------------------------------- original paper F1 car (side view, no team livery)
+function f1car(x, y, s, t, opt = {}) {
+  const o = Object.assign({ body: C.green, accent: C.yellow, spin: 0, cutaway: 0, fuelLevel: 1 }, opt);
+  ctx.save(); ctx.translate(x + wob(t, 31, 1.2), y + wob(t, 32, 1.2)); ctx.scale(s, s);
+  const out = (fn, fill) => { ctx.save(); shadow(true, 16, 8, .25); ctx.lineJoin = 'round'; ctx.strokeStyle = C.white; ctx.lineWidth = 9; fn(); ctx.stroke(); ctx.fillStyle = fill; ctx.fill(); shadow(false); ctx.restore(); };
+  // rear wing
+  out(() => { ctx.beginPath(); ctx.moveTo(300, -150); ctx.lineTo(380, -150); ctx.lineTo(380, -40); ctx.lineTo(350, -40); ctx.lineTo(350, -110); ctx.lineTo(300, -110); ctx.closePath(); }, C.ink);
+  // body / sidepod / nose
+  out(() => { ctx.beginPath(); ctx.moveTo(-420, 10); ctx.quadraticCurveTo(-300, -20, -160, -40); ctx.lineTo(-60, -70); ctx.quadraticCurveTo(0, -120, 80, -95);
+    ctx.lineTo(230, -80); ctx.quadraticCurveTo(330, -70, 360, -30); ctx.lineTo(360, 20); ctx.lineTo(-420, 20); ctx.closePath(); }, o.body);
+  // stripe
+  ctx.fillStyle = o.accent; ctx.beginPath(); ctx.moveTo(-400, 4); ctx.lineTo(340, 4); ctx.lineTo(340, 14); ctx.lineTo(-400, 14); ctx.fill();
+  // front wing
+  out(() => { ctx.beginPath(); ctx.roundRect(-470, 8, 120, 22, 6); }, C.ink);
+  // halo + driver helmet
+  ctx.fillStyle = C.yellow; ctx.beginPath(); ctx.arc(-20, -100, 26, Math.PI, 0); ctx.fill();
+  ctx.strokeStyle = C.ink; ctx.lineWidth = 9; ctx.lineCap = 'round'; ctx.beginPath(); ctx.moveTo(-80, -80); ctx.quadraticCurveTo(-30, -150, 30, -115); ctx.stroke();
+  // fuel cell cut-away (behind the driver)
+  if (o.cutaway > 0) {
+    ctx.save(); ctx.globalAlpha = o.cutaway;
+    ctx.fillStyle = C.white; ctx.beginPath(); ctx.roundRect(30, -80, 150, 92, 14); ctx.fill();
+    ctx.save(); ctx.beginPath(); ctx.roundRect(36, -74, 138, 80, 10); ctx.clip();
+    const lvl = 80 * o.fuelLevel; ctx.fillStyle = C.fuel; ctx.fillRect(36, 6 - lvl, 138, lvl);
+    ctx.fillStyle = 'rgba(255,255,255,.35)'; for (let i = 0; i < 5; i++) { ctx.beginPath(); ctx.arc(60 + i * 25, 6 - lvl + 6 + Math.sin(t * 4 + i) * 3, 4, 0, 7); ctx.fill(); }
+    ctx.restore(); ctx.restore();
+  }
+  // wheels
+  [[-300, 40], [250, 40]].forEach(([wx, wy]) => { ctx.save(); ctx.translate(wx, wy); shadow(true, 12, 6, .3); ctx.fillStyle = C.tyre; ctx.beginPath(); ctx.arc(0, 0, 70, 0, 7); ctx.fill(); shadow(false);
+    ctx.rotate(o.spin); ctx.strokeStyle = '#555'; ctx.lineWidth = 6; for (let k = 0; k < 5; k++) { ctx.beginPath(); ctx.moveTo(0, 0); ctx.lineTo(Math.cos(k * 1.2566) * 40, Math.sin(k * 1.2566) * 40); ctx.stroke(); }
+    ctx.fillStyle = C.yellow; ctx.beginPath(); ctx.arc(0, 0, 12, 0, 7); ctx.fill(); ctx.restore(); });
+  ctx.restore();
+}
+function road(t, speed) { ctx.save(); ctx.fillStyle = '#CFCCC4'; ctx.fillRect(0, 760, W, 30); ctx.strokeStyle = C.white; ctx.lineWidth = 8; ctx.setLineDash([60, 50]); ctx.lineDashOffset = t * speed; ctx.beginPath(); ctx.moveTo(0, 775); ctx.lineTo(W, 775); ctx.stroke(); ctx.restore(); }
+function speedLines(t, y0, n, alpha = .5) { ctx.save(); ctx.strokeStyle = `rgba(22,22,22,${alpha})`; ctx.lineWidth = 4; ctx.lineCap = 'round'; const r = rng(3); for (let i = 0; i < n; i++) { const y = y0 + r() * 260, len = 80 + r() * 160, x = W - ((t * 1400 + r() * 3000) % (W + 400)); ctx.beginPath(); ctx.moveTo(x, y); ctx.lineTo(x + len, y); ctx.stroke(); } ctx.restore(); }
+function jerrycan(x, y, s, p) { ctx.save(); ctx.translate(x, y); ctx.scale(s * p, s * p); shadow(true); ctx.fillStyle = C.red; ctx.beginPath(); ctx.roundRect(-50, -60, 100, 130, 12); ctx.fill(); shadow(false);
+  ctx.fillStyle = C.red; ctx.fillRect(-10, -82, 34, 24); ctx.strokeStyle = 'rgba(255,255,255,.5)'; ctx.lineWidth = 6; ctx.beginPath(); ctx.moveTo(-30, -30); ctx.lineTo(30, 40); ctx.moveTo(30, -30); ctx.lineTo(-30, 40); ctx.stroke(); ctx.restore(); }
+function stamp(text, x, y, t, t0, rot = -8) { const p = inv(t0, t0 + .25, t); if (p <= 0) return; const s = lerp(2.2, 1, E.outCubic(p));
+  ctx.save(); ctx.translate(x, y); ctx.rotate(rot * Math.PI / 180); ctx.scale(s, s); ctx.globalAlpha = p; ctx.strokeStyle = C.red; ctx.lineWidth = 8; ctx.font = font(70, 900);
+  const w = ctx.measureText(text).width; ctx.strokeRect(-w / 2 - 24, -62, w + 48, 88); ctx.fillStyle = C.red; ctx.textAlign = 'center'; ctx.fillText(text, 0, 6); ctx.restore(); }
+function counter(v, x, y, size, color = C.ink, suffix = '', align = 'left') { ctx.save(); ctx.font = font(size, 900); ctx.fillStyle = color; ctx.textAlign = align; ctx.fillText(Math.round(v) + suffix, x, y); ctx.restore(); }
+function bar(x, y, w, h, p, fill, text, val) { ctx.save(); shadow(true, 10, 5, .2); ctx.fillStyle = fill; tornPath(x, y, Math.max(8, w * p), h, Math.floor(x), 3); ctx.fill(); shadow(false);
+  ctx.font = font(30, 800); ctx.fillStyle = C.ink; ctx.fillText(text, x, y - 16); ctx.font = font(44, 900); ctx.fillText(val, x + Math.max(8, w * p) + 20, y + h / 2 + 15); ctx.restore(); }
+
+// ---------------------------------------------------------------- narration (VO stand-in captions)
+cap(0.5, 5.6, 'A Formula 1 race is about 300 kilometres long.', ['300', 'kilometres']);
+cap(5.6, 10.8, 'And the car finishes it without adding a single drop of fuel. How?', ['single', 'drop']);
+cap(11.3, 16.4, 'Refuelling during races used to be normal in F1.', ['normal']);
+cap(16.4, 21.8, 'But it was banned from 2010, to cut costs and the risk of fires in the pit lane.', ['banned', '2010']);
+cap(22.3, 28.4, 'So every car starts the race carrying all the fuel it will ever need…', ['all']);
+cap(28.4, 34.8, '…up to 110 kilograms, about 147 litres, in a tank right behind the driver.', ['110', 'kilograms']);
+cap(35.3, 41.2, 'Spread over 305 km, that works out to around 2 km per litre.', ['2', 'km', 'per', 'litre']);
+cap(41.2, 46.8, 'A normal family car does about 15. So F1 cars are thirsty…', ['thirsty…']);
+cap(47.3, 53.4, '…but incredibly efficient. A typical road engine turns about a third of its fuel into motion.', ['third']);
+cap(53.4, 59.8, 'Modern F1 hybrid engines have passed 50%, partly by recycling braking energy into a battery.', ['50%', 'braking', 'energy']);
+cap(60.3, 66.6, 'And here\'s the neat part: burning fuel makes the car lighter, lap after lap.', ['lighter']);
+cap(66.6, 73.6, 'Engineers\' rule of thumb: every 10 kg costs about 0.3 seconds a lap. So the car gets faster as the race goes on.', ['faster']);
+cap(74.3, 80.5, 'Next time: why a football curves in the air.', ['football', 'curves']);
+
+// ---------------------------------------------------------------- scenes
+// S1 · the hook: 300 km, zero refuelling
+scene(0, 11.3, t => {
+  speedLines(t, 440, 16, .25 * inv(.3, 1, t)); road(t, 1800);
+  f1car(1160 + Math.sin(t * 1.3) * 20, 700, 1.05, t, { spin: t * 18 });
+  const d = 305 * E.inOutCubic(inv(.8, 4.8, t));
+  ctx.save(); ctx.globalAlpha = inv(.6, 1, t); counter(d, 140, 330, 210, C.ink, ' km'); ctx.restore();
+  ctx.save(); ctx.globalAlpha = inv(1, 1.4, t); ctx.font = font(24, 700, 'MONO'); ctx.letterSpacing = '4px'; ctx.fillStyle = C.ink2; ctx.fillText('ONE GRAND PRIX · ABOUT', 150, 130); ctx.restore();
+  if (t > 5.8) { jerrycan(240, 560, .9, E.outBack(inv(5.8, 6.3, t))); stamp('0 REFUELS', 590, 560, t, 6.6); }
+  pip(1680, 360, .6, t, { talking: true, seed: 1 });
+});
+
+// S2 · the refuelling era → banned
+scene(11.3, 22.3, t => {
+  place(t, .2, 520, 460, -3, 21, () => { whitePaper(640, 440, 21);
+    // refuel rig illustration
+    ctx.fillStyle = C.steel; ctx.beginPath(); ctx.roundRect(-230, -120, 120, 260, 10); ctx.fill();
+    ctx.strokeStyle = C.ink; ctx.lineWidth = 16; ctx.lineCap = 'round'; ctx.beginPath(); ctx.moveTo(-110, -60); ctx.bezierCurveTo(0, -160, 120, 40, 200, -10); ctx.stroke();
+    ctx.fillStyle = C.fuel; ctx.beginPath(); ctx.roundRect(190, -30, 60, 40, 8); ctx.fill();
+    ctx.font = font(24, 700, 'MONO'); ctx.fillStyle = C.ink2; ctx.fillText('PIT-STOP REFUELLING', -230, 190);
+  }, { from: 'left' });
+  place(t, .8, 1340, 330, 3, 22, () => greenCard(520, 210, [{ text: '1994 – 2009', size: 24, fam: 'MONO', w: 700, track: 3, color: C.yellow }, { text: 'Refuelling era', size: 60, w: 900 }], 22), { from: 'right' });
+  stamp('BANNED 2010', 560, 470, t, 5.4, -10);
+  place(t, 6.4, 1340, 640, -2, 23, () => { whitePaper(520, 220, 23); ctx.font = font(34, 800); ctx.fillStyle = C.ink; ctx.fillText('Why?', -220, -40);
+    ctx.font = font(30, 500); ctx.fillText('• cheaper for teams', -220, 20); ctx.fillText('• no fuel fires in the pits', -220, 66); }, { from: 'down' });
+});
+
+// S3 · all the fuel on board: 110 kg ≈ 147 L behind the driver
+scene(22.3, 35.3, t => {
+  const cut = inv(3.0, 4.0, t);
+  f1car(900, 640, 1.35, t, { cutaway: cut, fuelLevel: E.outCubic(inv(4.2, 7.4, t)) });
+  if (cut > 0) { arrow(1300, 290, 1060, 520, E.outCubic(inv(4.4, 5.0, t))); label('FUEL CELL', 1380, 250, t, 4.6, { rot: 2 }); }
+  const kg = 110 * E.outCubic(inv(6.2, 8.6, t));
+  if (t > 6.2) { counter(kg, 150, 300, 170, C.green, ' kg'); hiText('≈ 147 litres', 160, 390, 56, t, 8.8, { w: 900 }); }
+  if (t > 9.8) { ctx.save(); ctx.globalAlpha = inv(9.8, 10.2, t); ctx.font = font(22, 700, 'MONO'); ctx.letterSpacing = '3px'; ctx.fillStyle = C.ink2; ctx.fillText('MAX RACE FUEL · 2022–2025 RULES', 160, 450); ctx.restore(); }
+  pip(1700, 860, .6, t, { talking: true, point: Math.PI + .5, seed: 4 });
+});
+
+// S4 · mileage: ~2 km/L vs ~15 km/L
+scene(35.3, 47.3, t => {
+  hiText('MILEAGE', 140, 200, 110, t, .2, { w: 900 });
+  ctx.save(); ctx.globalAlpha = inv(.8, 1.2, t); ctx.font = font(34, 500); ctx.fillStyle = C.ink2; ctx.fillText('305 km ÷ 147 L', 150, 270); ctx.restore();
+  const p1 = E.outCubic(inv(1.6, 3.2, t)), p2 = E.outCubic(inv(6.4, 8.0, t));
+  bar(150, 420, 1300 / 15 * 2.1, 110, p1, C.red, 'F1 car', '≈ 2 km/L');
+  if (t > 6) bar(150, 680, 1300, 110, p2, C.green, 'Family car', '≈ 15 km/L');
+  if (t > 8.6) place(t, 8.6, 1560, 300, 4, 41, () => greenCard(420, 200, [{ text: 'THAT\'S ABOUT', size: 22, fam: 'MONO', w: 700, track: 3, color: C.yellow }, { text: '5 mpg', size: 90, w: 900 }], 41), { from: 'right' });
+  pip(1700, 880, .55, t, { talking: true, seed: 5 });
+});
+
+// S5 · efficiency: where the fuel's energy goes
+function energySplit(x, y, w, useful, label1, t, t0) {
+  const p = E.inOutCubic(inv(t0, t0 + 1.4, t)); ctx.save();
+  ctx.font = font(34, 800); ctx.fillStyle = C.ink; ctx.fillText(label1, x, y - 22);
+  shadow(true, 10, 5, .2); ctx.fillStyle = '#CFCCC4'; tornPath(x, y, w, 120, 7, 3); ctx.fill(); shadow(false);
+  ctx.fillStyle = C.green; tornPath(x, y, w * useful * p, 120, 8, 3); ctx.fill();
+  ctx.font = font(52, 900); ctx.fillStyle = C.white; if (p > .3) ctx.fillText(Math.round(useful * 100 * p) + '%', x + 24, y + 80);
+  ctx.font = font(22, 700, 'MONO'); ctx.fillStyle = C.ink2; ctx.fillText('MOTION', x + 24, y + 150); ctx.fillText('LOST AS HEAT', x + w - 210, y + 150);
+  ctx.restore();
+}
+scene(47.3, 60.3, t => {
+  energySplit(150, 330, 1100, .30, 'Typical road-car engine', t, .6);
+  energySplit(150, 660, 1100, .50, 'F1 hybrid power unit', t, 6.0);
+  if (t > 8.2) {  // braking energy loop
+    ctx.save(); ctx.translate(1560, 560); const a = t * 2;
+    ctx.strokeStyle = C.green; ctx.lineWidth = 10; ctx.setLineDash([26, 16]); ctx.lineDashOffset = -t * 60; ctx.beginPath(); ctx.arc(0, 0, 150, 0, 6.283 * E.outCubic(inv(8.2, 9.2, t))); ctx.stroke(); ctx.setLineDash([]);
+    shadow(true); ctx.fillStyle = C.yellow; ctx.beginPath(); ctx.roundRect(-60, -90, 120, 180, 14); ctx.fill(); shadow(false);
+    ctx.fillStyle = C.ink; ctx.fillRect(-20, -106, 40, 18); ctx.font = font(64, 900); ctx.textAlign = 'center'; ctx.fillText('⚡', 0, 24);
+    ctx.restore(); label('BRAKING → BATTERY', 1560, 330, t, 8.8, { rot: -2, size: 26 });
+  }
+});
+
+// S6 · lighter car, faster laps
+scene(60.3, 74.3, t => {
+  const lap = 1 + Math.floor(55 * E.inOutCubic(inv(6.0, 12.5, t)));
+  const fuel = 110 * (1 - (lap - 1) / 55);
+  // scale balance: car vs fuel weight
+  f1car(700, 560, .8, t, { cutaway: 1, fuelLevel: fuel / 110, spin: t * 12 });
+  road(t, 1400);
+  counter(fuel, 1260, 380, 130, C.fuelDark, ' kg');
+  ctx.save(); ctx.font = font(22, 700, 'MONO'); ctx.letterSpacing = '3px'; ctx.fillStyle = C.ink2; ctx.fillText('FUEL ON BOARD', 1266, 420); ctx.fillText('LAP ' + lap + ' / 55', 1266, 470); ctx.restore();
+  if (t > 6.4) { const gain = (110 - fuel) * .03; place(t, 6.4, 1500, 620, 3, 61, () => greenCard(560, 200, [{ text: 'LAP TIME GAINED', size: 22, fam: 'MONO', w: 700, track: 3, color: C.yellow }, { text: '−' + gain.toFixed(1) + ' s', size: 90, w: 900 }], 61), { from: 'right' }); }
+  hiText('lighter = faster', 150, 220, 70, t, 1.0, { fam: 'SER', style: 'italic', w: 400 });
+  pip(220, 880, .55, t, { talking: true, seed: 6 });
+});
+
+// S7 · end card + next episode
+scene(74.3, 84, t => {
+  place(t, .2, W / 2, 230, -2, 90, () => label('SMALL SCIENCE · F1', 0, 0, 1, 0, { size: 50 }), { from: 'up' });
+  place(t, .6, W / 2, 440, 0, 91, () => { ctx.font = font(110, 900); ctx.fillStyle = C.ink; ctx.textAlign = 'center'; ctx.fillText('300 km, one tank.', 0, 30); }, { from: 'down' });
+  f1car(W / 2 + 200, 760, .6, t, { spin: t * 10 });
+  pip(360, 820, .75, t, { talking: t < 6.2, seed: 9 });
+  place(t, 2.0, 1500, 960, 2, 92, () => { whitePaper(640, 90, 92); ctx.font = font(26, 700, 'MONO'); ctx.fillStyle = C.ink; ctx.textAlign = 'center'; ctx.letterSpacing = '2px'; ctx.fillText('NEXT: WHY DOES A FOOTBALL CURVE?', 0, 10); }, { from: 'right' });
+});
+
+const CUTS = [11.3, 22.3, 35.3, 47.3, 60.3, 74.3];
+function transitions(t) {
+  for (const c of CUTS) { const p = inv(c - .35, c + .35, t); if (p <= 0 || p >= 1) continue;
+    const x = lerp(-W * 1.2, W * 1.2, E.inOutCubic(p));
+    ctx.save(); ctx.translate(x + W / 2, H / 2); ctx.rotate(-.04); shadow(true, 40, 0, .35);
+    ctx.fillStyle = C.green; ctx.fillRect(-W / 2 - 200, -H, W + 100, H * 2); shadow(false);
+    ctx.drawImage(TEX.card, -W / 2 - 200, -H / 2 - 100, W + 100, H + 200); ctx.restore(); }
+}
+window.render = function (t) {
+  ctx.setTransform(1, 0, 0, 1, 0, 0); ctx.globalAlpha = 1; ctx.letterSpacing = '0px'; ctx.textAlign = 'left'; ctx.setLineDash([]);
+  ctx.drawImage(TEX.bg, 0, 0);
+  for (const s of SCENES) if (t >= s.a && t < s.b) { ctx.save(); s.fn(t - s.a); ctx.restore(); }
+  ctx.setLineDash([]); transitions(t); captions(t);
+  ctx.save(); ctx.globalCompositeOperation = 'overlay'; ctx.globalAlpha = .07; ctx.drawImage(grainFrames[Math.floor(t * 12) % grainFrames.length], 0, 0, W, H); ctx.restore();
+  const v = ctx.createRadialGradient(W / 2, H / 2, H * .45, W / 2, H / 2, W * .75); v.addColorStop(0, 'rgba(0,0,0,0)'); v.addColorStop(1, 'rgba(60,50,30,.2)'); ctx.fillStyle = v; ctx.fillRect(0, 0, W, H);
+  const fo = inv(0, .4, t) * (1 - inv(DURATION - 1, DURATION, t)); if (fo < 1) { ctx.fillStyle = `rgba(0,0,0,${1 - fo})`; ctx.fillRect(0, 0, W, H); }
+};
+window.DURATION = DURATION; window.FPS = FPS;
+window.ready = document.fonts.ready.then(() => Promise.all(['900 20px IT', '800 20px IT', '700 20px IT', '500 20px IT', '400 20px SER', 'italic 400 20px SER', '500 20px MONO', '700 20px MONO'].map(f => document.fonts.load(f)))).then(buildTextures);
+if (!navigator.webdriver) { const t0 = performance.now(); window.ready.then(() => { const loop = () => { render(((performance.now() - t0) / 1000) % DURATION); requestAnimationFrame(loop); }; loop(); }); }
+</script></body></html>
