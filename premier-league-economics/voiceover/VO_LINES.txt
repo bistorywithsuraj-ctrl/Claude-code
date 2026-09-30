@@ -1,0 +1,69 @@
+# One narration line per row: <id><TAB><text>. Save audio as voiceover/audio/<id>.wav
+
+# COLD OPEN: "THE FROZEN CLUB" (0:00 – 1:30)
+001	On a Thursday in March 2022, the British government froze the assets of a football club.
+002	Nineteen years earlier a Russian billionaire, Roman Abramovich, had bought Chelsea for around one hundred and forty million pounds and turned it into a trophy machine: five league titles, two Champions Leagues, more than twenty trophies.
+003	Now it couldn't sell a ticket. It couldn't sell a shirt. It couldn't sign a player. And its owner had ninety days to sell it, without keeping a penny.
+004	A forced sale, in a war, at the worst possible moment. It still fetched the highest price ever paid for a football club: two and a half billion pounds. About eighteen times what Abramovich paid.
+005	Here's the strange part. Most Premier League clubs lose money. Every year. So why is the league that loses money the most valuable league on Earth?
+006	To understand it, you have to go back to the year English football nearly died.
+
+# CHAPTER 1: "THE SLUM SPORT" (1:30 – 3:45)
+007	In the 1980s, English football was in trouble. Not "losing a bit of money" trouble. Existential trouble.
+008	Attendances had been falling for two decades. Stadiums were crumbling terraces with fences to keep fans off the pitch. Hooliganism was a national embarrassment. In 1985 a fire at Bradford killed fifty-six people. Weeks later, rioting at the European Cup final in Brussels killed thirty-nine, and English clubs were banned from Europe for five years.
+009	In April 1989, ninety-seven Liverpool supporters were crushed to death at Hillsborough. The inquiry that followed ordered every top-division ground to become all-seater. That cost money. And the clubs didn't have any.
+010	Television wasn't paying much either. In 1988, ITV bought the whole First Division for about forty-four million pounds over four years. Roughly eleven million a season for the entire league.
+011	The biggest clubs looked at the money coming in, looked at how it was shared with ninety other clubs, and decided they wanted out.
+
+# CHAPTER 2: "THE BREAKAWAY" (3:45 – 6:15)
+012	The "Big Five", Manchester United, Liverpool, Arsenal, Everton and Tottenham, had been plotting since a dinner in 1988. The idea was simple: split from the Football League, keep the television money, and share it among the top clubs only.
+013	In 1992, they did it. Twenty-two clubs formed the FA Premier League. Same players, same stadiums, new company. The one thing that changed was who owned the television rights.
+014	And that mattered because of a satellite company that was, at the time, nearly bankrupt.
+015	BSkyB had lost hundreds of millions launching pay television in Britain. Rupert Murdoch needed something people would pay for. He'd later describe sport as "a battering ram" for pay TV. In May 1992, Sky bid three hundred and four million pounds for five years of live Premier League football. ITV was outbid. The BBC got the highlights.
+016	It was the first time in Britain that a whole sport disappeared behind a paywall. Fans hated it. Then they subscribed. By the end of the decade Sky had millions of customers, and football was the reason.
+017	The Premier League wasn't a football idea. It was a television idea.
+
+# CHAPTER 3: "THE AUCTION" (6:15 – 9:00)
+018	The Premier League does one thing better than any league in the world: it sells itself.
+019	Every three or four years it auctions its matches in packages and makes broadcasters bid against each other. Three hundred million became six hundred and seventy million, became one point two billion, became three billion, became five billion. The latest domestic deal is six point seven billion pounds over four years.
+020	The home market has flattened. Growth now comes from abroad. For the 2022 to 2025 cycle, international rights were worth more than domestic rights for the first time. The American deal alone, with NBC, is worth about two point seven billion dollars over six years.
+021	And here's why other leagues can't copy it. The Premier League sells everything collectively and shares it more equally than any rival. In the 2023–24 season the champions received about a hundred and seventy-five million pounds from the league. The club that finished last still got about a hundred and ten million.
+022	Twenty clubs. One seller. Everybody gets rich, even the losers.
+
+# CHAPTER 4: "THE OWNERS" (9:00 – 11:30)
+023	Where there's guaranteed money, buyers follow. And the buyers changed the game three times.
+024	Two thousand and three, the billionaire. Roman Abramovich bought Chelsea and spent whatever it took. Losses didn't matter, the owner covered them. Chelsea won the league in 2005, for the first time in fifty years. Every club learned the same lesson: to compete, find a billionaire.
+025	Two thousand and five, the leveraged buyout. The Glazer family bought Manchester United for about seven hundred and ninety million pounds, borrowed most of it, and put the debt on the club. United has since paid more than a billion pounds in interest, fees and dividends. Fans have protested for twenty years. The club is still worth around six billion dollars.
+026	Two thousand and eight, the state. Sheikh Mansour of Abu Dhabi bought Manchester City for about two hundred and ten million pounds. In 2021, Saudi Arabia's sovereign wealth fund bought Newcastle for about three hundred and five million. Owners with, in effect, unlimited money.
+027	And now, the Americans. Liverpool, Arsenal, Chelsea, Manchester United, Aston Villa, Bournemouth, Crystal Palace, Fulham… Investors who understand exactly why this league is valuable: it's the NFL of the rest of the world. With one enormous exception.
+028	There is no salary cap. There is no draft. And every year, three clubs fall off a cliff.
+
+# CHAPTER 5: "THE ARMS RACE" (11:30 – 13:45)
+029	Here's the paradox from the top of the episode.
+030	In the 2022–23 season Premier League clubs made a record six point one billion pounds. Combined, they lost about six hundred and eighty-five million before tax. Only a handful made a profit.
+031	Where did the money go? Players.
+032	Wages take about two-thirds of everything the clubs earn. Then transfer fees: in the summer of 2023, Premier League clubs spent about two point four billion pounds on players, more than the other four big European leagues combined. And agents: over four hundred million pounds in one season.
+033	Why spend it all? Because the money is only guaranteed if you stay up.
+034	Relegation costs a club roughly a hundred million pounds a year in lost television money, softened by parachute payments for three seasons. So every club spends to the limit to avoid the cliff, and the clubs at the top spend to the limit to reach the Champions League. Nobody can afford to stop.
+035	In Formula 1, the cap made teams profitable. In football, the cliff makes them spend.
+
+# CHAPTER 6: "THE CAP THAT ISN'T" (13:45 – 15:45)
+036	The league's answer is a set of accounting rules, not a spending cap. Under the Profit and Sustainability Rules a club may lose up to a hundred and five million pounds over three seasons. Break it and you lose points.
+037	In the 2023–24 season, for the first time, the league actually did it. Everton were docked points twice. Nottingham Forest once.
+038	Manchester City faced more than a hundred charges of breaking financial rules over nine seasons. The hearing ran through late 2024.
+039	Clubs have found ways around the rules. Chelsea's new owners signed players on eight-year contracts to spread the cost, until UEFA and the league capped contracts at five years. Chelsea then sold two hotels, and later its women's team, to companies owned by its own owners, and booked the profit.
+040	Now the league is moving toward a squad-cost ratio, where spending on players is limited to a share of revenue, and it has argued about anchoring spending to a multiple of what the bottom club earns. And in 2025 Parliament created an independent regulator for English football.
+041	The Premier League has rules against losing money. It just doesn't have rules against spending it.
+
+# CHAPTER 7: "THE FRANCHISE THAT WASN'T" (15:45 – 17:00)
+042	The obvious fix, if you're an American owner, is to do what Formula 1 did. Close the league. No relegation, fixed costs, guaranteed revenue. Franchises.
+043	In April 2021, twelve clubs, six of them English, tried it. The European Super League. Permanent members. No relegation.
+044	It lasted about forty-eight hours. Fans blocked the team bus outside Stamford Bridge. The government threatened to legislate. Players and managers turned on their own owners. All six English clubs withdrew.
+045	The thing that makes the Premier League less profitable than the NFL, the risk of falling, is also the thing that makes people watch.
+
+# CHAPTER 8: "WHO WON?" (17:00 – 18:00)
+046	So who keeps the money? The owners: clubs bought for hundreds of millions are worth billions, as long as they never have to sell in a hurry. The players and their agents: two-thirds of every pound. The broadcasters: Sky built a business on it, and NBC turned Saturday morning into an American habit.
+047	And the fans? They pay more for everything: tickets, two or three subscriptions, and a Saturday-afternoon blackout that has lasted since the 1960s.
+048	Remember Chelsea? The two and a half billion pounds Abramovich was paid still sits frozen in a British bank account, promised to Ukraine, years later. The new owners spent more than a billion pounds on players in their first two years. They've won a European trophy and a Club World Cup since. And, like almost everyone else in this league, they lose money doing it.
+049	Formula 1 learned to print money by becoming a private club. English football did the opposite: it stayed open, stayed uncapped and kept losing money, and the world paid billions to watch it.
+050	The Premier League isn't the best-run league in the world. It's the best-sold one.
