@@ -1,0 +1,408 @@
+<!doctype html>
+<html><head><meta charset="utf-8"><title>Premier League Cold Open</title>
+<style>
+@font-face{font-family:IT;src:url(../source/fonts/inter-tight-latin-900-normal.woff2);font-weight:900}
+@font-face{font-family:IT;src:url(../source/fonts/inter-tight-latin-800-normal.woff2);font-weight:800}
+@font-face{font-family:IT;src:url(../source/fonts/inter-tight-latin-700-normal.woff2);font-weight:700}
+@font-face{font-family:IT;src:url(../source/fonts/inter-tight-latin-500-normal.woff2);font-weight:500}
+@font-face{font-family:SER;src:url(../source/fonts/instrument-serif-latin-400-normal.woff2)}
+@font-face{font-family:SER;src:url(../source/fonts/instrument-serif-latin-400-italic.woff2);font-style:italic}
+@font-face{font-family:MONO;src:url(../source/fonts/jetbrains-mono-latin-500-normal.woff2);font-weight:500}
+@font-face{font-family:MONO;src:url(../source/fonts/jetbrains-mono-latin-700-normal.woff2);font-weight:700}
+html,body{margin:0;background:#000}canvas{display:block;width:100vw;height:auto}
+</style></head><body><canvas id="c" width="1920" height="1080"></canvas>
+<script>
+// =====================================================================
+//  HOW THE PREMIER LEAGUE TOOK OVER THE WORLD — Cold open (Vox-style collage)
+//  Greenback · Episode 2. Same paper world as Episode 1 (f1-economics/vox).
+//  Palette: light-gray paper · yellow highlighter · green cards
+//  Real photos: drop PNG cutouts into assets/photos/<id>.png — they
+//  replace the placeholder slots automatically (see README.md).
+// =====================================================================
+const W = 1920, H = 1080, FPS = 30, DURATION = 90;
+const cv = document.getElementById('c'), ctx = cv.getContext('2d');
+const C = {
+  paper: '#E3E1DB', paper2: '#D6D3CB', ink: '#161616', ink2: '#4A4A46', mute: '#8A877F',
+  yellow: '#F6D646', green: '#2E8B57', greenDark: '#1F6440', white: '#FBFAF6', red: '#D6453D'
+};
+const clamp = (x, a = 0, b = 1) => Math.min(b, Math.max(a, x));
+const lerp = (a, b, p) => a + (b - a) * p;
+const inv = (a, b, x) => clamp((x - a) / (b - a));
+const E = {
+  outExpo: p => p >= 1 ? 1 : 1 - Math.pow(2, -10 * p),
+  inOutCubic: p => p < .5 ? 4 * p * p * p : 1 - Math.pow(-2 * p + 2, 3) / 2,
+  outBack: p => { const c1 = 1.5, c3 = c1 + 1; return 1 + c3 * Math.pow(p - 1, 3) + c1 * Math.pow(p - 1, 2); },
+  inCubic: p => p * p * p, outCubic: p => 1 - Math.pow(1 - p, 3),
+};
+const P = (t, a, b, e = E.outExpo) => e(inv(a, b, t));
+function rng(seed) { let s = seed >>> 0; return () => { s = (s * 1664525 + 1013904223) >>> 0; return s / 4294967296; }; }
+const font = (s, w = 800, f = 'IT', st = '') => `${st} ${w} ${s}px ${f}`.trim();
+// stop-motion wobble: stepped at 12 fps like hand-animated paper
+const wob = (t, seed, amt = 1) => { const q = Math.floor(t * 12); const r = rng(seed * 997 + q); return (r() - .5) * amt; };
+
+// ------------------------------------------------------------ assets
+const IMG = {};
+function loadImg(key, src) { return new Promise(res => { const i = new Image(); i.onload = () => { IMG[key] = i; res(); }; i.onerror = () => res(); i.src = src; }); }
+// brand colours for the simple-icons SVGs in assets/logos (dark where the brand mark is white or multicolour)
+const LOGOS = { premierleague: '#37003C', sky: '#0072C9', tnt: '#161616', nbc: '#161616', amazonprime: '#00A8E1', dazn: '#161616',
+  paramountplus: '#0064FF', bbc: '#161616', nike: '#161616', adidas: '#161616', emirates: '#D71921', ea: '#161616' };
+const PHOTOS = ['stamford_bridge_2022', 'chelsea_shop_closed', 'abramovich', 'headline_2003', 'interview_tuchel_2022'];
+const tinted = {};
+function tint(key, color, w) {  // rasterise an SVG logo in brand color
+  const id = key + color + w; if (tinted[id]) return tinted[id];
+  const im = IMG['logo_' + key]; if (!im) return null;
+  const h = w * im.height / im.width; const c = document.createElement('canvas'); c.width = w; c.height = h;
+  const g = c.getContext('2d'); g.drawImage(im, 0, 0, w, h); g.globalCompositeOperation = 'source-in'; g.fillStyle = color; g.fillRect(0, 0, w, h);
+  return (tinted[id] = c);
+}
+
+// ------------------------------------------------------------ paper textures
+function makeTex(w, h, seed, base, fibers = 900, grainAmt = 22) {
+  const c = document.createElement('canvas'); c.width = w; c.height = h; const g = c.getContext('2d'); const r = rng(seed);
+  g.fillStyle = base; g.fillRect(0, 0, w, h);
+  const id = g.getImageData(0, 0, w, h);
+  for (let i = 0; i < id.data.length; i += 4) { const n = (r() - .5) * grainAmt; id.data[i] += n; id.data[i + 1] += n; id.data[i + 2] += n; }
+  g.putImageData(id, 0, 0);
+  g.globalAlpha = .05; g.strokeStyle = '#000'; g.lineWidth = .7;
+  for (let i = 0; i < fibers; i++) { const x = r() * w, y = r() * h, a = r() * 6.28, l = 6 + r() * 26;
+    g.beginPath(); g.moveTo(x, y); g.quadraticCurveTo(x + Math.cos(a + .6) * l * .5, y + Math.sin(a + .6) * l * .5, x + Math.cos(a) * l, y + Math.sin(a) * l); g.stroke(); }
+  // blotches
+  g.globalAlpha = .012; for (let i = 0; i < 14; i++) { g.fillStyle = r() > .5 ? '#000' : '#fff'; g.beginPath(); g.arc(r() * w, r() * h, 40 + r() * 160, 0, 7); g.fill(); }
+  return c;
+}
+let TEX = {};
+const grainFrames = [];
+function buildTextures() {
+  TEX.bg = makeTex(W, H, 11, C.paper, 2600, 16);
+  TEX.card = makeTex(900, 700, 21, C.green, 700, 20);
+  TEX.white = makeTex(900, 900, 31, C.white, 700, 12);
+  const r = rng(5);
+  for (let k = 0; k < 6; k++) { const c = document.createElement('canvas'); c.width = 960; c.height = 540; const g = c.getContext('2d');
+    const id = g.createImageData(960, 540); for (let i = 0; i < id.data.length; i += 4) { const v = r() * 255; id.data[i] = id.data[i + 1] = id.data[i + 2] = v; id.data[i + 3] = 255; }
+    g.putImageData(id, 0, 0); grainFrames.push(c); }
+}
+
+// ------------------------------------------------------------ primitives
+function tornPath(x, y, w, h, seed, rough = 5) {  // slightly irregular paper rectangle
+  const r = rng(seed); ctx.beginPath();
+  const pts = []; const step = 28;
+  for (let i = 0; i <= w; i += step) pts.push([x + i, y + (r() - .5) * rough]);
+  for (let i = 0; i <= h; i += step) pts.push([x + w + (r() - .5) * rough, y + i]);
+  for (let i = w; i >= 0; i -= step) pts.push([x + i, y + h + (r() - .5) * rough]);
+  for (let i = h; i >= 0; i -= step) pts.push([x + (r() - .5) * rough, y + i]);
+  pts.forEach((p, i) => i ? ctx.lineTo(...p) : ctx.moveTo(...p)); ctx.closePath();
+}
+function shadow(on, blur = 24, oy = 10, a = .28) { if (on) { ctx.shadowColor = `rgba(0,0,0,${a})`; ctx.shadowBlur = blur; ctx.shadowOffsetY = oy; ctx.shadowOffsetX = 3; } else { ctx.shadowColor = 'transparent'; ctx.shadowBlur = 0; ctx.shadowOffsetY = 0; ctx.shadowOffsetX = 0; } }
+
+// place a paper element: slide/drop-in with overshoot, rotation, stepped wobble
+function place(t, t0, x, y, rot, seed, draw, opt = {}) {
+  const o = Object.assign({ from: 'up', dur: .6, out: 1e9, outTo: 'down' }, opt);
+  const p = E.outBack(inv(t0, t0 + o.dur, t)); const q = E.inCubic(inv(o.out, o.out + .45, t));
+  if (p <= 0 || q >= 1) return;
+  const dist = 1300; const dir = { up: [0, -1], down: [0, 1], left: [-1, 0], right: [1, 0] };
+  const [fx, fy] = dir[o.from]; const [tx, ty] = dir[o.outTo];
+  ctx.save();
+  ctx.translate(x + fx * dist * (1 - p) + tx * dist * q + wob(t, seed, 1.2), y + fy * dist * (1 - p) + ty * dist * q + wob(t, seed + 1, 1.2));
+  ctx.rotate((rot + (1 - p) * 8 * (fx || fy) + wob(t, seed + 2, .25)) * Math.PI / 180);
+  draw(); ctx.restore();
+}
+
+// green card with white type
+function greenCard(w, h, lines, seed, opt = {}) {
+  ctx.save(); shadow(true); tornPath(-w / 2, -h / 2, w, h, seed, 4); ctx.fillStyle = C.green; ctx.fill(); shadow(false);
+  ctx.clip(); ctx.drawImage(TEX.card, -w / 2, -h / 2, w, h); ctx.restore();
+  let y = -h / 2 + (opt.pad || 60);
+  lines.forEach(l => {
+    ctx.font = font(l.size, l.w || 800, l.fam || 'IT', l.style || ''); ctx.fillStyle = l.color || C.white; ctx.textAlign = 'left';
+    if (l.track) ctx.letterSpacing = l.track + 'px';
+    y += l.size * (l.lh || 1.0); ctx.fillText(l.text, -w / 2 + (opt.pad || 60), y); ctx.letterSpacing = '0px'; y += l.gap || 14;
+  });
+}
+function whitePaper(w, h, seed) { shadow(true); tornPath(-w / 2, -h / 2, w, h, seed, 3); ctx.fillStyle = C.white; ctx.fill(); shadow(false);
+  ctx.save(); ctx.clip(); ctx.drawImage(TEX.white, -w / 2, -h / 2, w, h); ctx.restore(); }
+function tape(x, y, w, rot) { ctx.save(); ctx.translate(x, y); ctx.rotate(rot * Math.PI / 180); ctx.fillStyle = 'rgba(246,214,70,.75)'; ctx.fillRect(-w / 2, -14, w, 28); ctx.restore(); }
+
+// highlighter behind text, sweeping left→right
+function hiText(str, x, y, size, t, t0, opt = {}) {
+  const o = Object.assign({ w: 800, fam: 'IT', style: '', color: C.ink, hi: C.yellow, align: 'left', dur: .5 }, opt);
+  ctx.save(); ctx.font = font(size, o.w, o.fam, o.style); const tw = ctx.measureText(str).width;
+  const x0 = o.align === 'center' ? x - tw / 2 : x;
+  const p = E.outCubic(inv(t0, t0 + o.dur, t));
+  if (p > 0) { ctx.globalCompositeOperation = 'multiply'; ctx.fillStyle = o.hi; const r = rng(Math.floor(x));
+    ctx.beginPath(); ctx.moveTo(x0 - 10, y - size * .78); ctx.lineTo(x0 - 10 + (tw + 20) * p, y - size * .82 + r() * 4);
+    ctx.lineTo(x0 - 10 + (tw + 20) * p, y + size * .18); ctx.lineTo(x0 - 12, y + size * .2); ctx.closePath(); ctx.fill(); ctx.globalCompositeOperation = 'source-over'; }
+  ctx.fillStyle = o.color; ctx.fillText(str, x0, y); ctx.restore(); return tw;
+}
+
+// photo slot: real cutout if provided, otherwise a halftone placeholder silhouette
+function halftoneBust(w, h, seed) {
+  ctx.save(); ctx.beginPath(); ctx.rect(-w / 2, -h / 2, w, h); ctx.clip();
+  ctx.fillStyle = '#CFCCC4'; ctx.fillRect(-w / 2, -h / 2, w, h);
+  const cx = 0, headY = -h * .12, hr = w * .2;
+  for (let y = -h / 2; y < h / 2; y += 9) for (let x = -w / 2; x < w / 2; x += 9) {
+    const dh = Math.hypot(x - cx, (y - headY) * .85) / hr; const inBody = y > headY + hr * .9 && Math.abs(x) < w * .42 * clamp((y - headY) / (h * .5), .4, 1);
+    let v = dh < 1 ? .9 - dh * .3 : inBody ? .75 : .12; ctx.fillStyle = C.ink2; ctx.beginPath(); ctx.arc(x, y, 4.2 * v, 0, 7); ctx.fill();
+  }
+  ctx.restore();
+}
+function halftoneScene(w, h, seed) {
+  ctx.save(); ctx.beginPath(); ctx.rect(-w / 2, -h / 2, w, h); ctx.clip(); ctx.fillStyle = '#CFCCC4'; ctx.fillRect(-w / 2, -h / 2, w, h);
+  const r = rng(seed); const hz = h * (.1 + r() * .2);
+  for (let y = -h / 2; y < h / 2; y += 9) for (let x = -w / 2; x < w / 2; x += 9) {
+    const hill = hz + Math.sin(x / w * 6 + seed) * h * .08; let v = y > hill ? .55 + (y - hill) / h * .6 : .15 + (y + h / 2) / h * .2;
+    ctx.fillStyle = C.ink2; ctx.beginPath(); ctx.arc(x, y, 4.2 * clamp(v, 0, 1), 0, 7); ctx.fill(); }
+  ctx.restore();
+}
+function photo(id, w, h, seed, label, kind = 'person') {
+  const im = IMG['photo_' + id];
+  shadow(true, 20, 8, .3); tornPath(-w / 2 - 14, -h / 2 - 14, w + 28, h + 28, seed, 6); ctx.fillStyle = C.white; ctx.fill(); shadow(false);
+  if (im) { const s = Math.max(w / im.width, h / im.height); ctx.save(); ctx.beginPath(); ctx.rect(-w / 2, -h / 2, w, h); ctx.clip();
+    ctx.filter = 'grayscale(1) contrast(1.15)'; ctx.drawImage(im, -im.width * s / 2, -im.height * s / 2, im.width * s, im.height * s); ctx.filter = 'none'; ctx.restore(); }
+  else { kind === 'person' ? halftoneBust(w, h, seed) : halftoneScene(w, h, seed);
+    ctx.fillStyle = 'rgba(22,22,22,.75)'; ctx.fillRect(-w / 2, h / 2 - 44, w, 44);
+    ctx.font = font(15, 700, 'MONO'); ctx.fillStyle = C.yellow; ctx.textAlign = 'center'; ctx.letterSpacing = '2px';
+    ctx.fillText('PHOTO · ' + label.toUpperCase(), 0, h / 2 - 16); ctx.letterSpacing = '0px'; }
+}
+function nameTag(name, role, t, t0) {
+  ctx.save(); const p = E.outExpo(inv(t0, t0 + .5, t)); if (p <= 0) { ctx.restore(); return; }
+  ctx.globalAlpha = p; ctx.font = font(34, 800); const tw = ctx.measureText(name).width;
+  ctx.fillStyle = C.ink; ctx.fillRect(0, 0, (tw + 40) * p, 54);
+  ctx.fillStyle = C.white; ctx.fillText(name, 20, 39);
+  ctx.font = font(16, 700, 'MONO'); ctx.letterSpacing = '2px'; ctx.fillStyle = C.ink; ctx.fillText(role.toUpperCase(), 4, 82); ctx.restore();
+}
+function logo(key, w, x, y, color) { const c = tint(key, color || LOGOS[key], w); if (c) ctx.drawImage(c, x - c.width / 2, y - c.height / 2); }
+
+// narration caption (stands in for VO until voice is recorded)
+const CAPS = [];
+const cap = (a, b, text, hi = []) => CAPS.push({ a, b, text, hi });
+function captions(t) {
+  const c = CAPS.find(c => t >= c.a && t < c.b); if (!c) return;
+  const p = inv(c.a, c.a + .25, t) * (1 - inv(c.b - .25, c.b, t));
+  ctx.save(); ctx.globalAlpha = p; ctx.font = font(34, 700); ctx.textAlign = 'left';
+  const words = c.text.split(' '); const lines = [[]]; let lw = 0; const maxW = 1400;
+  words.forEach(wd => { const w = ctx.measureText(wd + ' ').width; if (lw + w > maxW) { lines.push([]); lw = 0; } lines[lines.length - 1].push(wd); lw += w; });
+  const lh = 46, y0 = H - 70 - (lines.length - 1) * lh;
+  lines.forEach((ln, li) => { const s = ln.join(' '); const tw = ctx.measureText(s).width; let x = W / 2 - tw / 2; const y = y0 + li * lh;
+    ctx.fillStyle = 'rgba(22,22,22,.88)'; ctx.fillRect(x - 18, y - 36, tw + 36, 48);
+    ln.forEach(wd => { const clean = wd.replace(/[.,!?—:;"]/g, ''); ctx.fillStyle = c.hi.includes(clean) ? C.yellow : C.white; ctx.fillText(wd, x, y); x += ctx.measureText(wd + ' ').width; }); });
+  ctx.restore();
+}
+
+// rubber stamp: red ink, slams down from above, slight over-inking at the edges
+function stamp(text, t, t0, w = 640, h = 150, size = 76) {
+  const p = inv(t0, t0 + .22, t); if (p <= 0) return;
+  const s = lerp(1.9, 1, E.outCubic(p));
+  ctx.save(); ctx.scale(s, s); ctx.rotate(-11 * Math.PI / 180); ctx.globalAlpha = .92 * E.outCubic(p);
+  ctx.strokeStyle = C.red; ctx.lineWidth = 9; ctx.beginPath(); ctx.roundRect(-w / 2, -h / 2, w, h, 14); ctx.stroke();
+  ctx.font = font(size, 900); ctx.fillStyle = C.red; ctx.textAlign = 'center'; ctx.letterSpacing = '6px'; ctx.fillText(text, 0, size * .36); ctx.letterSpacing = '0px';
+  // ink flecks
+  const r = rng(77); ctx.globalAlpha *= .35; for (let i = 0; i < 40; i++) { ctx.beginPath(); ctx.arc((r() - .5) * w * 1.1, (r() - .5) * h * 1.3, r() * 3, 0, 7); ctx.fill(); }
+  ctx.restore();
+}
+// paper trophy for the counter cards
+function trophy(x, y, s = 1) {
+  ctx.save(); ctx.translate(x, y); ctx.scale(s, s); ctx.fillStyle = C.yellow;
+  ctx.beginPath(); ctx.moveTo(-22, -30); ctx.lineTo(22, -30); ctx.quadraticCurveTo(22, 8, 0, 14); ctx.quadraticCurveTo(-22, 8, -22, -30); ctx.fill();
+  ctx.fillRect(-4, 12, 8, 12); ctx.fillRect(-16, 24, 32, 7);
+  ctx.strokeStyle = C.yellow; ctx.lineWidth = 4; ctx.beginPath(); ctx.arc(-26, -14, 9, Math.PI * .5, Math.PI * 1.5); ctx.stroke();
+  ctx.beginPath(); ctx.arc(26, -14, 9, -Math.PI * .5, Math.PI * .5); ctx.stroke(); ctx.restore();
+}
+
+// ------------------------------------------------------------ scenes
+const SCENES = []; const scene = (a, b, fn) => SCENES.push({ a, b, fn });
+
+// S1 · Stamford Bridge, Thursday 10 March 2022: the freeze
+cap(0.6, 6.8, 'On a Thursday in March 2022…', ['March', '2022']);
+cap(6.8, 11.8, '…the British government froze the assets of a football club.', ['froze', 'assets']);
+scene(0, 12, t => {
+  const pan = E.inOutCubic(inv(0, 12, t));
+  place(t, .3, 620 - pan * 30, 440, -2, 1, () => photo('stamford_bridge_2022', 880, 540, 1, 'Stamford Bridge, March 2022', 'scene'), { from: 'left', out: 11.4, outTo: 'left' });
+  place(t, 1.1, 1400 + pan * 20, 350, 3, 2, () => {
+    greenCard(560, 300, [
+      { text: 'LONDON, ENGLAND', size: 22, fam: 'MONO', w: 700, track: 4, color: C.yellow },
+      { text: '10 March', size: 76, w: 900, gap: 4 }, { text: '2022', size: 76, w: 900 }], 2);
+    ctx.save(); ctx.translate(20, 92); stamp('SANCTIONED', t, 7.2, 540, 140, 64); ctx.restore();
+  }, { from: 'right', out: 11.3, outTo: 'right' });
+  place(t, 2.2, 1360, 720, -3, 3, () => photo('chelsea_shop_closed', 620, 300, 3, 'Club shop, shutters down', 'scene'), { from: 'down', out: 11.2 });
+  place(t, 2.9, 1120, 590, -30, 4, () => tape(0, 0, 120, 0), { from: 'down', out: 11.2 });
+});
+
+// S2 · Abramovich, 2003: the trophy machine
+cap(12.3, 19.5, 'Nineteen years earlier a Russian billionaire, Roman Abramovich, had bought Chelsea for around £140 million…', ['Roman', 'Abramovich', '£140', 'million']);
+cap(19.5, 25.6, '…and turned it into a trophy machine.', ['trophy', 'machine']);
+scene(12, 26, t => {
+  place(t, .2, 520, 460, 2, 6, () => photo('abramovich', 520, 660, 6, 'Roman Abramovich'), { from: 'left', out: 13.4, outTo: 'left' });
+  ctx.save(); ctx.translate(270, 830 + wob(t, 7)); nameTag('Roman Abramovich', 'Owner of Chelsea FC, 2003–2022', t, 1.4); ctx.restore();
+  place(t, .7, 1250, 330, -3, 5, () => {
+    const im = IMG['photo_headline_2003'];
+    whitePaper(720, 380, 5);
+    if (im) { const s = Math.max(690 / im.width, 350 / im.height); ctx.save(); ctx.beginPath(); ctx.rect(-345, -175, 690, 350); ctx.clip();
+      ctx.filter = 'grayscale(1) contrast(1.1)'; ctx.drawImage(im, -im.width * s / 2, -im.height * s / 2, im.width * s, im.height * s); ctx.filter = 'none'; ctx.restore(); }
+    else {
+      ctx.fillStyle = C.ink; ctx.font = font(16, 700, 'MONO'); ctx.letterSpacing = '3px'; ctx.fillText('SPORT · 2 JULY 2003', -320, -140); ctx.letterSpacing = '0px';
+      ctx.fillRect(-320, -120, 640, 3);
+      ctx.font = font(50, 400, 'SER'); ctx.fillStyle = C.ink;
+      ['Russian billionaire buys', 'Chelsea in deal worth'].forEach((l, i) => ctx.fillText(l, -320, -60 + i * 56));
+      hiText('around £140 million', -320, 56, 50, t, 2.6, { fam: 'SER', w: 400 });
+      ctx.font = font(14, 500, 'MONO'); ctx.fillStyle = C.mute; ctx.fillText('SOURCE: PRESS REPORTS, JULY 2003 · £60M FOR SHARES PLUS ~£80M OF DEBT', -320, 130);
+    }
+  }, { from: 'right', out: 13.4, outTo: 'right' });
+  // trophy counters
+  const cnt = (v, t0) => Math.round(v * E.outCubic(inv(t0, t0 + 1.2, t)));
+  const cards = [[6.2, 'LEAGUE TITLES', 5, 940, 'up'], [6.8, 'CHAMPIONS LEAGUES', 2, 1270, 'down'], [7.4, 'TROPHIES IN TOTAL', 21, 1600, 'up']];
+  cards.forEach(([t0, label, v, x, from], i) => place(t, t0, x, 800, i % 2 ? 3 : -3, 9 + i, () => {
+    greenCard(310, 240, [{ text: label, size: 16, fam: 'MONO', w: 700, track: 3, color: C.yellow }, { text: String(cnt(v, t0 + .2)), size: 120, w: 900 }], 9 + i, { pad: 40 });
+    trophy(105, 40, 1.1);
+  }, { from, out: 13.3 }));
+});
+
+// S3 · The frozen club → the forced sale
+cap(26.3, 31.6, "Now it couldn't sell a ticket. It couldn't sell a shirt. It couldn't sign a player.", ['ticket', 'shirt', 'player']);
+cap(31.6, 36.6, 'And its owner had ninety days to sell it…', ['ninety', 'days']);
+cap(36.6, 41.6, '…without keeping a penny.', ['penny']);
+scene(26, 42, t => {
+  const items = [[.3, 'NO TICKET SALES', 'Special licence · existing tickets only', 470, 330, -3], [1.6, 'SHOP CLOSED', 'No merchandise · 10 March 2022', 520, 560, 2], [2.9, 'NO NEW CONTRACTS', 'No signings · no renewals', 460, 790, -2]];
+  items.forEach(([t0, a, b, x, y, r], i) => place(t, t0, x, y, r, 20 + i, () => greenCard(640, 190, [
+    { text: a, size: 54, w: 900, gap: 10 }, { text: b.toUpperCase(), size: 17, fam: 'MONO', w: 700, track: 3, color: C.yellow }], 20 + i, { pad: 44 }), { from: 'left', out: 15.4, outTo: 'left' }));
+  // newspaper-style clipping (neutral styling; cite real source on screen)
+  place(t, 6.2, 1330, 520, 2.5, 30, () => {
+    whitePaper(760, 600, 30);
+    ctx.fillStyle = C.ink; ctx.font = font(16, 700, 'MONO'); ctx.letterSpacing = '3px'; ctx.fillText('BUSINESS · 30 MAY 2022', -330, -240); ctx.letterSpacing = '0px';
+    ctx.fillRect(-330, -220, 660, 3);
+    ctx.font = font(54, 400, 'SER'); ctx.fillStyle = C.ink;
+    ['Chelsea sale to Boehly', 'and Clearlake consortium', 'completed'].forEach((l, i) => ctx.fillText(l, -330, -150 + i * 60));
+    ctx.font = font(22, 500, 'IT'); ctx.fillStyle = C.ink2;
+    ['The buyers pay', 'for the club, plus £1.75bn of', 'committed investment. Proceeds', 'are frozen for charity.'].forEach((l, i) => i === 0 ? ctx.fillText(l, -330, 70) : ctx.fillText(l, -330, 106 + (i - 1) * 32));
+    hiText('£2.5 billion', -330 + 160, 70, 34, t, 11.2, { w: 900 });
+    ctx.font = font(14, 500, 'MONO'); ctx.fillStyle = C.mute; ctx.fillText('SOURCE: CHELSEA FC STATEMENTS, 7 & 30 MAY 2022', -330, 250);
+  }, { from: 'up', out: 15.4, outTo: 'right' });
+  // 90-day countdown strip under the cards
+  const d = Math.round(90 * (1 - E.inOutCubic(inv(5.6, 13.6, t))));
+  if (t > 5.4) { ctx.save(); ctx.globalAlpha = inv(5.4, 5.8, t); ctx.translate(150, 130 + wob(t, 33)); ctx.fillStyle = C.ink; ctx.fillRect(0, 0, 640, 60);
+    ctx.font = font(18, 700, 'MONO'); ctx.fillStyle = C.yellow; ctx.letterSpacing = '3px'; ctx.fillText('DAYS TO SELL', 20, 39);
+    ctx.font = font(40, 900); ctx.fillStyle = C.white; ctx.textAlign = 'right'; ctx.letterSpacing = '0px'; ctx.fillText(String(d).padStart(2, '0'), 620, 44); ctx.restore(); }
+});
+
+// S4 · Interview clip slot
+cap(42.3, 47.8, '[CLIP] Thomas Tuchel, press conference, 10 March 2022', ['CLIP']);
+cap(47.8, 51.8, 'A forced sale, in a war, at the worst possible moment.', ['forced', 'sale']);
+scene(42, 52, t => {
+  place(t, .2, W / 2, 460, -1, 40, () => {
+    shadow(true, 30, 14, .35); ctx.fillStyle = C.ink; ctx.beginPath(); ctx.roundRect(-620, -350, 1240, 700, 20); ctx.fill(); shadow(false);
+    ctx.save(); ctx.beginPath(); ctx.rect(-590, -320, 1180, 640); ctx.clip();
+    const im = IMG['photo_interview_tuchel_2022'];
+    if (im) { const s = Math.max(1180 / im.width, 640 / im.height); ctx.drawImage(im, -im.width * s / 2, -im.height * s / 2, im.width * s, im.height * s); }
+    else { ctx.save(); ctx.translate(0, 40); ctx.scale(1.9, 1.2); halftoneBust(620, 560, 41); ctx.restore();
+      ctx.fillStyle = 'rgba(22,22,22,.55)'; ctx.fillRect(-590, -320, 1180, 640);
+      ctx.fillStyle = C.yellow; ctx.font = font(22, 700, 'MONO'); ctx.textAlign = 'center'; ctx.letterSpacing = '4px';
+      ctx.fillText('INSERT INTERVIEW CLIP', 0, -10); ctx.font = font(16, 500, 'MONO'); ctx.fillStyle = C.white;
+      ctx.fillText('CHELSEA FC / SKY SPORTS NEWS · 10 MARCH 2022 · THOMAS TUCHEL', 0, 24); ctx.letterSpacing = '0px'; }
+    ctx.restore();
+    // lower third
+    const lp = E.outExpo(inv(1.2, 1.8, t)); ctx.fillStyle = C.green; ctx.fillRect(-560, 190, 520 * lp, 70);
+    ctx.fillStyle = C.white; ctx.font = font(30, 800); ctx.textAlign = 'left'; ctx.globalAlpha = lp; ctx.fillText('Thomas Tuchel', -536, 237);
+    ctx.fillStyle = C.yellow; ctx.fillRect(-560, 260, 440 * lp, 34); ctx.fillStyle = C.ink; ctx.font = font(15, 700, 'MONO'); ctx.fillText('CHELSEA HEAD COACH · PRESS CONFERENCE 2022', -546, 283);
+    ctx.globalAlpha = 1;
+    // progress bar
+    ctx.fillStyle = 'rgba(255,255,255,.25)'; ctx.fillRect(-590, 316, 1180, 4); ctx.fillStyle = C.red; ctx.fillRect(-590, 316, 1180 * inv(0, 10, t), 4);
+  }, { from: 'down', out: 9.4 });
+});
+
+// S5 · The price tag flip: £140M → £2.5B
+cap(52.3, 57.2, 'It still fetched the highest price ever paid for a football club.', ['highest', 'price']);
+cap(57.2, 63.6, 'Two and a half billion pounds. About eighteen times what Abramovich paid.', ['eighteen', 'times']);
+scene(52, 64, t => {
+  hiText('THE WORST', 180, 250, 100, t, 1.0, { w: 900 });
+  hiText('POSSIBLE', 180, 365, 100, t, 1.3, { w: 900 });
+  hiText('MOMENT.', 180, 480, 100, t, 1.6, { w: 900 });
+  // hanging price tag that flips
+  const flip = E.inOutCubic(inv(5.2, 6.2, t)); const sx = Math.cos(flip * Math.PI);
+  const sway = Math.sin(t * 2.2) * 3 * (1 - inv(0, 12, t) * .5);
+  ctx.save(); ctx.translate(1380, 180); ctx.rotate(sway * Math.PI / 180);
+  ctx.strokeStyle = C.ink2; ctx.lineWidth = 3; ctx.beginPath(); ctx.moveTo(0, -200); ctx.lineTo(0, 60); ctx.stroke();
+  ctx.translate(0, 360); const p = E.outBack(inv(.2, .9, t)); ctx.scale(Math.abs(sx) * p, p);
+  const back = sx < 0;
+  shadow(true, 26, 12, .3); ctx.beginPath(); ctx.moveTo(-260, -250); ctx.lineTo(-60, -300); ctx.lineTo(60, -300); ctx.lineTo(260, -250); ctx.lineTo(260, 250); ctx.lineTo(-260, 250); ctx.closePath();
+  ctx.fillStyle = back ? C.green : C.white; ctx.fill(); shadow(false);
+  ctx.save(); ctx.clip(); ctx.drawImage(back ? TEX.card : TEX.white, -260, -300, 520, 550); ctx.restore();
+  ctx.fillStyle = C.paper; ctx.beginPath(); ctx.arc(0, -240, 18, 0, 7); ctx.fill();
+  ctx.textAlign = 'center';
+  if (!back) { ctx.fillStyle = C.mute; ctx.font = font(22, 700, 'MONO'); ctx.fillText('CHELSEA · 2003', 0, -120);
+    ctx.fillStyle = C.ink; ctx.font = font(140, 900); ctx.fillText('£140M', 0, 60); }
+  else { ctx.fillStyle = C.yellow; ctx.font = font(22, 700, 'MONO'); ctx.fillText('CHELSEA · 2022', 0, -120);
+    ctx.fillStyle = C.white; ctx.font = font(150, 900); ctx.fillText('£2.5B', 0, 60);
+    ctx.font = font(18, 500, 'MONO'); ctx.fillText('RECORD PRICE FOR A FOOTBALL CLUB', 0, 130); }
+  ctx.restore();
+  hiText('×18', 360, 720, 180, t, 7.2, { w: 900, color: C.green, hi: C.yellow, dur: .4 });
+  ctx.save(); ctx.globalAlpha = inv(7.4, 7.8, t); ctx.font = font(22, 700, 'MONO'); ctx.fillStyle = C.ink2; ctx.fillText('IN NINETEEN YEARS · SOLD UNDER SANCTIONS', 190, 780); ctx.restore();
+});
+
+// S6 · The money keeps coming: broadcaster and sponsor logos pinned to a board
+cap(64.3, 70.6, "Here's the strange part. Most Premier League clubs lose money. Every year.", ['lose', 'money']);
+cap(70.6, 77.6, 'So why is the league that loses money the most valuable league on Earth?', ['most', 'valuable']);
+const BOARD = [['sky', 260, 300, -6], ['tnt', 610, 250, 4], ['nbc', 960, 310, -3], ['amazonprime', 1310, 270, 5], ['dazn', 1660, 300, -4],
+  ['paramountplus', 320, 640, 3], ['nike', 700, 700, -4], ['adidas', 1080, 660, 6], ['emirates', 1440, 620, -5], ['ea', 1740, 690, 4]];
+scene(64, 78, t => {
+  BOARD.forEach(([k, x, y, r], i) => place(t, .2 + i * .18, x, y, r, 60 + i, () => {
+    whitePaper(300, 220, 60 + i); logo(k, k === 'amazonprime' || k === 'paramountplus' ? 190 : k === 'emirates' ? 100 : 130, 0, -6);
+    ctx.fillStyle = C.red; ctx.beginPath(); ctx.arc(0, -96, 9, 0, 7); ctx.fill();
+  }, { from: i % 2 ? 'down' : 'up', out: 6.2, outTo: i % 2 ? 'up' : 'down' }));
+  // the paradox, drawn as a ledger line that goes red
+  if (t > 1.6 && t < 6.6) { ctx.save(); ctx.globalAlpha = inv(1.6, 2.1, t) * (1 - inv(6.0, 6.5, t)); ctx.translate(W / 2, 885 + wob(t, 90));
+    ctx.fillStyle = C.ink; ctx.fillRect(-520, -34, 1040, 68); ctx.font = font(20, 700, 'MONO'); ctx.letterSpacing = '3px'; ctx.textAlign = 'left';
+    ctx.fillStyle = C.yellow; ctx.fillText('PREMIER LEAGUE CLUBS, 2022–23', -500, 8); ctx.fillStyle = C.white; ctx.fillText('REVENUE £6.1B', 30, 8);
+    ctx.fillStyle = C.red; ctx.fillText('PRE-TAX LOSS £685M', 260, 8); ctx.letterSpacing = '0px'; ctx.restore(); }
+  // the question
+  if (t > 6.4) {
+    const qx = W / 2; ctx.save(); ctx.textAlign = 'center';
+    ctx.font = font(84, 400, 'SER', 'italic'); ctx.fillStyle = C.ink; ctx.globalAlpha = inv(6.5, 7.0, t);
+    ctx.fillText('Why is the league that loses money', qx, 430); ctx.restore();
+    hiText('the most valuable league on Earth?', qx, 560, 84, t, 7.4, { fam: 'SER', style: 'italic', w: 400, align: 'center', dur: .7 });
+  }
+});
+
+// S7 · Title card
+cap(78.3, 84, 'To understand it, you have to go back to the year English football nearly died.', ['nearly', 'died']);
+scene(78, 90, t => {
+  const out = inv(10.8, 11.8, t);
+  ctx.save(); ctx.globalAlpha = 1 - out;
+  // checkered tape
+  place(t, .2, W / 2, 250, -2, 80, () => { const sq = 26; for (let i = -40; i < 40; i++) for (let j = 0; j < 2; j++) { ctx.fillStyle = (i + j) % 2 ? C.ink : C.white; ctx.fillRect(i * sq, j * sq - sq, sq, sq); } }, { from: 'left' });
+  place(t, .6, W / 2, 385, 0, 81, () => logo('premierleague', 150, 0, 0), { from: 'up' });
+  place(t, 1.0, W / 2, 560, -1, 82, () => { ctx.font = font(120, 900); ctx.fillStyle = C.ink; ctx.textAlign = 'center'; ctx.fillText('HOW THE PREMIER LEAGUE', 0, 40); }, { from: 'down' });
+  place(t, 1.4, W / 2, 740, 1.5, 83, () => { ctx.font = font(110, 900); const w = ctx.measureText('TOOK OVER THE WORLD').width;
+    greenCard(w + 100, 170, [{ text: 'TOOK OVER THE WORLD', size: 110, w: 900 }], 83, { pad: 22 }); }, { from: 'down' });
+  ctx.save(); ctx.globalAlpha = inv(2.4, 2.9, t); ctx.font = font(22, 700, 'MONO'); ctx.fillStyle = C.ink2; ctx.textAlign = 'center'; ctx.letterSpacing = '4px'; ctx.fillText('GREENBACK · EPISODE 2', W / 2, 900); ctx.restore();
+  ctx.restore();
+});
+
+// paper push transition between scenes
+const CUTS = [12, 26, 42, 52, 64, 78];
+function transitions(t) {
+  for (const c of CUTS) { const p = inv(c - .35, c + .35, t); if (p <= 0 || p >= 1) continue;
+    const x = lerp(-W * 1.2, W * 1.2, E.inOutCubic(p));
+    ctx.save(); ctx.translate(x + W / 2, H / 2); ctx.rotate(-.04); shadow(true, 40, 0, .35);
+    ctx.fillStyle = C.green; ctx.fillRect(-W / 2 - 200, -H, W + 100, H * 2); shadow(false);
+    ctx.drawImage(TEX.card, -W / 2 - 200, -H / 2 - 100, W + 100, H + 200); ctx.restore(); }
+}
+
+window.render = function (t) {
+  ctx.setTransform(1, 0, 0, 1, 0, 0); ctx.globalAlpha = 1; ctx.letterSpacing = '0px'; ctx.textAlign = 'left';
+  ctx.drawImage(TEX.bg, 0, 0);
+  for (const s of SCENES) if (t >= s.a && t < s.b) { ctx.save(); s.fn(t - s.a); ctx.restore(); }
+  transitions(t);
+  captions(t);
+  // grain + light vignette
+  ctx.save(); ctx.globalCompositeOperation = 'overlay'; ctx.globalAlpha = .07; ctx.drawImage(grainFrames[Math.floor(t * 12) % grainFrames.length], 0, 0, W, H); ctx.restore();
+  const v = ctx.createRadialGradient(W / 2, H / 2, H * .45, W / 2, H / 2, W * .75); v.addColorStop(0, 'rgba(0,0,0,0)'); v.addColorStop(1, 'rgba(60,50,30,.22)');
+  ctx.fillStyle = v; ctx.fillRect(0, 0, W, H);
+  const fo = inv(0, .5, t) * (1 - inv(89, 90, t)); if (fo < 1) { ctx.fillStyle = `rgba(0,0,0,${1 - fo})`; ctx.fillRect(0, 0, W, H); }
+};
+window.DURATION = DURATION; window.FPS = FPS;
+window.ready = document.fonts.ready.then(() => Promise.all([
+  ...['900 20px IT', '800 20px IT', '700 20px IT', '500 20px IT', '400 20px SER', 'italic 400 20px SER', '500 20px MONO', '700 20px MONO'].map(f => document.fonts.load(f)),
+  ...Object.keys(LOGOS).map(k => loadImg('logo_' + k, 'assets/logos/' + k + '.svg')),
+  ...PHOTOS.map(p => loadImg('photo_' + p, 'assets/photos/' + p + '.png')),
+])).then(buildTextures);
+if (!navigator.webdriver) { const t0 = performance.now(); window.ready.then(() => { const loop = () => { render(((performance.now() - t0) / 1000) % DURATION); requestAnimationFrame(loop); }; loop(); }); }
+</script></body></html>
