@@ -1,0 +1,192 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Safe Zone Checker for Shorts, Reels and TikTok: is your text hidden?</title>
+<meta name="description" content="Drop in a vertical video or frame and see which parts the TikTok, Instagram Reels and YouTube Shorts buttons and captions cover. Runs in your browser, nothing is uploaded.">
+<link rel="canonical" href="https://example.com/safe-zones">
+<meta property="og:title" content="Safe Zone Checker for Shorts, Reels and TikTok: is your text hidden?"><meta property="og:description" content="Drop in a vertical video or frame and see which parts the TikTok, Instagram Reels and YouTube Shorts buttons and captions cover. Runs in your browser, nothing is uploaded.">
+<meta property="og:type" content="website"><meta property="og:url" content="https://example.com/safe-zones">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='12' fill='%235B3FD9'/%3E%3Cpath d='M22 18l26 14-26 14z' fill='white'/%3E%3C/svg%3E">
+<link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin><link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Archivo:wdth,wght@112,800;118,900;125,900&family=Public+Sans:wght@400;500;600;700&family=IBM+Plex+Mono:wght@500;600&display=swap">
+<style>/* Shared base for the creator tool sites. Each tool sets --accent / --accent-soft in its own :root.
+   Layout: one tool per page — header, tool panel(s), short how-to, FAQ, footer. */
+:root {
+  --bg: #EEEDF0; --panel: #FAFAFB; --ink: #18171C; --ink-2: #57555F; --rule: #D6D4DB; --field: #F2F1F4;
+  --accent: #5B3FD9; --accent-soft: #E6E0FB; --warn: #C2410C; --ok: #15803D; --hi: #F3D54E;
+  --display: "Archivo", "Arial Narrow", system-ui, sans-serif;
+  --body: "Public Sans", system-ui, -apple-system, "Segoe UI", sans-serif;
+  --mono: "IBM Plex Mono", ui-monospace, Menlo, monospace;
+}
+@media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) {
+  --bg: #121116; --panel: #1B1A21; --ink: #ECEBF0; --ink-2: #A6A3B1; --rule: #302E38; --field: #23222A;
+  --warn: #FB923C; --ok: #4ADE80; --hi: #D9BC3B; color-scheme: dark } }
+:root[data-theme="dark"] {
+  --bg: #121116; --panel: #1B1A21; --ink: #ECEBF0; --ink-2: #A6A3B1; --rule: #302E38; --field: #23222A;
+  --warn: #FB923C; --ok: #4ADE80; --hi: #D9BC3B; color-scheme: dark }
+
+* { box-sizing: border-box }
+[hidden] { display: none !important }
+body { background: var(--bg); color: var(--ink); font: 16px/1.55 var(--body); margin: 0 }
+.wrap { max-width: 1040px; margin: 0 auto; padding-inline: 20px; padding-block: 24px 56px; display: grid; gap: 26px }
+header.top { display: flex; flex-wrap: wrap; align-items: baseline; justify-content: space-between; gap: 8px 20px }
+.brand { font: 900 21px/1 var(--display); font-stretch: 125%; text-transform: uppercase; color: var(--ink); text-decoration: none }
+.brand span { color: var(--accent) }
+.nav { display: flex; gap: 16px; font-size: 14px; flex-wrap: wrap }
+.nav a { color: var(--ink-2); text-decoration: none } .nav a:hover { color: var(--ink); text-decoration: underline }
+h1 { font: 900 clamp(30px, 5.6vw, 54px)/1.02 var(--display); font-stretch: 118%; margin: 0; text-wrap: balance }
+h1 em { font-style: normal; color: var(--accent) }
+.lede { max-width: 64ch; color: var(--ink-2); margin: 10px 0 0; font-size: 17px }
+.panel { background: var(--panel); border: 1px solid var(--rule); border-radius: 8px; padding: 18px; display: grid; gap: 14px; min-width: 0 }
+.panel h2 { font: 800 13px/1 var(--display); font-stretch: 112%; text-transform: uppercase; letter-spacing: .1em; margin: 0; color: var(--ink-2) }
+.cols { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 20px; align-items: start }
+@media (max-width: 800px) { .cols { grid-template-columns: 1fr } }
+label { display: grid; gap: 6px; font-size: 14px; font-weight: 600 }
+.hint { font-weight: 400; color: var(--ink-2); font-size: 13px }
+input, select, textarea { width: 100%; font: 500 16px var(--body); color: var(--ink); background: var(--field); border: 1px solid var(--rule); border-radius: 6px; padding: 9px 11px; min-width: 0 }
+textarea { line-height: 1.6; resize: vertical }
+input[type=number] { font-family: var(--mono) }
+input:focus-visible, select:focus-visible, textarea:focus-visible, button:focus-visible, a:focus-visible { outline: 3px solid var(--accent); outline-offset: 2px }
+.seg { display: flex; flex-wrap: wrap; gap: 6px }
+.seg button { font: 600 13px var(--body); background: transparent; color: var(--ink-2); border: 1px solid var(--rule); border-radius: 999px; padding: 6px 12px; cursor: pointer }
+.seg button[aria-pressed="true"] { background: var(--accent); border-color: var(--accent); color: #fff }
+.btn { font: 600 14px var(--body); background: var(--ink); color: var(--panel); border: 0; border-radius: 6px; padding: 10px 16px; cursor: pointer }
+.btn.ghost { background: transparent; color: var(--ink); border: 1px solid var(--rule) }
+.row { display: flex; flex-wrap: wrap; gap: 10px; align-items: center }
+.big { font: 900 clamp(40px, 8vw, 72px)/1 var(--display); font-stretch: 118%; color: var(--accent); font-variant-numeric: tabular-nums }
+.stats { display: grid; grid-template-columns: repeat(auto-fit, minmax(120px, 1fr)); gap: 8px }
+.stat { background: var(--field); border: 1px solid var(--rule); border-radius: 6px; padding: 10px 12px; display: grid; gap: 2px }
+.stat span { font-size: 11px; color: var(--ink-2); text-transform: uppercase; letter-spacing: .08em }
+.stat b { font: 600 19px var(--mono); font-variant-numeric: tabular-nums; overflow-wrap: anywhere }
+.pill { display: inline-block; font: 600 12px var(--body); padding: 3px 9px; border-radius: 999px; background: var(--accent-soft); color: var(--ink) }
+.pill.warn { background: color-mix(in srgb, var(--warn) 18%, transparent); color: var(--warn) }
+.pill.ok { background: color-mix(in srgb, var(--ok) 18%, transparent); color: var(--ok) }
+.toast { font-size: 13px; color: var(--ok) }
+.tablewrap { overflow-x: auto }
+table { border-collapse: collapse; width: 100%; font-size: 14px }
+th, td { text-align: left; padding: 7px 8px; border-bottom: 1px solid var(--rule); vertical-align: top }
+th { font-size: 11px; text-transform: uppercase; letter-spacing: .08em; color: var(--ink-2) }
+td.t { font-family: var(--mono); white-space: nowrap; color: var(--accent); font-variant-numeric: tabular-nums }
+section.copy { display: grid; gap: 12px; max-width: 70ch }
+section.copy h2 { font: 800 24px/1.15 var(--display); font-stretch: 112%; margin: 0; text-wrap: balance }
+section.copy p, section.copy li { color: var(--ink-2) }
+details { border-top: 1px solid var(--rule); padding-block: 12px }
+details summary { font-weight: 700; cursor: pointer }
+details p { margin: 8px 0 0 }
+.ad-slot:empty { display: none }
+footer.foot { border-top: 1px solid var(--rule); padding-top: 16px; display: flex; flex-wrap: wrap; justify-content: space-between; gap: 10px; font-size: 13px; color: var(--ink-2) }
+footer.foot a { color: var(--ink-2) }
+@media (prefers-reduced-motion: reduce) { * { transition: none !important; animation: none !important } }
+</style><script type="application/ld+json">{"@context": "https://schema.org", "@type": "WebApplication", "name": "Shorts & Reels Safe Zones", "url": "https://example.com/safe-zones", "applicationCategory": "MultimediaApplication", "operatingSystem": "Any", "description": "Drop in a vertical video or frame and see which parts the TikTok, Instagram Reels and YouTube Shorts buttons and captions cover. Runs in your browser, nothing is uploaded.", "offers": {"@type": "Offer", "price": "0", "priceCurrency": "USD"}}</script><script type="application/ld+json">{"@context": "https://schema.org", "@type": "FAQPage", "mainEntity": [{"@type": "Question", "name": "What size should a Short, Reel or TikTok be?", "acceptedAnswer": {"@type": "Answer", "text": "1080 \u00d7 1920 pixels, a 9:16 vertical frame. All three apps crop or letterbox other shapes."}}, {"@type": "Question", "name": "Where should I put text in a vertical video?", "acceptedAnswer": {"@type": "Answer", "text": "In the middle of the frame, away from the bottom fifth and the right edge. Text placed low is usually covered by the caption and username."}}, {"@type": "Question", "name": "Can I make one video that works on all three apps?", "acceptedAnswer": {"@type": "Answer", "text": "Yes. Choose \"All three\" to see the combined safe area, then keep everything important inside it."}}, {"@type": "Question", "name": "Is my video uploaded?", "acceptedAnswer": {"@type": "Answer", "text": "No. It plays in your browser only and never leaves your device."}}]}</script>
+</head>
+<body>
+<div class="wrap">
+<header class="top"><a class="brand" href="index.html">Creator<span>Bench</span></a><nav class="nav" aria-label="Tools"><a href="script-timer.html">Script Timer</a><a href="title-preview.html">Title &amp; Thumbnail Preview</a><a href="safe-zones.html">Shorts &amp; Reels Safe Zones</a><a href="caption-formatter.html">Instagram Caption Formatter</a></nav></header>
+<style>
+.sz-stage { position: relative; width: min(100%, 360px); aspect-ratio: 9 / 16; border-radius: 14px; overflow: hidden; background: #222; margin-inline: auto; max-width: 100% }
+.sz-stage canvas { position: absolute; inset: 0; width: 100%; height: 100% }
+.sz-legend { display: flex; flex-wrap: wrap; gap: 10px; font-size: 13px; color: var(--ink-2) }
+.sz-legend i { display: inline-block; width: 12px; height: 12px; border-radius: 3px; vertical-align: -1px; margin-right: 5px }
+</style>
+<div>
+  <h1>Is your text hiding <em>behind the buttons?</em></h1>
+  <p class="lede">Add a frame or clip from your vertical video. We draw where TikTok, Instagram Reels and YouTube Shorts put their buttons, captions and top bar, so you can keep faces and text in the clear.</p>
+</div>
+<div class="ad-slot"></div>
+<div class="cols">
+  <div class="panel">
+    <h2>Your video</h2>
+    <label>Image or video <span class="hint">9:16 works best (1080 × 1920). Stays on your device.</span><input id="sz-file" type="file" accept="image/*,video/*"></label>
+    <label id="sz-seek-wrap" hidden>Frame <input id="sz-seek" type="range" min="0" max="1000" value="0"></label>
+    <h2>Platform</h2>
+    <div class="seg" id="sz-plat" role="group" aria-label="Platform">
+      <button type="button" data-p="tiktok" aria-pressed="false">TikTok</button>
+      <button type="button" data-p="reels" aria-pressed="true">Reels</button>
+      <button type="button" data-p="shorts" aria-pressed="false">Shorts</button>
+      <button type="button" data-p="all" aria-pressed="false">All three</button>
+    </div>
+    <div class="seg" role="group" aria-label="Overlay style">
+      <button type="button" id="sz-ui" aria-pressed="true">Show app buttons</button>
+      <button type="button" id="sz-grid" aria-pressed="false">Thirds grid</button>
+    </div>
+    <div class="sz-legend"><span><i style="background:rgba(220,38,38,.45)"></i>Covered by the app</span><span><i style="background:rgba(22,163,74,.0);outline:2px dashed #16a34a"></i>Safe area</span></div>
+    <p class="hint">These guides are approximate. Apps change their layouts and differ between phones, so leave a little extra room.</p>
+  </div>
+  <div class="panel"><div class="sz-stage"><canvas id="sz-c" width="1080" height="1920" aria-label="Preview with safe-zone overlay"></canvas></div></div>
+</div>
+<div class="ad-slot"></div>
+<section class="copy" id="how">
+  <h2>Safe zones at a glance</h2>
+  <p>All three apps cover the bottom of the screen with your caption and username, and the right edge with like, comment and share buttons. The top holds the app's own tabs. Keep faces, product shots and on-screen text inside the middle area.</p>
+  <div class="tablewrap"><table><thead><tr><th>Platform</th><th>Top</th><th>Bottom</th><th>Right</th><th>Left</th></tr></thead><tbody id="sz-table"></tbody></table></div>
+  <p class="hint">Pixel values for a 1080 × 1920 frame, rounded. Approximate.</p>
+</section>
+<section class="copy" id="faq">
+  <h2>Questions</h2>
+  <details><summary>What size should a Short, Reel or TikTok be?</summary><p>1080 × 1920 pixels, a 9:16 vertical frame. All three apps crop or letterbox other shapes.</p></details>
+  <details><summary>Where should I put text in a vertical video?</summary><p>In the middle of the frame, away from the bottom fifth and the right edge. Text placed low is usually covered by the caption and username.</p></details>
+  <details><summary>Can I make one video that works on all three apps?</summary><p>Yes. Choose "All three" to see the combined safe area, then keep everything important inside it.</p></details>
+  <details><summary>Is my video uploaded?</summary><p>No. It plays in your browser only and never leaves your device.</p></details>
+</section>
+<script>
+(() => {
+  const $ = id => document.getElementById(id);
+  const W = 1080, H = 1920, ctx = $('sz-c').getContext('2d');
+  // approximate covered margins (px on a 1080x1920 frame); right column only spans the lower part of the screen
+  const Z = {
+    tiktok: { name: 'TikTok', top: 150, bottom: 440, right: 140, left: 60, rightFrom: 720 },
+    reels:  { name: 'Reels',  top: 220, bottom: 420, right: 130, left: 40, rightFrom: 900 },
+    shorts: { name: 'Shorts', top: 170, bottom: 480, right: 150, left: 50, rightFrom: 760 },
+  };
+  let plat = 'reels', ui = true, grid = false, media = null;
+  $('sz-table').innerHTML = Object.values(Z).map(z => `<tr><td>${z.name}</td><td class="t">${z.top}</td><td class="t">${z.bottom}</td><td class="t">${z.right}</td><td class="t">${z.left}</td></tr>`).join('');
+  function sample() { // marked example frame
+    const g = ctx.createLinearGradient(0, 0, 0, H); g.addColorStop(0, '#2E2A6B'); g.addColorStop(1, '#C2410C'); ctx.fillStyle = g; ctx.fillRect(0, 0, W, H);
+    ctx.fillStyle = 'rgba(255,255,255,.9)'; ctx.font = '900 120px Arial'; ctx.textAlign = 'center'; ctx.fillText('YOUR TEXT', W / 2, 860); ctx.fillText('HERE?', W / 2, 1000);
+    ctx.font = '700 64px Arial'; ctx.fillText('Caption placed too low', W / 2, 1700); ctx.font = '600 34px Arial'; ctx.fillStyle = 'rgba(255,255,255,.6)'; ctx.fillText('SAMPLE FRAME · add your own', W / 2, 1840);
+  }
+  function drawMedia() {
+    if (!media) return sample();
+    const mw = media.videoWidth || media.naturalWidth, mh = media.videoHeight || media.naturalHeight;
+    const s = Math.max(W / mw, H / mh); ctx.fillStyle = '#000'; ctx.fillRect(0, 0, W, H);
+    ctx.drawImage(media, (W - mw * s) / 2, (H - mh * s) / 2, mw * s, mh * s);
+  }
+  function zoneFor(p) { if (p !== 'all') return Z[p]; const v = Object.values(Z);
+    return { top: Math.max(...v.map(z => z.top)), bottom: Math.max(...v.map(z => z.bottom)), right: Math.max(...v.map(z => z.right)), left: Math.max(...v.map(z => z.left)), rightFrom: Math.min(...v.map(z => z.rightFrom)) }; }
+  function mockUI(z) { // generic button column + caption lines, not any app's real icons
+    ctx.fillStyle = 'rgba(255,255,255,.85)';
+    const x = W - z.right / 2; for (let i = 0; i < 4; i++) { ctx.beginPath(); ctx.arc(x, z.rightFrom + 90 + i * 170, 42, 0, 7); ctx.fill(); }
+    ctx.fillRect(z.left + 20, H - z.bottom + 120, 380, 34); ctx.fillRect(z.left + 20, H - z.bottom + 180, 620, 26); ctx.fillRect(z.left + 20, H - z.bottom + 222, 520, 26);
+    ctx.fillRect(W / 2 - 160, z.top / 2 - 14, 320, 28);
+  }
+  function draw() {
+    drawMedia();
+    const z = zoneFor(plat);
+    ctx.fillStyle = 'rgba(220,38,38,.42)';
+    ctx.fillRect(0, 0, W, z.top); ctx.fillRect(0, H - z.bottom, W, z.bottom);
+    ctx.fillRect(W - z.right, z.rightFrom, z.right, H - z.bottom - z.rightFrom); ctx.fillRect(0, z.top, z.left, H - z.top - z.bottom);
+    if (ui) mockUI(z);
+    ctx.setLineDash([24, 16]); ctx.lineWidth = 8; ctx.strokeStyle = '#16a34a';
+    ctx.beginPath(); ctx.moveTo(z.left, z.top); ctx.lineTo(W, z.top); ctx.lineTo(W, z.rightFrom); ctx.lineTo(W - z.right, z.rightFrom); ctx.lineTo(W - z.right, H - z.bottom); ctx.lineTo(z.left, H - z.bottom); ctx.closePath(); ctx.stroke(); ctx.setLineDash([]);
+    if (grid) { ctx.strokeStyle = 'rgba(255,255,255,.5)'; ctx.lineWidth = 3; [1, 2].forEach(k => { ctx.beginPath(); ctx.moveTo(W * k / 3, 0); ctx.lineTo(W * k / 3, H); ctx.moveTo(0, H * k / 3); ctx.lineTo(W, H * k / 3); ctx.stroke(); }); }
+  }
+  document.querySelectorAll('#sz-plat button').forEach(b => b.addEventListener('click', () => { plat = b.dataset.p; document.querySelectorAll('#sz-plat button').forEach(x => x.setAttribute('aria-pressed', x === b)); draw(); }));
+  $('sz-ui').addEventListener('click', () => { ui = !ui; $('sz-ui').setAttribute('aria-pressed', ui); draw(); });
+  $('sz-grid').addEventListener('click', () => { grid = !grid; $('sz-grid').setAttribute('aria-pressed', grid); draw(); });
+  $('sz-file').addEventListener('change', e => {
+    const f = e.target.files[0]; if (!f) return; const url = URL.createObjectURL(f);
+    if (f.type.startsWith('video/')) { const v = document.createElement('video'); v.muted = true; v.playsInline = true; v.preload = 'auto'; v.src = url;
+      v.addEventListener('loadeddata', () => { media = v; $('sz-seek-wrap').hidden = false; v.currentTime = Math.min(1, v.duration / 2); });
+      v.addEventListener('seeked', draw); }
+    else { const i = new Image(); i.onload = () => { media = i; $('sz-seek-wrap').hidden = true; draw(); }; i.src = url; }
+  });
+  $('sz-seek').addEventListener('input', () => { if (media && media.duration) media.currentTime = media.duration * $('sz-seek').value / 1000; });
+  draw();
+})();
+</script>
+<section class="copy"><h2>More free tools</h2><ul><li><a href="script-timer.html">Script Timer</a>: Paste a video or voiceover script to get its exact speaking time, a timestamp for every paragraph, and how many words you need for your target length.</li><li><a href="title-preview.html">Title &amp; Thumbnail Preview</a>: Preview your YouTube title and thumbnail in the home feed, search results, sidebar and phone app, in light and dark mode.</li><li><a href="caption-formatter.html">Instagram Caption Formatter</a>: Format Instagram captions with line breaks that don&#x27;t disappear, see where &quot;… more&quot; cuts your caption, and check the 2,200-character and 30-hashtag limits.</li></ul></section>
+<footer class="foot"><span>© 2026 Creator Bench · Free tools for creators. Not affiliated with YouTube, Instagram or TikTok.</span><span><a href="about.html">About</a> · <a href="privacy.html">Privacy</a> · <a href="terms.html">Terms</a> · <a href="contact.html">Contact</a></span></footer>
+</div>
+</body>
+</html>

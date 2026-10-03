@@ -1,0 +1,187 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Script Timer: how long will my video script take to read?</title>
+<meta name="description" content="Paste a video or voiceover script to get its exact speaking time, a timestamp for every paragraph, and how many words you need for your target length. Free, private, no sign-up.">
+<link rel="canonical" href="https://example.com/script-timer">
+<meta property="og:title" content="Script Timer: how long will my video script take to read?"><meta property="og:description" content="Paste a video or voiceover script to get its exact speaking time, a timestamp for every paragraph, and how many words you need for your target length. Free, private, no sign-up.">
+<meta property="og:type" content="website"><meta property="og:url" content="https://example.com/script-timer">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='12' fill='%235B3FD9'/%3E%3Cpath d='M22 18l26 14-26 14z' fill='white'/%3E%3C/svg%3E">
+<link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin><link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Archivo:wdth,wght@112,800;118,900;125,900&family=Public+Sans:wght@400;500;600;700&family=IBM+Plex+Mono:wght@500;600&display=swap">
+<style>/* Shared base for the creator tool sites. Each tool sets --accent / --accent-soft in its own :root.
+   Layout: one tool per page — header, tool panel(s), short how-to, FAQ, footer. */
+:root {
+  --bg: #EEEDF0; --panel: #FAFAFB; --ink: #18171C; --ink-2: #57555F; --rule: #D6D4DB; --field: #F2F1F4;
+  --accent: #5B3FD9; --accent-soft: #E6E0FB; --warn: #C2410C; --ok: #15803D; --hi: #F3D54E;
+  --display: "Archivo", "Arial Narrow", system-ui, sans-serif;
+  --body: "Public Sans", system-ui, -apple-system, "Segoe UI", sans-serif;
+  --mono: "IBM Plex Mono", ui-monospace, Menlo, monospace;
+}
+@media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) {
+  --bg: #121116; --panel: #1B1A21; --ink: #ECEBF0; --ink-2: #A6A3B1; --rule: #302E38; --field: #23222A;
+  --warn: #FB923C; --ok: #4ADE80; --hi: #D9BC3B; color-scheme: dark } }
+:root[data-theme="dark"] {
+  --bg: #121116; --panel: #1B1A21; --ink: #ECEBF0; --ink-2: #A6A3B1; --rule: #302E38; --field: #23222A;
+  --warn: #FB923C; --ok: #4ADE80; --hi: #D9BC3B; color-scheme: dark }
+
+* { box-sizing: border-box }
+[hidden] { display: none !important }
+body { background: var(--bg); color: var(--ink); font: 16px/1.55 var(--body); margin: 0 }
+.wrap { max-width: 1040px; margin: 0 auto; padding-inline: 20px; padding-block: 24px 56px; display: grid; gap: 26px }
+header.top { display: flex; flex-wrap: wrap; align-items: baseline; justify-content: space-between; gap: 8px 20px }
+.brand { font: 900 21px/1 var(--display); font-stretch: 125%; text-transform: uppercase; color: var(--ink); text-decoration: none }
+.brand span { color: var(--accent) }
+.nav { display: flex; gap: 16px; font-size: 14px; flex-wrap: wrap }
+.nav a { color: var(--ink-2); text-decoration: none } .nav a:hover { color: var(--ink); text-decoration: underline }
+h1 { font: 900 clamp(30px, 5.6vw, 54px)/1.02 var(--display); font-stretch: 118%; margin: 0; text-wrap: balance }
+h1 em { font-style: normal; color: var(--accent) }
+.lede { max-width: 64ch; color: var(--ink-2); margin: 10px 0 0; font-size: 17px }
+.panel { background: var(--panel); border: 1px solid var(--rule); border-radius: 8px; padding: 18px; display: grid; gap: 14px; min-width: 0 }
+.panel h2 { font: 800 13px/1 var(--display); font-stretch: 112%; text-transform: uppercase; letter-spacing: .1em; margin: 0; color: var(--ink-2) }
+.cols { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 20px; align-items: start }
+@media (max-width: 800px) { .cols { grid-template-columns: 1fr } }
+label { display: grid; gap: 6px; font-size: 14px; font-weight: 600 }
+.hint { font-weight: 400; color: var(--ink-2); font-size: 13px }
+input, select, textarea { width: 100%; font: 500 16px var(--body); color: var(--ink); background: var(--field); border: 1px solid var(--rule); border-radius: 6px; padding: 9px 11px; min-width: 0 }
+textarea { line-height: 1.6; resize: vertical }
+input[type=number] { font-family: var(--mono) }
+input:focus-visible, select:focus-visible, textarea:focus-visible, button:focus-visible, a:focus-visible { outline: 3px solid var(--accent); outline-offset: 2px }
+.seg { display: flex; flex-wrap: wrap; gap: 6px }
+.seg button { font: 600 13px var(--body); background: transparent; color: var(--ink-2); border: 1px solid var(--rule); border-radius: 999px; padding: 6px 12px; cursor: pointer }
+.seg button[aria-pressed="true"] { background: var(--accent); border-color: var(--accent); color: #fff }
+.btn { font: 600 14px var(--body); background: var(--ink); color: var(--panel); border: 0; border-radius: 6px; padding: 10px 16px; cursor: pointer }
+.btn.ghost { background: transparent; color: var(--ink); border: 1px solid var(--rule) }
+.row { display: flex; flex-wrap: wrap; gap: 10px; align-items: center }
+.big { font: 900 clamp(40px, 8vw, 72px)/1 var(--display); font-stretch: 118%; color: var(--accent); font-variant-numeric: tabular-nums }
+.stats { display: grid; grid-template-columns: repeat(auto-fit, minmax(120px, 1fr)); gap: 8px }
+.stat { background: var(--field); border: 1px solid var(--rule); border-radius: 6px; padding: 10px 12px; display: grid; gap: 2px }
+.stat span { font-size: 11px; color: var(--ink-2); text-transform: uppercase; letter-spacing: .08em }
+.stat b { font: 600 19px var(--mono); font-variant-numeric: tabular-nums; overflow-wrap: anywhere }
+.pill { display: inline-block; font: 600 12px var(--body); padding: 3px 9px; border-radius: 999px; background: var(--accent-soft); color: var(--ink) }
+.pill.warn { background: color-mix(in srgb, var(--warn) 18%, transparent); color: var(--warn) }
+.pill.ok { background: color-mix(in srgb, var(--ok) 18%, transparent); color: var(--ok) }
+.toast { font-size: 13px; color: var(--ok) }
+.tablewrap { overflow-x: auto }
+table { border-collapse: collapse; width: 100%; font-size: 14px }
+th, td { text-align: left; padding: 7px 8px; border-bottom: 1px solid var(--rule); vertical-align: top }
+th { font-size: 11px; text-transform: uppercase; letter-spacing: .08em; color: var(--ink-2) }
+td.t { font-family: var(--mono); white-space: nowrap; color: var(--accent); font-variant-numeric: tabular-nums }
+section.copy { display: grid; gap: 12px; max-width: 70ch }
+section.copy h2 { font: 800 24px/1.15 var(--display); font-stretch: 112%; margin: 0; text-wrap: balance }
+section.copy p, section.copy li { color: var(--ink-2) }
+details { border-top: 1px solid var(--rule); padding-block: 12px }
+details summary { font-weight: 700; cursor: pointer }
+details p { margin: 8px 0 0 }
+.ad-slot:empty { display: none }
+footer.foot { border-top: 1px solid var(--rule); padding-top: 16px; display: flex; flex-wrap: wrap; justify-content: space-between; gap: 10px; font-size: 13px; color: var(--ink-2) }
+footer.foot a { color: var(--ink-2) }
+@media (prefers-reduced-motion: reduce) { * { transition: none !important; animation: none !important } }
+</style><script type="application/ld+json">{"@context": "https://schema.org", "@type": "WebApplication", "name": "Script Timer", "url": "https://example.com/script-timer", "applicationCategory": "MultimediaApplication", "operatingSystem": "Any", "description": "Paste a video or voiceover script to get its exact speaking time, a timestamp for every paragraph, and how many words you need for your target length. Free, private, no sign-up.", "offers": {"@type": "Offer", "price": "0", "priceCurrency": "USD"}}</script><script type="application/ld+json">{"@context": "https://schema.org", "@type": "FAQPage", "mainEntity": [{"@type": "Question", "name": "How many words is a 10-minute YouTube video?", "acceptedAnswer": {"@type": "Answer", "text": "Roughly 1,500 words at a calm narration pace of 150 words per minute, or about 1,700 at a typical YouTube pace of 170."}}, {"@type": "Question", "name": "How many words fit in a 60-second Short or Reel?", "acceptedAnswer": {"@type": "Answer", "text": "About 130 to 170 words, depending on how fast you speak. Aim for the lower end if you want room for on-screen moments."}}, {"@type": "Question", "name": "Why are bracketed notes ignored?", "acceptedAnswer": {"@type": "Answer", "text": "Scripts usually contain directions like [B-roll] or (pause) that are never spoken. Leaving them out keeps the estimate accurate."}}, {"@type": "Question", "name": "How do I find my own speaking pace?", "acceptedAnswer": {"@type": "Answer", "text": "Record yourself reading one paragraph, note the seconds, then enter words \u00f7 seconds \u00d7 60 as your words per minute."}}, {"@type": "Question", "name": "Is my script uploaded anywhere?", "acceptedAnswer": {"@type": "Answer", "text": "No. Everything runs in your browser, and nothing you paste is sent to a server."}}]}</script>
+</head>
+<body>
+<div class="wrap">
+<header class="top"><a class="brand" href="index.html">Creator<span>Bench</span></a><nav class="nav" aria-label="Tools"><a href="script-timer.html">Script Timer</a><a href="title-preview.html">Title &amp; Thumbnail Preview</a><a href="safe-zones.html">Shorts &amp; Reels Safe Zones</a><a href="caption-formatter.html">Instagram Caption Formatter</a></nav></header>
+<div>
+  <h1>How long is your script <em>out loud?</em></h1>
+  <p class="lede">Paste your script. You get the speaking time, a timestamp for every paragraph, and how far you are from your target length. Notes in [brackets] or (parentheses) aren't counted.</p>
+</div>
+<div class="ad-slot"></div>
+<div class="cols">
+  <div class="panel">
+    <h2>Your script</h2>
+    <textarea id="st-text" rows="16" aria-label="Script text">A Formula 1 race is about 300 kilometres long. And the car finishes it without adding a single drop of fuel. [SFX: engine pass-by]
+
+Refuelling during races used to be normal. It was banned from 2010, to cut costs and the risk of fires in the pit lane.
+
+So every car starts the race carrying all the fuel it will ever need: up to 110 kilograms, in a tank right behind the driver. (Cut to: cutaway diagram)
+
+That works out to around 2 kilometres per litre. A family car does about 15.
+
+And as the fuel burns, the car gets lighter, and faster, lap after lap.</textarea>
+    <div class="row hint">Example script shown. Paste yours over it.</div>
+  </div>
+  <div class="panel" aria-live="polite">
+    <h2>Speaking pace</h2>
+    <div class="seg" id="st-pace" role="group" aria-label="Speaking pace">
+      <button type="button" data-wpm="120" aria-pressed="false">Slow · 120</button>
+      <button type="button" data-wpm="150" aria-pressed="true">Narration · 150</button>
+      <button type="button" data-wpm="170" aria-pressed="false">YouTube · 170</button>
+      <button type="button" data-wpm="190" aria-pressed="false">Fast · 190</button>
+    </div>
+    <label>Words per minute <input id="st-wpm" type="number" min="60" max="300" value="150"></label>
+    <div><div class="hint">Estimated length</div><div class="big" id="st-time">0:00</div></div>
+    <div class="stats" id="st-stats"></div>
+    <label>Target length <span class="hint">minutes:seconds, e.g. 8:00 or 0:60 for a Short</span><input id="st-target" value="1:00"></label>
+    <div id="st-target-msg"></div>
+  </div>
+</div>
+<div class="panel">
+  <h2>Paragraph timestamps</h2>
+  <div class="tablewrap"><table><thead><tr><th>Starts at</th><th>Length</th><th>Paragraph</th></tr></thead><tbody id="st-rows"></tbody></table></div>
+  <div class="row"><button type="button" class="btn" id="st-copy">Copy timestamps</button><span class="toast" id="st-toast" role="status"></span></div>
+</div>
+<div class="ad-slot"></div>
+<section class="copy" id="how">
+  <h2>How the timing works</h2>
+  <p>We count the words you will actually say, skipping anything inside [square brackets] or (parentheses), since those are usually camera or sound notes. Then we divide by your speaking pace. A pause of about half a second is added between paragraphs, which matches how most narrators breathe between ideas.</p>
+  <p>Most YouTube narration runs at 150 to 170 words per minute. A 60-second Short is about 150 words. A 10-minute video is roughly 1,500 to 1,700 words.</p>
+</section>
+<section class="copy" id="faq">
+  <h2>Questions</h2>
+  <details><summary>How many words is a 10-minute YouTube video?</summary><p>Roughly 1,500 words at a calm narration pace of 150 words per minute, or about 1,700 at a typical YouTube pace of 170.</p></details>
+  <details><summary>How many words fit in a 60-second Short or Reel?</summary><p>About 130 to 170 words, depending on how fast you speak. Aim for the lower end if you want room for on-screen moments.</p></details>
+  <details><summary>Why are bracketed notes ignored?</summary><p>Scripts usually contain directions like [B-roll] or (pause) that are never spoken. Leaving them out keeps the estimate accurate.</p></details>
+  <details><summary>How do I find my own speaking pace?</summary><p>Record yourself reading one paragraph, note the seconds, then enter words ÷ seconds × 60 as your words per minute.</p></details>
+  <details><summary>Is my script uploaded anywhere?</summary><p>No. Everything runs in your browser, and nothing you paste is sent to a server.</p></details>
+</section>
+<script>
+(() => {
+  const $ = id => document.getElementById(id);
+  const PAUSE = 0.5; // seconds between paragraphs
+  const spoken = s => s.replace(/\[[^\]]*\]|\([^)]*\)/g, ' ');
+  const words = s => (spoken(s).match(/[\p{L}\p{N}'’-]+/gu) || []).length;
+  const fmt = sec => { sec = Math.max(0, Math.round(sec)); const h = Math.floor(sec / 3600), m = Math.floor(sec % 3600 / 60), s = sec % 60;
+    return (h ? h + ':' + String(m).padStart(2, '0') : m) + ':' + String(s).padStart(2, '0'); };
+  const parseT = v => { const p = String(v).trim().split(':').map(Number); if (p.some(isNaN)) return null; return p.length === 1 ? p[0] * 60 : p.length === 2 ? p[0] * 60 + p[1] : p[0] * 3600 + p[1] * 60 + p[2]; };
+  try { const s = JSON.parse(localStorage.getItem('st-v1') || 'null'); if (s) { $('st-text').value = s.text; $('st-wpm').value = s.wpm; $('st-target').value = s.target; } } catch (e) {}
+  function calc() {
+    const wpm = Math.max(60, Math.min(300, +$('st-wpm').value || 150));
+    document.querySelectorAll('#st-pace button').forEach(b => b.setAttribute('aria-pressed', +b.dataset.wpm === wpm));
+    const paras = $('st-text').value.split(/\n\s*\n/).map(p => p.trim()).filter(Boolean);
+    let t = 0, rows = '', total = 0, copy = [];
+    paras.forEach((p, i) => { const w = words(p); const d = w / wpm * 60; total += w;
+      const preview = p.length > 110 ? p.slice(0, 110) + '…' : p;
+      rows += `<tr><td class="t">${fmt(t)}</td><td class="t">${fmt(d)}</td><td>${preview.replace(/[&<>]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;' }[c]))}</td></tr>`;
+      copy.push(fmt(t) + ' ' + p.split(/\s+/).slice(0, 8).join(' ') + '…');
+      t += d + (i < paras.length - 1 ? PAUSE : 0); });
+    $('st-rows').innerHTML = rows || '<tr><td colspan="3" class="hint">Paste a script to see timestamps.</td></tr>';
+    $('st-time').textContent = fmt(t);
+    const chars = $('st-text').value.length;
+    $('st-stats').innerHTML = [['Spoken words', total.toLocaleString()], ['Paragraphs', paras.length], ['Characters', chars.toLocaleString()], ['Avg paragraph', paras.length ? fmt(t / paras.length) : '0:00']]
+      .map(([k, v]) => `<div class="stat"><span>${k}</span><b>${v}</b></div>`).join('');
+    const target = parseT($('st-target').value);
+    if (target && target > 0) {
+      const need = Math.round(target / 60 * wpm), diff = need - total;
+      $('st-target-msg').innerHTML = Math.abs(diff) <= Math.max(5, need * 0.03)
+        ? `<span class="pill ok">On target</span> about ${need.toLocaleString()} words fits ${fmt(target)}.`
+        : diff > 0 ? `<span class="pill">${diff.toLocaleString()} words short</span> about ${need.toLocaleString()} words fits ${fmt(target)}.`
+        : `<span class="pill warn">${(-diff).toLocaleString()} words over</span> cut to about ${need.toLocaleString()} words for ${fmt(target)}.`;
+    } else $('st-target-msg').textContent = '';
+    $('st-copy').dataset.text = copy.join('\n');
+    try { localStorage.setItem('st-v1', JSON.stringify({ text: $('st-text').value, wpm, target: $('st-target').value })); } catch (e) {}
+  }
+  document.querySelectorAll('#st-pace button').forEach(b => b.addEventListener('click', () => { $('st-wpm').value = b.dataset.wpm; calc(); }));
+  ['st-text', 'st-wpm', 'st-target'].forEach(id => $(id).addEventListener('input', calc));
+  $('st-copy').addEventListener('click', () => { const t = $('st-copy').dataset.text || '';
+    navigator.clipboard?.writeText(t).then(() => { $('st-toast').textContent = 'Copied'; setTimeout(() => $('st-toast').textContent = '', 1600); },
+      () => { $('st-toast').textContent = 'Copy blocked here. Select the table instead.'; }); });
+  calc();
+})();
+</script>
+<section class="copy"><h2>More free tools</h2><ul><li><a href="title-preview.html">Title &amp; Thumbnail Preview</a>: Preview your YouTube title and thumbnail in the home feed, search results, sidebar and phone app, in light and dark mode.</li><li><a href="safe-zones.html">Shorts &amp; Reels Safe Zones</a>: Drop in a vertical video or frame and see which parts the TikTok, Instagram Reels and YouTube Shorts buttons and captions cover.</li><li><a href="caption-formatter.html">Instagram Caption Formatter</a>: Format Instagram captions with line breaks that don&#x27;t disappear, see where &quot;… more&quot; cuts your caption, and check the 2,200-character and 30-hashtag limits.</li></ul></section>
+<footer class="foot"><span>© 2026 Creator Bench · Free tools for creators. Not affiliated with YouTube, Instagram or TikTok.</span><span><a href="about.html">About</a> · <a href="privacy.html">Privacy</a> · <a href="terms.html">Terms</a> · <a href="contact.html">Contact</a></span></footer>
+</div>
+</body>
+</html>

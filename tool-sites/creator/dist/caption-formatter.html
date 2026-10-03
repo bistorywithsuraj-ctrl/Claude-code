@@ -1,0 +1,191 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Instagram Caption Formatter: line breaks that stick, plus limits and preview</title>
+<meta name="description" content="Format Instagram captions with line breaks that don&#x27;t disappear, see where &quot;… more&quot; cuts your caption, and check the 2,200-character and 30-hashtag limits. Free, private.">
+<link rel="canonical" href="https://example.com/caption-formatter">
+<meta property="og:title" content="Instagram Caption Formatter: line breaks that stick, plus limits and preview"><meta property="og:description" content="Format Instagram captions with line breaks that don&#x27;t disappear, see where &quot;… more&quot; cuts your caption, and check the 2,200-character and 30-hashtag limits. Free, private.">
+<meta property="og:type" content="website"><meta property="og:url" content="https://example.com/caption-formatter">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='12' fill='%235B3FD9'/%3E%3Cpath d='M22 18l26 14-26 14z' fill='white'/%3E%3C/svg%3E">
+<link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin><link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Archivo:wdth,wght@112,800;118,900;125,900&family=Public+Sans:wght@400;500;600;700&family=IBM+Plex+Mono:wght@500;600&display=swap">
+<style>/* Shared base for the creator tool sites. Each tool sets --accent / --accent-soft in its own :root.
+   Layout: one tool per page — header, tool panel(s), short how-to, FAQ, footer. */
+:root {
+  --bg: #EEEDF0; --panel: #FAFAFB; --ink: #18171C; --ink-2: #57555F; --rule: #D6D4DB; --field: #F2F1F4;
+  --accent: #5B3FD9; --accent-soft: #E6E0FB; --warn: #C2410C; --ok: #15803D; --hi: #F3D54E;
+  --display: "Archivo", "Arial Narrow", system-ui, sans-serif;
+  --body: "Public Sans", system-ui, -apple-system, "Segoe UI", sans-serif;
+  --mono: "IBM Plex Mono", ui-monospace, Menlo, monospace;
+}
+@media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) {
+  --bg: #121116; --panel: #1B1A21; --ink: #ECEBF0; --ink-2: #A6A3B1; --rule: #302E38; --field: #23222A;
+  --warn: #FB923C; --ok: #4ADE80; --hi: #D9BC3B; color-scheme: dark } }
+:root[data-theme="dark"] {
+  --bg: #121116; --panel: #1B1A21; --ink: #ECEBF0; --ink-2: #A6A3B1; --rule: #302E38; --field: #23222A;
+  --warn: #FB923C; --ok: #4ADE80; --hi: #D9BC3B; color-scheme: dark }
+
+* { box-sizing: border-box }
+[hidden] { display: none !important }
+body { background: var(--bg); color: var(--ink); font: 16px/1.55 var(--body); margin: 0 }
+.wrap { max-width: 1040px; margin: 0 auto; padding-inline: 20px; padding-block: 24px 56px; display: grid; gap: 26px }
+header.top { display: flex; flex-wrap: wrap; align-items: baseline; justify-content: space-between; gap: 8px 20px }
+.brand { font: 900 21px/1 var(--display); font-stretch: 125%; text-transform: uppercase; color: var(--ink); text-decoration: none }
+.brand span { color: var(--accent) }
+.nav { display: flex; gap: 16px; font-size: 14px; flex-wrap: wrap }
+.nav a { color: var(--ink-2); text-decoration: none } .nav a:hover { color: var(--ink); text-decoration: underline }
+h1 { font: 900 clamp(30px, 5.6vw, 54px)/1.02 var(--display); font-stretch: 118%; margin: 0; text-wrap: balance }
+h1 em { font-style: normal; color: var(--accent) }
+.lede { max-width: 64ch; color: var(--ink-2); margin: 10px 0 0; font-size: 17px }
+.panel { background: var(--panel); border: 1px solid var(--rule); border-radius: 8px; padding: 18px; display: grid; gap: 14px; min-width: 0 }
+.panel h2 { font: 800 13px/1 var(--display); font-stretch: 112%; text-transform: uppercase; letter-spacing: .1em; margin: 0; color: var(--ink-2) }
+.cols { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 20px; align-items: start }
+@media (max-width: 800px) { .cols { grid-template-columns: 1fr } }
+label { display: grid; gap: 6px; font-size: 14px; font-weight: 600 }
+.hint { font-weight: 400; color: var(--ink-2); font-size: 13px }
+input, select, textarea { width: 100%; font: 500 16px var(--body); color: var(--ink); background: var(--field); border: 1px solid var(--rule); border-radius: 6px; padding: 9px 11px; min-width: 0 }
+textarea { line-height: 1.6; resize: vertical }
+input[type=number] { font-family: var(--mono) }
+input:focus-visible, select:focus-visible, textarea:focus-visible, button:focus-visible, a:focus-visible { outline: 3px solid var(--accent); outline-offset: 2px }
+.seg { display: flex; flex-wrap: wrap; gap: 6px }
+.seg button { font: 600 13px var(--body); background: transparent; color: var(--ink-2); border: 1px solid var(--rule); border-radius: 999px; padding: 6px 12px; cursor: pointer }
+.seg button[aria-pressed="true"] { background: var(--accent); border-color: var(--accent); color: #fff }
+.btn { font: 600 14px var(--body); background: var(--ink); color: var(--panel); border: 0; border-radius: 6px; padding: 10px 16px; cursor: pointer }
+.btn.ghost { background: transparent; color: var(--ink); border: 1px solid var(--rule) }
+.row { display: flex; flex-wrap: wrap; gap: 10px; align-items: center }
+.big { font: 900 clamp(40px, 8vw, 72px)/1 var(--display); font-stretch: 118%; color: var(--accent); font-variant-numeric: tabular-nums }
+.stats { display: grid; grid-template-columns: repeat(auto-fit, minmax(120px, 1fr)); gap: 8px }
+.stat { background: var(--field); border: 1px solid var(--rule); border-radius: 6px; padding: 10px 12px; display: grid; gap: 2px }
+.stat span { font-size: 11px; color: var(--ink-2); text-transform: uppercase; letter-spacing: .08em }
+.stat b { font: 600 19px var(--mono); font-variant-numeric: tabular-nums; overflow-wrap: anywhere }
+.pill { display: inline-block; font: 600 12px var(--body); padding: 3px 9px; border-radius: 999px; background: var(--accent-soft); color: var(--ink) }
+.pill.warn { background: color-mix(in srgb, var(--warn) 18%, transparent); color: var(--warn) }
+.pill.ok { background: color-mix(in srgb, var(--ok) 18%, transparent); color: var(--ok) }
+.toast { font-size: 13px; color: var(--ok) }
+.tablewrap { overflow-x: auto }
+table { border-collapse: collapse; width: 100%; font-size: 14px }
+th, td { text-align: left; padding: 7px 8px; border-bottom: 1px solid var(--rule); vertical-align: top }
+th { font-size: 11px; text-transform: uppercase; letter-spacing: .08em; color: var(--ink-2) }
+td.t { font-family: var(--mono); white-space: nowrap; color: var(--accent); font-variant-numeric: tabular-nums }
+section.copy { display: grid; gap: 12px; max-width: 70ch }
+section.copy h2 { font: 800 24px/1.15 var(--display); font-stretch: 112%; margin: 0; text-wrap: balance }
+section.copy p, section.copy li { color: var(--ink-2) }
+details { border-top: 1px solid var(--rule); padding-block: 12px }
+details summary { font-weight: 700; cursor: pointer }
+details p { margin: 8px 0 0 }
+.ad-slot:empty { display: none }
+footer.foot { border-top: 1px solid var(--rule); padding-top: 16px; display: flex; flex-wrap: wrap; justify-content: space-between; gap: 10px; font-size: 13px; color: var(--ink-2) }
+footer.foot a { color: var(--ink-2) }
+@media (prefers-reduced-motion: reduce) { * { transition: none !important; animation: none !important } }
+</style><script type="application/ld+json">{"@context": "https://schema.org", "@type": "WebApplication", "name": "Instagram Caption Formatter", "url": "https://example.com/caption-formatter", "applicationCategory": "MultimediaApplication", "operatingSystem": "Any", "description": "Format Instagram captions with line breaks that don't disappear, see where \"\u2026 more\" cuts your caption, and check the 2,200-character and 30-hashtag limits. Free, private.", "offers": {"@type": "Offer", "price": "0", "priceCurrency": "USD"}}</script><script type="application/ld+json">{"@context": "https://schema.org", "@type": "FAQPage", "mainEntity": [{"@type": "Question", "name": "What is the Instagram caption limit?", "acceptedAnswer": {"@type": "Answer", "text": "2,200 characters, including spaces, emoji, line breaks and hashtags."}}, {"@type": "Question", "name": "How many hashtags can I use?", "acceptedAnswer": {"@type": "Answer", "text": "Up to 30 per post. Instagram itself suggests 3 to 5 relevant ones work best."}}, {"@type": "Question", "name": "Why do my line breaks disappear?", "acceptedAnswer": {"@type": "Answer", "text": "Instagram can strip lines that contain nothing, including lines ending in a space. Formatting the caption here adds an invisible character so each blank line is kept."}}, {"@type": "Question", "name": "Does this work for TikTok and Threads?", "acceptedAnswer": {"@type": "Answer", "text": "The formatting works anywhere you paste it. The limits shown here are Instagram's: TikTok allows 4,000 characters and Threads 500."}}, {"@type": "Question", "name": "Is my caption saved anywhere?", "acceptedAnswer": {"@type": "Answer", "text": "Only in your own browser, so it's still there if you come back. It's never sent to a server."}}]}</script>
+</head>
+<body>
+<div class="wrap">
+<header class="top"><a class="brand" href="index.html">Creator<span>Bench</span></a><nav class="nav" aria-label="Tools"><a href="script-timer.html">Script Timer</a><a href="title-preview.html">Title &amp; Thumbnail Preview</a><a href="safe-zones.html">Shorts &amp; Reels Safe Zones</a><a href="caption-formatter.html">Instagram Caption Formatter</a></nav></header>
+<style>
+.ig { max-width: 420px; border: 1px solid var(--rule); border-radius: 10px; background: var(--field); padding: 12px 14px; font: 14px/1.45 -apple-system, "Segoe UI", Roboto, Arial, sans-serif; overflow-wrap: anywhere }
+.ig b { font-weight: 600 }
+.ig .more { color: var(--ink-2) }
+.ig .tag { color: #4F6BD8 }
+.meter { height: 8px; border-radius: 999px; background: var(--field); overflow: hidden; border: 1px solid var(--rule) }
+.meter i { display: block; height: 100%; background: var(--accent) }
+.meter i.over { background: var(--warn) }
+</style>
+<div>
+  <h1>Captions with <em>line breaks that stick</em></h1>
+  <p class="lede">Write or paste your caption. We keep your blank lines from disappearing when you post, show where Instagram cuts it off with "… more", and check every limit.</p>
+</div>
+<div class="ad-slot"></div>
+<div class="cols">
+  <div class="panel">
+    <h2>Your caption</h2>
+    <textarea id="cf-text" rows="14" aria-label="Caption">Your phone costs more than you think. 📱
+
+We worked it out in hours of work, not dollars.
+
+The answer surprised us: a new phone is about a full working week for most people.
+
+Would you still buy it?
+
+#personalfinance #moneytips #budgeting #savemoney</textarea>
+    <div class="row">
+      <button type="button" class="btn ghost" id="cf-tags-end">Move hashtags to the end</button>
+      <button type="button" class="btn ghost" id="cf-dedupe">Remove duplicate hashtags</button>
+    </div>
+    <div class="hint">Example caption shown. Paste yours over it.</div>
+  </div>
+  <div class="panel" aria-live="polite">
+    <h2>Checks</h2>
+    <div class="stats" id="cf-stats"></div>
+    <div><div class="hint" id="cf-meter-label"></div><div class="meter"><i id="cf-meter"></i></div></div>
+    <div id="cf-flags" style="display:grid;gap:6px"></div>
+    <h2>Feed preview</h2>
+    <div class="ig" id="cf-preview"></div>
+    <div class="row"><button type="button" class="btn" id="cf-copy">Copy formatted caption</button><span class="toast" id="cf-toast" role="status"></span></div>
+  </div>
+</div>
+<div class="ad-slot"></div>
+<section class="copy" id="how">
+  <h2>How the line-break fix works</h2>
+  <p>Instagram sometimes deletes empty lines, squashing your paragraphs together. We put an invisible blank character on each empty line, so the gap survives but nothing shows. Each one counts as a single character toward the limit.</p>
+  <p>In the feed, Instagram shows roughly the first 125 characters (or the first couple of lines) and hides the rest behind "… more". Put your hook there.</p>
+</section>
+<section class="copy" id="faq">
+  <h2>Questions</h2>
+  <details><summary>What is the Instagram caption limit?</summary><p>2,200 characters, including spaces, emoji, line breaks and hashtags.</p></details>
+  <details><summary>How many hashtags can I use?</summary><p>Up to 30 per post. Instagram itself suggests 3 to 5 relevant ones work best.</p></details>
+  <details><summary>Why do my line breaks disappear?</summary><p>Instagram can strip lines that contain nothing, including lines ending in a space. Formatting the caption here adds an invisible character so each blank line is kept.</p></details>
+  <details><summary>Does this work for TikTok and Threads?</summary><p>The formatting works anywhere you paste it. The limits shown here are Instagram's: TikTok allows 4,000 characters and Threads 500.</p></details>
+  <details><summary>Is my caption saved anywhere?</summary><p>Only in your own browser, so it's still there if you come back. It's never sent to a server.</p></details>
+</section>
+<script>
+(() => {
+  const $ = id => document.getElementById(id);
+  const BLANK = '⠀'; // braille blank, renders as empty space
+  const LIMIT = 2200, FOLD = 125;
+  const esc = s => s.replace(/[&<>]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;' }[c]));
+  const tagsOf = s => s.match(/#[\p{L}\p{N}_]+/gu) || [];
+  const fmt = s => s.replace(/\r/g, '').split('\n').map(l => l.replace(/\s+$/, '')).map(l => l === '' ? BLANK : l).join('\n').replace(new RegExp('^' + BLANK + '+\\n|\\n' + BLANK + '+$', 'g'), '');
+  const count = s => [...s].length; // count emoji as one, close to how Instagram counts
+  try { const v = localStorage.getItem('cf-v1'); if (v) $('cf-text').value = v; } catch (e) {}
+  function calc() {
+    const raw = $('cf-text').value, out = fmt(raw), n = count(out), tags = tagsOf(raw), mentions = (raw.match(/@[\w.]+/g) || []).length;
+    const uniq = new Set(tags.map(t => t.toLowerCase())).size;
+    $('cf-stats').innerHTML = [['Characters', `${n.toLocaleString()} / 2,200`], ['Hashtags', `${tags.length} / 30`], ['Mentions', mentions], ['Lines', out.split('\n').length]]
+      .map(([k, v]) => `<div class="stat"><span>${k}</span><b>${v}</b></div>`).join('');
+    const pct = Math.min(100, n / LIMIT * 100); $('cf-meter').style.width = pct + '%'; $('cf-meter').className = n > LIMIT ? 'over' : '';
+    $('cf-meter-label').textContent = n > LIMIT ? `${(n - LIMIT).toLocaleString()} characters over the limit` : `${(LIMIT - n).toLocaleString()} characters left`;
+    const flags = [];
+    if (tags.length > 30) flags.push(['warn', `Too many hashtags: Instagram allows 30, you have ${tags.length}.`]);
+    else if (tags.length > 5) flags.push(['', `${tags.length} hashtags. Instagram suggests 3–5 relevant ones.`]);
+    if (uniq < tags.length) flags.push(['warn', `${tags.length - uniq} duplicate hashtag${tags.length - uniq > 1 ? 's' : ''}.`]);
+    const first = out.split('\n')[0] || '';
+    if (count(first) > FOLD) flags.push(['', 'Your first line is longer than what shows before "… more". Consider a shorter hook.']);
+    if (!flags.length && raw.trim()) flags.push(['ok', 'Looks good.']);
+    $('cf-flags').innerHTML = flags.map(([c, t]) => `<div><span class="pill ${c}">${c === 'warn' ? 'Fix' : c === 'ok' ? 'OK' : 'Tip'}</span> ${t}</div>`).join('');
+    // preview: username + text up to the fold, then "… more"
+    let shown = out, cut = false; const lines = out.split('\n');
+    if (count(out) > FOLD || lines.length > 2) { const two = lines.slice(0, 2).join('\n'); shown = [...two].slice(0, FOLD).join(''); cut = true; }
+    const pretty = esc(shown).replace(/#[\p{L}\p{N}_]+/gu, m => `<span class="tag">${m}</span>`).replace(/\n/g, '<br>');
+    $('cf-preview').innerHTML = `<b>yourhandle</b> ${pretty}${cut ? '<span class="more">… more</span>' : ''}`;
+    $('cf-copy').dataset.text = out;
+    try { localStorage.setItem('cf-v1', raw); } catch (e) {}
+  }
+  $('cf-text').addEventListener('input', calc);
+  $('cf-tags-end').addEventListener('click', () => { const raw = $('cf-text').value, tags = tagsOf(raw);
+    const body = raw.replace(/#[\p{L}\p{N}_]+/gu, '').replace(/[ \t]+\n/g, '\n').replace(/\n{3,}/g, '\n\n').trim();
+    $('cf-text').value = body + (tags.length ? '\n\n.\n\n' + tags.join(' ') : ''); calc(); });
+  $('cf-dedupe').addEventListener('click', () => { const seen = new Set();
+    $('cf-text').value = $('cf-text').value.replace(/#[\p{L}\p{N}_]+/gu, m => { const k = m.toLowerCase(); if (seen.has(k)) return ''; seen.add(k); return m; }).replace(/ {2,}/g, ' '); calc(); });
+  $('cf-copy').addEventListener('click', () => navigator.clipboard?.writeText($('cf-copy').dataset.text || '').then(
+    () => { $('cf-toast').textContent = 'Copied. Paste it straight into Instagram.'; setTimeout(() => $('cf-toast').textContent = '', 2200); },
+    () => { $('cf-toast').textContent = 'Copy blocked here. Select the text and copy it.'; }));
+  calc();
+})();
+</script>
+<section class="copy"><h2>More free tools</h2><ul><li><a href="script-timer.html">Script Timer</a>: Paste a video or voiceover script to get its exact speaking time, a timestamp for every paragraph, and how many words you need for your target length.</li><li><a href="title-preview.html">Title &amp; Thumbnail Preview</a>: Preview your YouTube title and thumbnail in the home feed, search results, sidebar and phone app, in light and dark mode.</li><li><a href="safe-zones.html">Shorts &amp; Reels Safe Zones</a>: Drop in a vertical video or frame and see which parts the TikTok, Instagram Reels and YouTube Shorts buttons and captions cover.</li></ul></section>
+<footer class="foot"><span>© 2026 Creator Bench · Free tools for creators. Not affiliated with YouTube, Instagram or TikTok.</span><span><a href="about.html">About</a> · <a href="privacy.html">Privacy</a> · <a href="terms.html">Terms</a> · <a href="contact.html">Contact</a></span></footer>
+</div>
+</body>
+</html>

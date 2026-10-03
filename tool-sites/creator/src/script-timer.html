@@ -1,0 +1,103 @@
+<!--meta
+slug: script-timer
+title: Script Timer: how long will my video script take to read?
+name: Script Timer
+desc: Paste a video or voiceover script to get its exact speaking time, a timestamp for every paragraph, and how many words you need for your target length. Free, private, no sign-up.
+-->
+<div>
+  <h1>How long is your script <em>out loud?</em></h1>
+  <p class="lede">Paste your script. You get the speaking time, a timestamp for every paragraph, and how far you are from your target length. Notes in [brackets] or (parentheses) aren't counted.</p>
+</div>
+<div class="ad-slot" data-slot="top"></div>
+<div class="cols">
+  <div class="panel">
+    <h2>Your script</h2>
+    <textarea id="st-text" rows="16" aria-label="Script text">A Formula 1 race is about 300 kilometres long. And the car finishes it without adding a single drop of fuel. [SFX: engine pass-by]
+
+Refuelling during races used to be normal. It was banned from 2010, to cut costs and the risk of fires in the pit lane.
+
+So every car starts the race carrying all the fuel it will ever need: up to 110 kilograms, in a tank right behind the driver. (Cut to: cutaway diagram)
+
+That works out to around 2 kilometres per litre. A family car does about 15.
+
+And as the fuel burns, the car gets lighter, and faster, lap after lap.</textarea>
+    <div class="row hint">Example script shown. Paste yours over it.</div>
+  </div>
+  <div class="panel" aria-live="polite">
+    <h2>Speaking pace</h2>
+    <div class="seg" id="st-pace" role="group" aria-label="Speaking pace">
+      <button type="button" data-wpm="120" aria-pressed="false">Slow · 120</button>
+      <button type="button" data-wpm="150" aria-pressed="true">Narration · 150</button>
+      <button type="button" data-wpm="170" aria-pressed="false">YouTube · 170</button>
+      <button type="button" data-wpm="190" aria-pressed="false">Fast · 190</button>
+    </div>
+    <label>Words per minute <input id="st-wpm" type="number" min="60" max="300" value="150"></label>
+    <div><div class="hint">Estimated length</div><div class="big" id="st-time">0:00</div></div>
+    <div class="stats" id="st-stats"></div>
+    <label>Target length <span class="hint">minutes:seconds, e.g. 8:00 or 0:60 for a Short</span><input id="st-target" value="1:00"></label>
+    <div id="st-target-msg"></div>
+  </div>
+</div>
+<div class="panel">
+  <h2>Paragraph timestamps</h2>
+  <div class="tablewrap"><table><thead><tr><th>Starts at</th><th>Length</th><th>Paragraph</th></tr></thead><tbody id="st-rows"></tbody></table></div>
+  <div class="row"><button type="button" class="btn" id="st-copy">Copy timestamps</button><span class="toast" id="st-toast" role="status"></span></div>
+</div>
+<div class="ad-slot" data-slot="mid"></div>
+<section class="copy" id="how">
+  <h2>How the timing works</h2>
+  <p>We count the words you will actually say, skipping anything inside [square brackets] or (parentheses), since those are usually camera or sound notes. Then we divide by your speaking pace. A pause of about half a second is added between paragraphs, which matches how most narrators breathe between ideas.</p>
+  <p>Most YouTube narration runs at 150 to 170 words per minute. A 60-second Short is about 150 words. A 10-minute video is roughly 1,500 to 1,700 words.</p>
+</section>
+<section class="copy" id="faq">
+  <h2>Questions</h2>
+  <details><summary>How many words is a 10-minute YouTube video?</summary><p>Roughly 1,500 words at a calm narration pace of 150 words per minute, or about 1,700 at a typical YouTube pace of 170.</p></details>
+  <details><summary>How many words fit in a 60-second Short or Reel?</summary><p>About 130 to 170 words, depending on how fast you speak. Aim for the lower end if you want room for on-screen moments.</p></details>
+  <details><summary>Why are bracketed notes ignored?</summary><p>Scripts usually contain directions like [B-roll] or (pause) that are never spoken. Leaving them out keeps the estimate accurate.</p></details>
+  <details><summary>How do I find my own speaking pace?</summary><p>Record yourself reading one paragraph, note the seconds, then enter words ÷ seconds × 60 as your words per minute.</p></details>
+  <details><summary>Is my script uploaded anywhere?</summary><p>No. Everything runs in your browser, and nothing you paste is sent to a server.</p></details>
+</section>
+<script>
+(() => {
+  const $ = id => document.getElementById(id);
+  const PAUSE = 0.5; // seconds between paragraphs
+  const spoken = s => s.replace(/\[[^\]]*\]|\([^)]*\)/g, ' ');
+  const words = s => (spoken(s).match(/[\p{L}\p{N}'’-]+/gu) || []).length;
+  const fmt = sec => { sec = Math.max(0, Math.round(sec)); const h = Math.floor(sec / 3600), m = Math.floor(sec % 3600 / 60), s = sec % 60;
+    return (h ? h + ':' + String(m).padStart(2, '0') : m) + ':' + String(s).padStart(2, '0'); };
+  const parseT = v => { const p = String(v).trim().split(':').map(Number); if (p.some(isNaN)) return null; return p.length === 1 ? p[0] * 60 : p.length === 2 ? p[0] * 60 + p[1] : p[0] * 3600 + p[1] * 60 + p[2]; };
+  try { const s = JSON.parse(localStorage.getItem('st-v1') || 'null'); if (s) { $('st-text').value = s.text; $('st-wpm').value = s.wpm; $('st-target').value = s.target; } } catch (e) {}
+  function calc() {
+    const wpm = Math.max(60, Math.min(300, +$('st-wpm').value || 150));
+    document.querySelectorAll('#st-pace button').forEach(b => b.setAttribute('aria-pressed', +b.dataset.wpm === wpm));
+    const paras = $('st-text').value.split(/\n\s*\n/).map(p => p.trim()).filter(Boolean);
+    let t = 0, rows = '', total = 0, copy = [];
+    paras.forEach((p, i) => { const w = words(p); const d = w / wpm * 60; total += w;
+      const preview = p.length > 110 ? p.slice(0, 110) + '…' : p;
+      rows += `<tr><td class="t">${fmt(t)}</td><td class="t">${fmt(d)}</td><td>${preview.replace(/[&<>]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;' }[c]))}</td></tr>`;
+      copy.push(fmt(t) + ' ' + p.split(/\s+/).slice(0, 8).join(' ') + '…');
+      t += d + (i < paras.length - 1 ? PAUSE : 0); });
+    $('st-rows').innerHTML = rows || '<tr><td colspan="3" class="hint">Paste a script to see timestamps.</td></tr>';
+    $('st-time').textContent = fmt(t);
+    const chars = $('st-text').value.length;
+    $('st-stats').innerHTML = [['Spoken words', total.toLocaleString()], ['Paragraphs', paras.length], ['Characters', chars.toLocaleString()], ['Avg paragraph', paras.length ? fmt(t / paras.length) : '0:00']]
+      .map(([k, v]) => `<div class="stat"><span>${k}</span><b>${v}</b></div>`).join('');
+    const target = parseT($('st-target').value);
+    if (target && target > 0) {
+      const need = Math.round(target / 60 * wpm), diff = need - total;
+      $('st-target-msg').innerHTML = Math.abs(diff) <= Math.max(5, need * 0.03)
+        ? `<span class="pill ok">On target</span> about ${need.toLocaleString()} words fits ${fmt(target)}.`
+        : diff > 0 ? `<span class="pill">${diff.toLocaleString()} words short</span> about ${need.toLocaleString()} words fits ${fmt(target)}.`
+        : `<span class="pill warn">${(-diff).toLocaleString()} words over</span> cut to about ${need.toLocaleString()} words for ${fmt(target)}.`;
+    } else $('st-target-msg').textContent = '';
+    $('st-copy').dataset.text = copy.join('\n');
+    try { localStorage.setItem('st-v1', JSON.stringify({ text: $('st-text').value, wpm, target: $('st-target').value })); } catch (e) {}
+  }
+  document.querySelectorAll('#st-pace button').forEach(b => b.addEventListener('click', () => { $('st-wpm').value = b.dataset.wpm; calc(); }));
+  ['st-text', 'st-wpm', 'st-target'].forEach(id => $(id).addEventListener('input', calc));
+  $('st-copy').addEventListener('click', () => { const t = $('st-copy').dataset.text || '';
+    navigator.clipboard?.writeText(t).then(() => { $('st-toast').textContent = 'Copied'; setTimeout(() => $('st-toast').textContent = '', 1600); },
+      () => { $('st-toast').textContent = 'Copy blocked here. Select the table instead.'; }); });
+  calc();
+})();
+</script>

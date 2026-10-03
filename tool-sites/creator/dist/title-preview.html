@@ -1,0 +1,217 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>YouTube Title &amp; Thumbnail Preview: see where your title gets cut off</title>
+<meta name="description" content="Preview your YouTube title and thumbnail in the home feed, search results, sidebar and phone app, in light and dark mode. See exactly where the title gets cut off. Free, private.">
+<link rel="canonical" href="https://example.com/title-preview">
+<meta property="og:title" content="YouTube Title &amp; Thumbnail Preview: see where your title gets cut off"><meta property="og:description" content="Preview your YouTube title and thumbnail in the home feed, search results, sidebar and phone app, in light and dark mode. See exactly where the title gets cut off. Free, private.">
+<meta property="og:type" content="website"><meta property="og:url" content="https://example.com/title-preview">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='12' fill='%235B3FD9'/%3E%3Cpath d='M22 18l26 14-26 14z' fill='white'/%3E%3C/svg%3E">
+<link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin><link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Archivo:wdth,wght@112,800;118,900;125,900&family=Public+Sans:wght@400;500;600;700&family=IBM+Plex+Mono:wght@500;600&display=swap">
+<style>/* Shared base for the creator tool sites. Each tool sets --accent / --accent-soft in its own :root.
+   Layout: one tool per page — header, tool panel(s), short how-to, FAQ, footer. */
+:root {
+  --bg: #EEEDF0; --panel: #FAFAFB; --ink: #18171C; --ink-2: #57555F; --rule: #D6D4DB; --field: #F2F1F4;
+  --accent: #5B3FD9; --accent-soft: #E6E0FB; --warn: #C2410C; --ok: #15803D; --hi: #F3D54E;
+  --display: "Archivo", "Arial Narrow", system-ui, sans-serif;
+  --body: "Public Sans", system-ui, -apple-system, "Segoe UI", sans-serif;
+  --mono: "IBM Plex Mono", ui-monospace, Menlo, monospace;
+}
+@media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) {
+  --bg: #121116; --panel: #1B1A21; --ink: #ECEBF0; --ink-2: #A6A3B1; --rule: #302E38; --field: #23222A;
+  --warn: #FB923C; --ok: #4ADE80; --hi: #D9BC3B; color-scheme: dark } }
+:root[data-theme="dark"] {
+  --bg: #121116; --panel: #1B1A21; --ink: #ECEBF0; --ink-2: #A6A3B1; --rule: #302E38; --field: #23222A;
+  --warn: #FB923C; --ok: #4ADE80; --hi: #D9BC3B; color-scheme: dark }
+
+* { box-sizing: border-box }
+[hidden] { display: none !important }
+body { background: var(--bg); color: var(--ink); font: 16px/1.55 var(--body); margin: 0 }
+.wrap { max-width: 1040px; margin: 0 auto; padding-inline: 20px; padding-block: 24px 56px; display: grid; gap: 26px }
+header.top { display: flex; flex-wrap: wrap; align-items: baseline; justify-content: space-between; gap: 8px 20px }
+.brand { font: 900 21px/1 var(--display); font-stretch: 125%; text-transform: uppercase; color: var(--ink); text-decoration: none }
+.brand span { color: var(--accent) }
+.nav { display: flex; gap: 16px; font-size: 14px; flex-wrap: wrap }
+.nav a { color: var(--ink-2); text-decoration: none } .nav a:hover { color: var(--ink); text-decoration: underline }
+h1 { font: 900 clamp(30px, 5.6vw, 54px)/1.02 var(--display); font-stretch: 118%; margin: 0; text-wrap: balance }
+h1 em { font-style: normal; color: var(--accent) }
+.lede { max-width: 64ch; color: var(--ink-2); margin: 10px 0 0; font-size: 17px }
+.panel { background: var(--panel); border: 1px solid var(--rule); border-radius: 8px; padding: 18px; display: grid; gap: 14px; min-width: 0 }
+.panel h2 { font: 800 13px/1 var(--display); font-stretch: 112%; text-transform: uppercase; letter-spacing: .1em; margin: 0; color: var(--ink-2) }
+.cols { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 20px; align-items: start }
+@media (max-width: 800px) { .cols { grid-template-columns: 1fr } }
+label { display: grid; gap: 6px; font-size: 14px; font-weight: 600 }
+.hint { font-weight: 400; color: var(--ink-2); font-size: 13px }
+input, select, textarea { width: 100%; font: 500 16px var(--body); color: var(--ink); background: var(--field); border: 1px solid var(--rule); border-radius: 6px; padding: 9px 11px; min-width: 0 }
+textarea { line-height: 1.6; resize: vertical }
+input[type=number] { font-family: var(--mono) }
+input:focus-visible, select:focus-visible, textarea:focus-visible, button:focus-visible, a:focus-visible { outline: 3px solid var(--accent); outline-offset: 2px }
+.seg { display: flex; flex-wrap: wrap; gap: 6px }
+.seg button { font: 600 13px var(--body); background: transparent; color: var(--ink-2); border: 1px solid var(--rule); border-radius: 999px; padding: 6px 12px; cursor: pointer }
+.seg button[aria-pressed="true"] { background: var(--accent); border-color: var(--accent); color: #fff }
+.btn { font: 600 14px var(--body); background: var(--ink); color: var(--panel); border: 0; border-radius: 6px; padding: 10px 16px; cursor: pointer }
+.btn.ghost { background: transparent; color: var(--ink); border: 1px solid var(--rule) }
+.row { display: flex; flex-wrap: wrap; gap: 10px; align-items: center }
+.big { font: 900 clamp(40px, 8vw, 72px)/1 var(--display); font-stretch: 118%; color: var(--accent); font-variant-numeric: tabular-nums }
+.stats { display: grid; grid-template-columns: repeat(auto-fit, minmax(120px, 1fr)); gap: 8px }
+.stat { background: var(--field); border: 1px solid var(--rule); border-radius: 6px; padding: 10px 12px; display: grid; gap: 2px }
+.stat span { font-size: 11px; color: var(--ink-2); text-transform: uppercase; letter-spacing: .08em }
+.stat b { font: 600 19px var(--mono); font-variant-numeric: tabular-nums; overflow-wrap: anywhere }
+.pill { display: inline-block; font: 600 12px var(--body); padding: 3px 9px; border-radius: 999px; background: var(--accent-soft); color: var(--ink) }
+.pill.warn { background: color-mix(in srgb, var(--warn) 18%, transparent); color: var(--warn) }
+.pill.ok { background: color-mix(in srgb, var(--ok) 18%, transparent); color: var(--ok) }
+.toast { font-size: 13px; color: var(--ok) }
+.tablewrap { overflow-x: auto }
+table { border-collapse: collapse; width: 100%; font-size: 14px }
+th, td { text-align: left; padding: 7px 8px; border-bottom: 1px solid var(--rule); vertical-align: top }
+th { font-size: 11px; text-transform: uppercase; letter-spacing: .08em; color: var(--ink-2) }
+td.t { font-family: var(--mono); white-space: nowrap; color: var(--accent); font-variant-numeric: tabular-nums }
+section.copy { display: grid; gap: 12px; max-width: 70ch }
+section.copy h2 { font: 800 24px/1.15 var(--display); font-stretch: 112%; margin: 0; text-wrap: balance }
+section.copy p, section.copy li { color: var(--ink-2) }
+details { border-top: 1px solid var(--rule); padding-block: 12px }
+details summary { font-weight: 700; cursor: pointer }
+details p { margin: 8px 0 0 }
+.ad-slot:empty { display: none }
+footer.foot { border-top: 1px solid var(--rule); padding-top: 16px; display: flex; flex-wrap: wrap; justify-content: space-between; gap: 10px; font-size: 13px; color: var(--ink-2) }
+footer.foot a { color: var(--ink-2) }
+@media (prefers-reduced-motion: reduce) { * { transition: none !important; animation: none !important } }
+</style><script type="application/ld+json">{"@context": "https://schema.org", "@type": "WebApplication", "name": "Title & Thumbnail Preview", "url": "https://example.com/title-preview", "applicationCategory": "MultimediaApplication", "operatingSystem": "Any", "description": "Preview your YouTube title and thumbnail in the home feed, search results, sidebar and phone app, in light and dark mode. See exactly where the title gets cut off. Free, private.", "offers": {"@type": "Offer", "price": "0", "priceCurrency": "USD"}}</script><script type="application/ld+json">{"@context": "https://schema.org", "@type": "FAQPage", "mainEntity": [{"@type": "Question", "name": "How long can a YouTube title be?", "acceptedAnswer": {"@type": "Answer", "text": "Up to 100 characters. Only the first 50 to 70 are usually visible before YouTube cuts the title off, depending on where it appears."}}, {"@type": "Question", "name": "Why does the cut-off change with the same character count?", "acceptedAnswer": {"@type": "Answer", "text": "Wide letters like W and M take more room than narrow ones like i and l. That's why this tool measures the title at real font sizes rather than just counting characters."}}, {"@type": "Question", "name": "Is my thumbnail uploaded?", "acceptedAnswer": {"@type": "Answer", "text": "No. The image is read in your browser and never leaves your device."}}, {"@type": "Question", "name": "Is this tool made by YouTube?", "acceptedAnswer": {"@type": "Answer", "text": "No. It's an independent tool that imitates the layout so you can check your designs. YouTube is a trademark of Google LLC."}}]}</script>
+</head>
+<body>
+<div class="wrap">
+<header class="top"><a class="brand" href="index.html">Creator<span>Bench</span></a><nav class="nav" aria-label="Tools"><a href="script-timer.html">Script Timer</a><a href="title-preview.html">Title &amp; Thumbnail Preview</a><a href="safe-zones.html">Shorts &amp; Reels Safe Zones</a><a href="caption-formatter.html">Instagram Caption Formatter</a></nav></header>
+<style>
+/* Mock feed surfaces. These copy the look of the YouTube light/dark themes on purpose, so they set their own colours. */
+.feed { --f-bg: #ffffff; --f-ink: #0f0f0f; --f-sub: #606060; --f-chip: #f2f2f2; border-radius: 8px; padding: 18px; background: var(--f-bg); color: var(--f-ink); display: grid; gap: 22px; border: 1px solid var(--rule) }
+.feed.dark { --f-bg: #0f0f0f; --f-ink: #f1f1f1; --f-sub: #aaaaaa; --f-chip: #272727 }
+.feed h3 { margin: 0; font: 700 11px var(--mono); letter-spacing: .1em; text-transform: uppercase; color: var(--f-sub) }
+.yt-font { font-family: Roboto, Arial, "Helvetica Neue", sans-serif }
+.thumb { position: relative; border-radius: 10px; overflow: hidden; background: var(--f-chip); aspect-ratio: 16 / 9; max-width: 100% }
+.thumb img { width: 100%; height: 100%; object-fit: cover; display: block }
+.thumb .dur { position: absolute; right: 6px; bottom: 6px; background: rgba(0,0,0,.8); color: #fff; font: 500 12px Roboto, Arial, sans-serif; padding: 1px 5px; border-radius: 4px }
+.clamp2 { display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden }
+.home-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(min(100%, 300px), 1fr)); gap: 16px }
+.card { display: grid; gap: 10px; max-width: 360px; min-width: 0 }
+.card .meta { display: grid; grid-template-columns: 36px minmax(0, 1fr); gap: 12px }
+.avatar { width: 36px; height: 36px; border-radius: 50%; background: var(--accent) }
+.card .t { font: 500 16px/22px Roboto, Arial, sans-serif; margin: 0 }
+.sub { font: 400 14px/20px Roboto, Arial, sans-serif; color: var(--f-sub) }
+.ghost .thumb { opacity: .5 } .ghost .t { color: var(--f-sub) }
+.search { display: grid; grid-template-columns: minmax(0, 360px) minmax(0, 1fr); gap: 16px; max-width: 900px }
+.search .t { font: 400 18px/26px Roboto, Arial, sans-serif; margin: 0 }
+@media (max-width: 640px) { .search { grid-template-columns: 1fr } }
+.side { display: grid; grid-template-columns: 168px minmax(0, 1fr); gap: 8px; max-width: 402px }
+.side .thumb { border-radius: 8px }
+.side .t { font: 500 14px/20px Roboto, Arial, sans-serif; margin: 0 }
+.side .sub { font-size: 12px; line-height: 18px }
+.phone { width: 100%; max-width: 390px; border: 8px solid #222; border-radius: 26px; overflow: hidden; background: var(--f-bg) }
+.phone .thumb { border-radius: 0 }
+.phone .meta { display: grid; grid-template-columns: 36px minmax(0, 1fr); gap: 12px; padding: 10px 12px 14px }
+.phone .t { font: 500 14px/20px Roboto, Arial, sans-serif; margin: 0 }
+.phone .sub { font-size: 12px; line-height: 18px }
+.counter { font: 600 13px var(--mono) }
+.zone { background: linear-gradient(transparent 60%, var(--hi) 60%) }
+</style>
+<div>
+  <h1>See where your title <em>gets cut off</em></h1>
+  <p class="lede">Type a title and add your thumbnail. We show it in the home feed, search results, the sidebar and the phone app, in light and dark mode, cut off the way viewers will see it.</p>
+</div>
+<div class="ad-slot"></div>
+<div class="cols">
+  <div class="panel">
+    <h2>Your video</h2>
+    <label>Title <input id="tp-title" maxlength="100" value="I Tried Living on $5 a Day in the Most Expensive City in the World"></label>
+    <div class="row counter" id="tp-count"></div>
+    <div class="hint" id="tp-zone"></div>
+    <div class="row">
+      <label style="flex:1">Channel name <input id="tp-chan" value="Greenback"></label>
+      <label style="width:120px">Length <input id="tp-dur" value="14:07"></label>
+    </div>
+    <label>Thumbnail <span class="hint">JPG or PNG, 16:9. Stays on your device.</span><input id="tp-file" type="file" accept="image/*"></label>
+  </div>
+  <div class="panel">
+    <h2>Preview settings</h2>
+    <div class="seg" role="group" aria-label="Preview theme">
+      <button type="button" id="tp-light" aria-pressed="false">Light mode</button>
+      <button type="button" id="tp-dark" aria-pressed="true">Dark mode</button>
+    </div>
+    <div class="hint">YouTube usually shows two lines of title, then "…". On phones that is roughly 50–60 characters, depending on letter widths. Keep the important words at the start.</div>
+    <div id="tp-tips" style="display:grid;gap:6px"></div>
+  </div>
+</div>
+<div class="feed dark yt-font" id="tp-feed">
+  <h3>Home feed · desktop</h3>
+  <div class="home-grid" id="tp-home"></div>
+  <h3>Search results</h3>
+  <div class="search" id="tp-search"></div>
+  <h3>Sidebar · up next</h3>
+  <div class="side" id="tp-side"></div>
+  <h3>Phone app</h3>
+  <div class="phone" id="tp-phone"></div>
+</div>
+<div class="ad-slot"></div>
+<section class="copy" id="how">
+  <h2>Why previewing matters</h2>
+  <p>Viewers decide in a split second, and most of them are on a phone. A title that reads perfectly in your editor can lose its key word behind "…". This preview sets your title at the same font sizes and widths YouTube uses, so the cut-off lands where it really will.</p>
+  <p>The neighbouring "ghost" videos are there so you can judge whether your thumbnail stands out in a busy feed.</p>
+</section>
+<section class="copy" id="faq">
+  <h2>Questions</h2>
+  <details><summary>How long can a YouTube title be?</summary><p>Up to 100 characters. Only the first 50 to 70 are usually visible before YouTube cuts the title off, depending on where it appears.</p></details>
+  <details><summary>Why does the cut-off change with the same character count?</summary><p>Wide letters like W and M take more room than narrow ones like i and l. That's why this tool measures the title at real font sizes rather than just counting characters.</p></details>
+  <details><summary>Is my thumbnail uploaded?</summary><p>No. The image is read in your browser and never leaves your device.</p></details>
+  <details><summary>Is this tool made by YouTube?</summary><p>No. It's an independent tool that imitates the layout so you can check your designs. YouTube is a trademark of Google LLC.</p></details>
+</section>
+<script>
+(() => {
+  const $ = id => document.getElementById(id);
+  const esc = s => s.replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
+  let thumbURL = null;
+  // default example thumbnail drawn on a canvas (clearly a sample)
+  function sampleThumb() {
+    const c = document.createElement('canvas'); c.width = 640; c.height = 360; const g = c.getContext('2d');
+    const gr = g.createLinearGradient(0, 0, 640, 360); gr.addColorStop(0, '#1E7A4A'); gr.addColorStop(1, '#0B2E1C'); g.fillStyle = gr; g.fillRect(0, 0, 640, 360);
+    g.fillStyle = '#F3D54E'; g.font = '900 120px Arial'; g.fillText('$5', 40, 220); g.fillStyle = '#fff'; g.font = '800 44px Arial'; g.fillText('A DAY?', 40, 290);
+    g.fillStyle = 'rgba(255,255,255,.18)'; g.beginPath(); g.arc(470, 190, 120, 0, 7); g.fill(); g.fillStyle = 'rgba(255,255,255,.6)'; g.font = '600 18px Arial'; g.fillText('SAMPLE THUMBNAIL', 400, 340);
+    return c.toDataURL('image/jpeg', .85);
+  }
+  const ghost = (w) => `<div class="card ghost"><div class="thumb"></div><div class="meta"><div class="avatar" style="opacity:.3"></div><div><p class="t clamp2">${w}</p><div class="sub">Another channel · 1.2M views · 2 weeks ago</div></div></div></div>`;
+  function render() {
+    const title = $('tp-title').value || 'Untitled video', chan = esc($('tp-chan').value || 'Your channel'), dur = esc($('tp-dur').value || '10:00');
+    const T = esc(title), img = `<img src="${thumbURL || sampleThumb()}" alt="">`;
+    const thumb = `<div class="thumb">${img}<span class="dur">${dur}</span></div>`;
+    const sub = `${chan} · 48K views · 3 days ago`;
+    $('tp-home').innerHTML = `<div class="card">${thumb}<div class="meta"><div class="avatar"></div><div><p class="t clamp2">${T}</p><div class="sub">${chan}<br>48K views · 3 days ago</div></div></div></div>` +
+      ghost('Why Everyone Is Moving Out of Big Cities') + ghost('The Hidden Cost of Free Apps');
+    $('tp-search').innerHTML = `${thumb}<div style="display:grid;gap:8px;align-content:start"><p class="t clamp2">${T}</p><div class="sub">48K views · 3 days ago</div><div class="sub">${chan}</div></div>`;
+    $('tp-side').innerHTML = `${thumb}<div><p class="t clamp2">${T}</p><div class="sub">${chan}<br>48K views · 3 days ago</div></div>`;
+    $('tp-phone').innerHTML = `${thumb}<div class="meta"><div class="avatar"></div><div><p class="t clamp2">${T}</p><div class="sub">${sub}</div></div></div>`;
+    // counts + "keyword zone" (first 50 characters)
+    const n = title.length;
+    $('tp-count').innerHTML = `<span>${n} / 100 characters</span>` + (n > 70 ? '<span class="pill warn">Likely cut off everywhere</span>' : n > 55 ? '<span class="pill">May be cut off on phones</span>' : '<span class="pill ok">Fits on most screens</span>');
+    $('tp-zone').innerHTML = 'Visible on most phones: <span class="zone">' + esc(title.slice(0, 50)) + '</span>' + (n > 50 ? esc(title.slice(50)) : '');
+    const tips = [];
+    if (/^\s*(the|a|an)\s/i.test(title)) tips.push('Starting with "The" or "A" spends visible space on a word that says little.');
+    if ((title.match(/[A-Z]{4,}/g) || []).length > 1) tips.push('Several ALL-CAPS words can look spammy. One is usually enough.');
+    if (n < 25) tips.push('Very short titles leave search and curiosity on the table. Most top videos use 40–70 characters.');
+    $('tp-tips').innerHTML = tips.map(t => `<div class="hint">• ${t}</div>`).join('');
+    // measure real truncation in the phone card
+    requestAnimationFrame(() => { const p = $('tp-phone').querySelector('.t'); if (p && p.scrollHeight > p.clientHeight + 2) $('tp-count').innerHTML += ' <span class="pill warn">Cut off in the phone app</span>'; });
+    try { localStorage.setItem('tp-v1', JSON.stringify({ t: $('tp-title').value, c: $('tp-chan').value, d: $('tp-dur').value })); } catch (e) {}
+  }
+  try { const s = JSON.parse(localStorage.getItem('tp-v1') || 'null'); if (s) { $('tp-title').value = s.t; $('tp-chan').value = s.c; $('tp-dur').value = s.d; } } catch (e) {}
+  const setTheme = d => { $('tp-feed').classList.toggle('dark', d); $('tp-dark').setAttribute('aria-pressed', d); $('tp-light').setAttribute('aria-pressed', !d); };
+  $('tp-light').addEventListener('click', () => setTheme(false)); $('tp-dark').addEventListener('click', () => setTheme(true));
+  $('tp-file').addEventListener('change', e => { const f = e.target.files[0]; if (!f) return; if (thumbURL && thumbURL.startsWith('blob:')) URL.revokeObjectURL(thumbURL); thumbURL = URL.createObjectURL(f); render(); });
+  ['tp-title', 'tp-chan', 'tp-dur'].forEach(id => $(id).addEventListener('input', render));
+  render();
+})();
+</script>
+<section class="copy"><h2>More free tools</h2><ul><li><a href="script-timer.html">Script Timer</a>: Paste a video or voiceover script to get its exact speaking time, a timestamp for every paragraph, and how many words you need for your target length.</li><li><a href="safe-zones.html">Shorts &amp; Reels Safe Zones</a>: Drop in a vertical video or frame and see which parts the TikTok, Instagram Reels and YouTube Shorts buttons and captions cover.</li><li><a href="caption-formatter.html">Instagram Caption Formatter</a>: Format Instagram captions with line breaks that don&#x27;t disappear, see where &quot;… more&quot; cuts your caption, and check the 2,200-character and 30-hashtag limits.</li></ul></section>
+<footer class="foot"><span>© 2026 Creator Bench · Free tools for creators. Not affiliated with YouTube, Instagram or TikTok.</span><span><a href="about.html">About</a> · <a href="privacy.html">Privacy</a> · <a href="terms.html">Terms</a> · <a href="contact.html">Contact</a></span></footer>
+</div>
+</body>
+</html>
