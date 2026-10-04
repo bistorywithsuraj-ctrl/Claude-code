@@ -256,11 +256,15 @@ home = (f'<section class="hero">{scene_svg()}<p class="hand" aria-hidden="true">
         '<div class="sec-head" id="tools"><h2>Popular tools</h2><a href="#cats">Browse by category</a></div>'
         f'<div class="tools" id="cards">{cards}</div><p class="no-match" id="nomatch" hidden>No tool matches that yet. Try "script", "title", "reels" or "caption".</p>'
         f'{ad("leader")}<div class="sec-head" id="cats"><h2>Browse by category</h2></div><div class="cats">{cats}</div>'
-        '<section class="copy"><h2>Why Creator Bench</h2><p>Each tool answers a question creators ask before every upload: how long is this script, will my title get cut off, '
+        '<section class="copy"><h2>Why Creator Bench</h2><p><b>Creator Bench</b> (creatorbenchtool.com) is a free toolkit for YouTubers, Instagram and TikTok creators, built by an independent creator. It is not a talent-management or sponsorship platform. ' + 'Each tool answers a question creators ask before every upload: how long is this script, will my title get cut off, '
         'is my text hidden behind the buttons, will my caption keep its spacing. No accounts, no watermarks, no uploads. Your work stays on your device.</p></section>' + HOME_JS)
 HOME_DESC = 'Free tools for creators: YouTube earnings calculator, image resizer, word counter, frame extractor, subtitles, QR codes, PDF tools and more. No sign-up.'
-write('index.html', full(f'{NAME}: free tools for video creators', HOME_DESC, '/', home,
-      SCENE_CSS + ld({'@context': 'https://schema.org', '@type': 'WebSite', 'name': NAME, 'url': SITE_URL + '/'}), active='home'))
+write('index.html', full(f'{NAME} Tool: free tools for video creators', HOME_DESC, '/', home,
+      SCENE_CSS + ld({'@context': 'https://schema.org', '@graph': [
+          {'@type': 'WebSite', '@id': SITE_URL + '/#website', 'name': NAME, 'alternateName': ['Creator Bench Tool', 'creatorbenchtool', 'creatorbenchtool.com'], 'url': SITE_URL + '/',
+           'description': HOME_DESC, 'publisher': {'@id': SITE_URL + '/#org'}, 'inLanguage': 'en'},
+          {'@type': 'Organization', '@id': SITE_URL + '/#org', 'name': NAME, 'alternateName': 'Creator Bench Tool', 'url': SITE_URL + '/', 'logo': SITE_URL + '/logo.png',
+           'email': EMAIL, 'founder': {'@type': 'Person', 'name': AUTHOR, 'url': AUTHOR_URL}, 'sameAs': [AUTHOR_URL]}]}), active='home'))
 
 # ---------- trust pages ----------
 def page(slug, title, desc, inner):

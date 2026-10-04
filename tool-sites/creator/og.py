@@ -43,6 +43,9 @@ async def main():
                                             B['BLURB'].get(s, t['desc']), B['ICON'].get(s, 'grid'))))
     async with async_playwright() as pw:
         b = await pw.chromium.launch(executable_path='/opt/pw-browsers/chromium-1194/chrome-linux/chrome')
+        lp = await b.new_page(viewport={'width': 512, 'height': 512})   # square logo for Organization schema
+        await lp.set_content(f'<html><body style="margin:0;background:#1F4D3A;display:grid;place-items:center;width:512px;height:512px"><svg viewBox="0 0 24 24" style="width:300px;height:300px;stroke:#DCEF80;fill:none;stroke-width:2.2;stroke-linecap:round;stroke-linejoin:round">{B["P"]["leaf"]}</svg></body></html>')
+        await lp.screenshot(path=str(HERE / 'dist' / 'logo.png')); await lp.close()
         p = await b.new_page(viewport={'width': 1200, 'height': 630})
         for path, doc in jobs:
             await p.set_content(doc); await p.evaluate('document.fonts.ready'); await p.screenshot(path=str(path))
