@@ -114,6 +114,16 @@ def load_tools():
     return tools
 TOOLS = load_tools()
 
+def load_guides():
+    out = []
+    for f in sorted((HERE / 'src_guides').glob('*.html')):
+        s = f.read_text(); m = re.match(r'<!--meta\n(.*?)\n-->\n', s, re.S)
+        g = dict(l.split(': ', 1) for l in m.group(1).splitlines()); g['body'] = s[m.end():]; g['tools'] = [x.strip() for x in g['tools'].split(',')]
+        g['faq'] = [(html.unescape(re.sub('<[^>]+>', '', q)), html.unescape(re.sub('<[^>]+>', '', a))) for q, a in re.findall(r'<summary>(.*?)</summary><p>(.*?)</p>', s)]
+        out.append(g)
+    return out
+GUIDES = load_guides() if (HERE / 'src_guides').exists() else []
+
 # ---------- original landscape scene for the hero (procedural SVG) ----------
 def scene_svg():
     rnd = random.Random(7); W, H = 1200, 420
@@ -139,7 +149,7 @@ SCENE_CSS = '''<style>
 # ---------- shell ----------
 def sidebar(active):
     tools = ''.join(f'<a href="{t["slug"]}.html"{cur(active == t["slug"])}>{ic(ICON.get(t["slug"], "grid"))}{html.escape(SHORT.get(t["slug"], t["name"]))}</a>' for t in TOOLS)
-    res = ''.join(f'<a href="{s}.html"{cur(active == s)}>{ic(i)}{l}</a>' for s, l, i in [('about', 'About', 'info'), ('contact', 'Contact', 'mail'), ('privacy', 'Privacy', 'shield')])
+    res = ''.join(f'<a href="{s}.html"{cur(active == s)}>{ic(i)}{l}</a>' for s, l, i in [('guides', 'Guides', 'list'), ('about', 'About', 'info'), ('contact', 'Contact', 'mail'), ('privacy', 'Privacy', 'shield')])
     return (f'<aside class="side" id="side" aria-label="Site navigation"><a class="brand" href="index.html"><span class="mark">{ic("leaf", "")}</span>'
             f'<span><b>{html.escape(NAME)}</b><small>{TAGLINE}</small></span></a>'
             f'<nav><a href="index.html"{cur(active == "home")}>{ic("home")}Home</a></nav><h6>Tools</h6><nav>{tools}</nav><h6>Resources</h6><nav>{res}</nav>'
@@ -173,7 +183,7 @@ SHELL_JS = '''<script>
 </script>'''
 
 FOOT = (f'<footer class="site-foot"><span>© {TODAY.year} {html.escape(NAME)} · Made by <a href="{AUTHOR_URL}">{html.escape(AUTHOR)}</a> · Not affiliated with YouTube, Instagram or TikTok.</span>'
-        '<nav><a href="about.html">About</a><a href="privacy.html">Privacy</a><a href="terms.html">Terms</a><a href="contact.html">Contact</a></nav></footer>')
+        '<nav><a href="guides.html">Guides</a><a href="about.html">About</a><a href="privacy.html">Privacy</a><a href="terms.html">Terms</a><a href="contact.html">Contact</a></nav></footer>')
 
 def ad(kind):
     """kind: leader (banner), inline (in-content), rect (300x250 rail), tower (300x600 rail)."""
@@ -278,9 +288,10 @@ home = (f'<section class="hero">{scene_svg()}<p class="hand" aria-hidden="true">
         '<div class="sec-head" id="tools"><h2>Popular tools</h2><a href="#cats">Browse by category</a></div>'
         f'<div class="tools" id="cards">{cards}</div><p class="no-match" id="nomatch" hidden>No tool matches that yet. Try "script", "title", "reels" or "caption".</p>'
         f'{ad("leader")}<div class="sec-head" id="cats"><h2>Browse by category</h2></div><div class="cats">{cats}</div>'
+        + (('<div class="sec-head" id="guides"><h2>Guides</h2><a href="guides.html">All guides</a></div><section class="copy"><ul>' + ''.join(f'<li><a href="{g["slug"]}.html">{html.escape(g["h1"])}</a></li>' for g in GUIDES) + '</ul></section>') if GUIDES else '') +
         '<section class="copy"><h2>Why Creator Bench</h2><p><b>Creator Bench</b> (creatorbenchtool.com) is a free toolkit for YouTubers, Instagram and TikTok creators, built by an independent creator. It is not a talent-management or sponsorship platform. ' + 'Each tool answers a question creators ask before every upload: how long is this script, will my title get cut off, '
         'is my text hidden behind the buttons, will my caption keep its spacing. No accounts, no watermarks, no uploads. Your work stays on your device.</p></section>' + HOME_JS)
-HOME_DESC = 'Free tools for creators: YouTube earnings calculator, image resizer, word counter, frame extractor, subtitles, QR codes, PDF tools and more. No sign-up.'
+HOME_DESC = 'Free tools for creators: AI captions, AI voiceover, background remover, AI image detector, video to MP3, thumbnail maker and more. No sign-up, no upload.'
 write('index.html', full(f'{NAME} Tool: free tools for video creators', HOME_DESC, '/', home,
       SCENE_CSS + ld({'@context': 'https://schema.org', '@graph': [
           {'@type': 'WebSite', '@id': SITE_URL + '/#website', 'name': NAME, 'alternateName': ['Creator Bench Tool', 'creatorbenchtool', 'creatorbenchtool.com'], 'url': SITE_URL + '/',
@@ -322,7 +333,25 @@ for f in (HERE / 'shared' / 'vendor').iterdir(): shutil.copy(f, DIST / 'vendor' 
 
 # ---------- crawl files ----------
 if not PREVIEW and 'example.com' not in SITE_URL: (DIST / 'CNAME').write_text(SITE_URL.split('://', 1)[1] + '\n')
-urls = ['/'] + [f'/{t["slug"]}' for t in TOOLS] + ['/about', '/privacy', '/terms', '/contact']
+BY_SLUG = {t['slug']: t for t in TOOLS}
+for g in GUIDES:
+    bc_vis, bc_ld = crumbs([('Guides', 'guides'), (g['h1'], None)])
+    tool_cards = ''.join(card(BY_SLUG[s]) for s in g['tools'] if s in BY_SLUG)
+    more = ''.join(f'<li><a href="{o["slug"]}.html">{html.escape(o["h1"])}</a></li>' for o in GUIDES if o is not g)
+    main = (f'<article class="copy guide">{bc_vis}<span class="eyebrow">{ic("list")} Guide · {html.escape(g["date"])}</span><h1>{html.escape(g["h1"])}</h1>{g["body"]}</article>'
+            f'{ad("inline")}<div class="sec-head"><h2>Tools in this guide</h2><a href="index.html#tools">All tools</a></div><div class="tools">{tool_cards}</div>'
+            f'<section class="copy"><h2>More guides</h2><ul>{more}</ul></section>')
+    extra = bc_ld + ld({'@context': 'https://schema.org', '@type': 'Article', 'headline': g['h1'], 'description': g['desc'], 'datePublished': g['date'], 'dateModified': g['date'],
+                        'author': {'@type': 'Person', 'name': AUTHOR, 'url': AUTHOR_URL}, 'publisher': {'@type': 'Organization', 'name': NAME, 'logo': {'@type': 'ImageObject', 'url': SITE_URL + '/logo.png'}},
+                        'mainEntityOfPage': f'{SITE_URL}/{g["slug"]}'})
+    if g['faq']: extra += ld({'@context': 'https://schema.org', '@type': 'FAQPage', 'mainEntity': [{'@type': 'Question', 'name': q, 'acceptedAnswer': {'@type': 'Answer', 'text': a}} for q, a in g['faq']]})
+    write(f'{g["slug"]}.html', full(g['title'], g['desc'], f'/{g["slug"]}', main, extra, active='guides'))
+if GUIDES:
+    bc_vis, bc_ld = crumbs([('Guides', None)])
+    items = ''.join(f'<a class="tool-card" href="{g["slug"]}.html"><span class="tile">{ic("list")}</span><h3>{html.escape(g["h1"])}</h3><p>{html.escape(g["desc"])}</p><span class="go">{ic("arrow")}</span></a>' for g in GUIDES)
+    write('guides.html', full(f'Guides for creators · {NAME}', 'Step-by-step guides for YouTube, Reels and Shorts creators: captions, thumbnails, AI voiceovers, background removal and more.', '/guides',
+          f'<section class="copy">{bc_vis}<span class="eyebrow">{ic("list")} Guides</span><h1>Guides for <em>creators</em></h1><p class="lede">Short, practical how-tos for the jobs around every upload, each with a free tool to do it.</p></section><div class="tools">{items}</div>', bc_ld, active='guides'))
+urls = ['/'] + [f'/{t["slug"]}' for t in TOOLS] + (['/guides'] + [f'/{g["slug"]}' for g in GUIDES]) + ['/about', '/privacy', '/terms', '/contact']
 (DIST / 'sitemap.xml').write_text('<?xml version="1.0" encoding="UTF-8"?>\n<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">\n' +
     ''.join(f'  <url><loc>{SITE_URL}{u}</loc><lastmod>{TODAY.isoformat()}</lastmod></url>\n' for u in urls) + '</urlset>\n')
 (DIST / 'robots.txt').write_text(f'User-agent: *\nAllow: /\nSitemap: {SITE_URL}/sitemap.xml\n')

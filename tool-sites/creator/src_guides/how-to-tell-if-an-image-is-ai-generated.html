@@ -1,0 +1,29 @@
+<!--meta
+slug: how-to-tell-if-an-image-is-ai-generated
+title: How to tell if an image is AI-generated (7 checks)
+h1: How to tell if an image is AI-generated
+desc: Seven practical ways to spot AI-generated images, from hidden metadata and Content Credentials to hands, text and lighting, plus a free AI image detector.
+tools: ai-image-detector
+date: 2026-10-04
+-->
+<p class="lede">AI images are now good enough to fool most people at a glance. No single check is perfect, but together these seven usually tell you what you are looking at.</p>
+<h2>1. Check the file for AI metadata</h2>
+<p>Many generators write into the image file. Stable Diffusion and ComfyUI save the prompt and settings, and tools such as ChatGPT, Adobe Firefly and others add <b>Content Credentials</b> (C2PA) or the IPTC tag "trained algorithmic media". The <a href="ai-image-detector.html">AI Image Detector</a> reads these for you. If it finds them, the answer is close to certain.</p>
+<h2>2. Run an AI detector model</h2>
+<p>Detector models look at patterns in the pixels that people cannot see. The same tool runs one in your browser and shows a likelihood. Treat it as a strong hint, not proof: compression, filters and screenshots can fool any detector.</p>
+<h2>3. Look at hands, teeth and ears</h2>
+<p>Newer models are much better, but extra or merged fingers, uneven teeth and mismatched earrings still appear.</p>
+<h2>4. Read the text</h2>
+<p>Signs, labels and book covers in AI images often have warped or nonsense letters, especially in the background.</p>
+<h2>5. Check light and shadows</h2>
+<p>Do the shadows point the same way? Do reflections in glasses, windows and water match the scene?</p>
+<h2>6. Zoom into the background</h2>
+<p>Crowds, railings, wires and patterns often melt into each other or repeat strangely.</p>
+<h2>7. Find the source</h2>
+<p>A reverse image search shows where the image first appeared. A real news photo usually has a photographer, an agency and other photos from the same event.</p>
+<h2>Why detectors are sometimes wrong</h2>
+<p>Social media strips metadata, heavy editing can make real photos look synthetic, and brand-new generators may not have been seen by the model. That is why a good check shows its evidence instead of a bare "100% AI" label.</p>
+<section class="copy" id="faq"><h2>Questions</h2>
+<details><summary>Can you detect Midjourney and ChatGPT images?</summary><p>Original downloads often carry markers in the file. Screenshots and re-uploaded copies usually lose them, which leaves only visual checks and the detector model.</p></details>
+<details><summary>Is the AI image detector free?</summary><p>Yes, and your image is checked in your browser without being uploaded.</p></details>
+</section>
