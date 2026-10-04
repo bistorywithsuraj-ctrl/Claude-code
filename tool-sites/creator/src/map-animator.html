@@ -114,7 +114,7 @@ desc: Make an animated route map video for travel vlogs, history and explainer v
   function unwrapRing(ring) { const out = []; let off = 0, prev = null;
     for (const [lon, lat] of ring) { if (prev !== null) { const d = lon - prev; if (d > 180) off -= 360; else if (d < -180) off += 360; } prev = lon; out.push([lon + off, my(lat)]); } return out; }
   async function loadWorld() {
-    const topo = await (await fetch('vendor/countries-110m.json')).json();
+    const topo = await (await fetch('vendor/countries-ind.json')).json();
     const geo = topojson.feature(topo, topo.objects.countries);
     countries = geo.features.map(f => { const polys = f.geometry ? (f.geometry.type === 'Polygon' ? [f.geometry.coordinates] : f.geometry.coordinates) : [];
       const rings = polys.flatMap(p => p.map(unwrapRing)); let x0 = 1e9, x1 = -1e9, y0 = 1e9, y1 = -1e9;
