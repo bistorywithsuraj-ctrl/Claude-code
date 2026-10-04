@@ -27,14 +27,15 @@ BASE_CSS = (HERE / 'shared' / 'base.css').read_text()
 FONTS = ('<link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>'
          '<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Newsreader:ital,opsz,wght@0,6..72,500;0,6..72,600;1,6..72,500;1,6..72,600'
          '&family=Geist:wght@400;500;600&family=Geist+Mono:wght@500&family=Caveat:wght@600&display=swap">')
-ORDER = ['script-timer', 'title-preview', 'safe-zones', 'caption-formatter']
-SHORT = {'script-timer': 'Script Timer', 'title-preview': 'Title & Thumbnail', 'safe-zones': 'Safe Zone Checker', 'caption-formatter': 'Caption Formatter'}
-CARD_TITLE = {'script-timer': 'Script Timer', 'title-preview': 'Title & Thumbnail Preview', 'safe-zones': 'Shorts & Reels Safe Zones', 'caption-formatter': 'Instagram Caption Formatter'}
+ORDER = ['script-timer', 'title-preview', 'safe-zones', 'caption-formatter', 'frame-extractor']
+SHORT = {'script-timer': 'Script Timer', 'title-preview': 'Title & Thumbnail', 'safe-zones': 'Safe Zone Checker', 'caption-formatter': 'Caption Formatter', 'frame-extractor': 'Frame Extractor'}
+CARD_TITLE = {'script-timer': 'Script Timer', 'title-preview': 'Title & Thumbnail Preview', 'safe-zones': 'Shorts & Reels Safe Zones', 'caption-formatter': 'Instagram Caption Formatter', 'frame-extractor': 'Video Frame Extractor'}
 BLURB = {'script-timer': 'Speaking time, paragraph timestamps and words to target.',
          'title-preview': 'See where your title gets cut off in every feed.',
          'safe-zones': 'Check what TikTok, Reels and Shorts buttons cover.',
-         'caption-formatter': 'Line breaks that stick, plus every Instagram limit.'}
-CATEGORY = {'script-timer': 'Scripts & Voiceover', 'title-preview': 'Titles & Thumbnails', 'safe-zones': 'Vertical Video', 'caption-formatter': 'Captions & Text'}
+         'caption-formatter': 'Line breaks that stick, plus every Instagram limit.',
+         'frame-extractor': 'Save frames from any video as JPG or PNG, or a ZIP.'}
+CATEGORY = {'script-timer': 'Scripts & Voiceover', 'title-preview': 'Titles & Thumbnails', 'safe-zones': 'Vertical Video', 'caption-formatter': 'Captions & Text', 'frame-extractor': 'Video Frames'}
 
 # ---------- icons (simple stroke icons drawn for this site) ----------
 P = {
@@ -57,9 +58,10 @@ P = {
  'key': '<rect x="4" y="10" width="16" height="10" rx="2"/><path d="M8 10V7a4 4 0 018 0v3"/>',
  'heart': '<path d="M12 20s-7-4.4-7-10a4 4 0 017-2.6A4 4 0 0119 10c0 5.6-7 10-7 10z"/>',
  'check': '<path d="M5 12l5 5 9-10"/>',
+ 'film': '<rect x="3" y="4" width="18" height="16" rx="2"/><path d="M7 4v16M17 4v16M3 9h4M3 15h4M17 9h4M17 15h4"/>',
  'leaf': '<path d="M5 19c0-8 6-14 15-14 0 9-6 15-14 15"/><path d="M5 19l7-7"/>',
 }
-ICON = {'script-timer': 'clock', 'title-preview': 'title', 'safe-zones': 'phone', 'caption-formatter': 'caption'}
+ICON = {'script-timer': 'clock', 'title-preview': 'title', 'safe-zones': 'phone', 'caption-formatter': 'caption', 'frame-extractor': 'film'}
 def ic(name, cls='i'): return f'<svg class="{cls}" viewBox="0 0 24 24" aria-hidden="true">{P[name]}</svg>'
 def cur(flag): return CUR if flag else ''
 

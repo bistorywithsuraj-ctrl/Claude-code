@@ -1,0 +1,124 @@
+<!--meta
+slug: frame-extractor
+title: Video Frame Extractor: save frames from any video as JPG or PNG
+name: Video Frame Extractor
+desc: Upload a video and extract frames as JPG or PNG images, every few seconds or a set number of frames. Download one or all as a ZIP. Free, runs in your browser.
+-->
+<style>
+.fx-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(min(100%, 160px), 1fr)); gap: 10px }
+.fx-frame { display: grid; gap: 6px; background: var(--surface-2); border: 1px solid var(--line); border-radius: 10px; padding: 6px; min-width: 0 }
+.fx-frame img { width: 100%; height: auto; border-radius: 6px; display: block; background: #000 }
+.fx-frame .row { justify-content: space-between; font: 500 12px var(--mono); color: var(--ink-2) }
+.fx-frame button { font: 600 12px var(--body); background: transparent; border: 1px solid var(--line-2); color: var(--ink); border-radius: 999px; padding: 3px 10px; cursor: pointer }
+.fx-bar { height: 8px; border-radius: 999px; background: var(--surface-2); border: 1px solid var(--line); overflow: hidden }
+.fx-bar i { display: block; height: 100%; width: 0; background: var(--green-2); transition: width .15s }
+.fx-video { width: 100%; max-height: 320px; border-radius: 10px; background: #000 }
+</style>
+<div>
+  <h1>Pull every frame <em>you need</em></h1>
+  <p class="lede">Add a video and save frames as images: one every few seconds, a fixed number spread across the clip, or the exact moment you pause on. Your video never leaves your device.</p>
+</div>
+<div class="ad-slot" data-slot="top"></div>
+<div class="cols">
+  <div class="panel">
+    <h2>Your video</h2>
+    <label>Video file <span class="hint">MP4, MOV or WebM. Whatever your browser can play.</span><input id="fx-file" type="file" accept="video/*"></label>
+    <video id="fx-video" class="fx-video" controls playsinline muted hidden></video>
+    <div class="hint" id="fx-info">No video yet.</div>
+    <button type="button" class="btn ghost" id="fx-grab" disabled>Save this exact frame</button>
+  </div>
+  <div class="panel">
+    <h2>Extract settings</h2>
+    <div class="seg" id="fx-mode" role="group" aria-label="Extract mode">
+      <button type="button" data-m="interval" aria-pressed="true">Every N seconds</button>
+      <button type="button" data-m="count" aria-pressed="false">Fixed number</button>
+    </div>
+    <label id="fx-int-wrap">Seconds between frames <input id="fx-int" type="number" min="0.04" step="0.1" value="1"></label>
+    <label id="fx-cnt-wrap" hidden>Number of frames <input id="fx-cnt" type="number" min="1" max="300" step="1" value="12"></label>
+    <div class="row">
+      <label style="flex:1">Format <select id="fx-fmt"><option value="image/jpeg">JPG (smaller)</option><option value="image/png">PNG (lossless)</option><option value="image/webp">WebP</option></select></label>
+      <label style="flex:1">Size <select id="fx-scale"><option value="1">Original</option><option value="0.5">Half</option><option value="0.25">Quarter</option></select></label>
+    </div>
+    <div class="hint" id="fx-est">Up to 300 frames per run.</div>
+    <div class="row"><button type="button" class="btn" id="fx-go" disabled>Extract frames</button><button type="button" class="btn ghost" id="fx-stop" hidden>Stop</button></div>
+    <div class="fx-bar" aria-hidden="true"><i id="fx-bar"></i></div>
+    <div class="toast" id="fx-status" role="status"></div>
+  </div>
+</div>
+<div class="panel" id="fx-results" hidden>
+  <h2>Frames</h2>
+  <div class="row"><button type="button" class="btn" id="fx-zip">Download all as ZIP</button><button type="button" class="btn ghost" id="fx-clear">Clear</button><span class="hint" id="fx-count"></span></div>
+  <div class="fx-grid" id="fx-grid"></div>
+</div>
+<div class="ad-slot" data-slot="mid"></div>
+<section class="copy" id="how">
+  <h2>How frame extraction works</h2>
+  <p>Your browser plays the video privately on your device. For each moment you ask for, the tool jumps to that point, draws the picture onto a hidden canvas and saves it as an image. Nothing is uploaded, so even long or private videos are safe to use.</p>
+  <p>Use "Every N seconds" for a contact sheet or storyboard, "Fixed number" to get evenly spaced thumbnails options, or pause the player and press "Save this exact frame" to grab a precise moment for a thumbnail.</p>
+</section>
+<section class="copy" id="faq">
+  <h2>Questions</h2>
+  <details><summary>Is my video uploaded to a server?</summary><p>No. The video is opened and processed in your browser, and the frames are created on your device.</p></details>
+  <details><summary>Which video formats work?</summary><p>Any format your browser can play. MP4 (H.264) and WebM work almost everywhere. Some iPhone HEVC videos only play in Safari.</p></details>
+  <details><summary>Can I extract every single frame?</summary><p>Set the gap to one frame, for example 0.04 seconds for 25 fps video. Each run is limited to 300 frames so your browser doesn't run out of memory, so work through long videos in sections.</p></details>
+  <details><summary>Which image format should I choose?</summary><p>JPG for small files and sharing, PNG for the best quality or for editing, WebP for small files with good quality.</p></details>
+  <details><summary>Can I use a frame as a YouTube thumbnail?</summary><p>Yes, if the video is yours. Extract at original size, then add text in your editor. YouTube thumbnails are 1280 × 720.</p></details>
+</section>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
+<script>
+(() => {
+  const $ = id => document.getElementById(id);
+  const MAX = 300, v = $('fx-video'), cv = document.createElement('canvas'), ctx = cv.getContext('2d');
+  let mode = 'interval', frames = [], stop = false, baseName = 'video', url = null;
+  const ext = () => ({ 'image/jpeg': 'jpg', 'image/png': 'png', 'image/webp': 'webp' }[$('fx-fmt').value]);
+  const ts = s => { const m = Math.floor(s / 60), r = (s % 60).toFixed(2).padStart(5, '0'); return `${m}:${r}`; };
+  function times() {
+    const d = v.duration || 0; if (!d) return [];
+    if (mode === 'count') { const n = Math.max(1, Math.min(MAX, Math.round(+$('fx-cnt').value || 1))); return Array.from({ length: n }, (_, i) => n === 1 ? d / 2 : Math.min(d - 0.001, i * d / (n - 1))); }
+    const step = Math.max(0.04, +$('fx-int').value || 1), out = []; for (let t = 0; t < d && out.length < MAX; t += step) out.push(t); return out;
+  }
+  function estimate() { const n = times().length; $('fx-est').textContent = v.duration ? `This will create ${n} frame${n === 1 ? '' : 's'}${n >= MAX ? ' (the 300-frame limit)' : ''}.` : 'Up to 300 frames per run.'; }
+  const seek = t => new Promise(res => { const on = () => { v.removeEventListener('seeked', on); res(); }; v.addEventListener('seeked', on); v.currentTime = t; });
+  function capture(t) {
+    const s = +$('fx-scale').value; cv.width = Math.round(v.videoWidth * s); cv.height = Math.round(v.videoHeight * s);
+    ctx.drawImage(v, 0, 0, cv.width, cv.height);
+    return new Promise(res => cv.toBlob(b => res({ t, blob: b, url: URL.createObjectURL(b) }), $('fx-fmt').value, 0.92));
+  }
+  function addCard(f, i) {
+    const name = `${baseName}_${String(i + 1).padStart(3, '0')}_${ts(f.t).replace(':', 'm').replace('.', 's')}.${ext()}`; f.name = name;
+    const el = document.createElement('div'); el.className = 'fx-frame';
+    el.innerHTML = `<img src="${f.url}" alt="Frame at ${ts(f.t)}" loading="lazy"><div class="row"><span>${ts(f.t)}</span><button type="button">Save</button></div>`;
+    el.querySelector('button').addEventListener('click', () => { const a = document.createElement('a'); a.href = f.url; a.download = name; a.click(); });
+    $('fx-grid').appendChild(el); $('fx-results').hidden = false; $('fx-count').textContent = `${frames.length} frame${frames.length === 1 ? '' : 's'}`;
+  }
+  $('fx-file').addEventListener('change', e => {
+    const f = e.target.files[0]; if (!f) return; if (url) URL.revokeObjectURL(url);
+    baseName = f.name.replace(/\.[^.]+$/, '').replace(/[^\w-]+/g, '_').slice(0, 40) || 'video';
+    url = URL.createObjectURL(f); v.src = url; v.hidden = false; $('fx-info').textContent = 'Loading…';
+  });
+  v.addEventListener('loadedmetadata', () => { $('fx-info').textContent = `${v.videoWidth} × ${v.videoHeight} · ${ts(v.duration)} long`; $('fx-go').disabled = false; $('fx-grab').disabled = false; estimate(); });
+  v.addEventListener('error', () => { $('fx-info').textContent = "Your browser can't play this file. Try MP4 (H.264) or WebM, or open it in another browser."; });
+  document.querySelectorAll('#fx-mode button').forEach(b => b.addEventListener('click', () => { mode = b.dataset.m;
+    document.querySelectorAll('#fx-mode button').forEach(x => x.setAttribute('aria-pressed', x === b)); $('fx-int-wrap').hidden = mode !== 'interval'; $('fx-cnt-wrap').hidden = mode !== 'count'; estimate(); }));
+  ['fx-int', 'fx-cnt'].forEach(id => $(id).addEventListener('input', estimate));
+  $('fx-go').addEventListener('click', async () => {
+    const list = times(); if (!list.length) return; stop = false; v.pause();
+    $('fx-go').disabled = true; $('fx-stop').hidden = false;
+    for (let i = 0; i < list.length && !stop; i++) {
+      await seek(list[i]); const f = await capture(list[i]); frames.push(f); addCard(f, frames.length - 1);
+      $('fx-bar').style.width = ((i + 1) / list.length * 100) + '%'; $('fx-status').textContent = `Extracted ${i + 1} of ${list.length}`;
+    }
+    $('fx-status').textContent = stop ? `Stopped. ${frames.length} frames ready.` : `Done. ${frames.length} frames ready.`;
+    $('fx-go').disabled = false; $('fx-stop').hidden = true;
+  });
+  $('fx-stop').addEventListener('click', () => { stop = true; });
+  $('fx-grab').addEventListener('click', async () => { v.pause(); const f = await capture(v.currentTime); frames.push(f); addCard(f, frames.length - 1); $('fx-status').textContent = `Saved the frame at ${ts(f.t)}.`; });
+  $('fx-clear').addEventListener('click', () => { frames.forEach(f => URL.revokeObjectURL(f.url)); frames = []; $('fx-grid').innerHTML = ''; $('fx-results').hidden = true; $('fx-bar').style.width = '0'; $('fx-status').textContent = ''; });
+  $('fx-zip').addEventListener('click', async () => {
+    if (!window.JSZip) { $('fx-status').textContent = "ZIP isn't available right now. Save frames one by one."; return; }
+    $('fx-status').textContent = 'Building ZIP…'; const zip = new JSZip(); frames.forEach(f => zip.file(f.name, f.blob));
+    const blob = await zip.generateAsync({ type: 'blob' }); const a = document.createElement('a'); a.href = URL.createObjectURL(blob); a.download = `${baseName}_frames.zip`; a.click();
+    $('fx-status').textContent = `ZIP with ${frames.length} frames downloaded.`;
+  });
+})();
+</script>
