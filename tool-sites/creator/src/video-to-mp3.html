@@ -1,0 +1,97 @@
+<!--meta
+slug: video-to-mp3
+title: Video to MP3 Converter: extract audio from MP4 free
+name: Video to MP3 Converter
+desc: Extract the audio from any MP4, MOV or WebM video as MP3 or WAV. Trim it, pick the quality, and download. Free, no upload, works in your browser.
+-->
+<style>
+.vm-wave { width: 100%; height: 90px; display: block; background: var(--surface-2); border: 1px solid var(--line); border-radius: 10px }
+.vm-bar { height: 8px; border-radius: 99px; background: var(--surface-2); border: 1px solid var(--line); overflow: hidden }
+.vm-bar i { display: block; height: 100%; width: 0; background: var(--green-2) }
+.vm-out { display: grid; grid-template-columns: repeat(auto-fit, minmax(120px, 1fr)); gap: 10px }
+.vm-out div { background: var(--surface-2); border: 1px solid var(--line); border-radius: 10px; padding: 10px 12px }
+.vm-out small { display: block; font: 600 11px var(--body); letter-spacing: .08em; text-transform: uppercase; color: var(--ink-3) }
+.vm-out b { font: 600 20px var(--mono); font-variant-numeric: tabular-nums }
+</style>
+<div>
+  <h1>Video to MP3, <em>in seconds</em></h1>
+  <p class="lede">Pull the audio out of any video: a voiceover, a podcast clip, a song for your edit. Trim it, choose MP3 or WAV, and download. Your file never leaves your device.</p>
+</div>
+<div class="ad-slot" data-slot="top"></div>
+<div class="cols">
+  <div class="panel">
+    <h2>Your video</h2>
+    <label>Video or audio file <input id="vm-file" type="file" accept="video/*,audio/*"></label>
+    <canvas class="vm-wave" id="vm-wave" width="900" height="180" aria-label="Audio waveform"></canvas>
+    <div class="row">
+      <label style="flex:1">Start (seconds) <input id="vm-start" type="number" min="0" step="0.1" value="0"></label>
+      <label style="flex:1">End (seconds) <input id="vm-end" type="number" min="0" step="0.1" value="0"></label>
+    </div>
+    <div class="row">
+      <label style="flex:1">Format <select id="vm-fmt"><option value="mp3">MP3</option><option value="wav">WAV (lossless)</option></select></label>
+      <label style="flex:1">Quality <select id="vm-kbps"><option value="128">128 kbps · small</option><option value="192" selected>192 kbps · standard</option><option value="320">320 kbps · best</option></select></label>
+    </div>
+    <div class="row"><button type="button" class="btn" id="vm-go" disabled>Convert and download</button><span class="hint" id="vm-status">Choose a video to start.</span></div>
+    <div class="vm-bar" aria-hidden="true"><i id="vm-bar"></i></div>
+  </div>
+  <div class="panel" aria-live="polite">
+    <h2>Your audio</h2>
+    <div class="vm-out">
+      <div><small>Length</small><b id="vm-len">0:00</b></div>
+      <div><small>Channels</small><b id="vm-ch">–</b></div>
+      <div><small>Sample rate</small><b id="vm-sr">–</b></div>
+      <div><small>Output size</small><b id="vm-size">–</b></div>
+    </div>
+    <audio id="vm-audio" controls style="width:100%"></audio>
+    <p class="hint">After converting, play the result here before you use it.</p>
+  </div>
+</div>
+<div class="ad-slot" data-slot="mid"></div>
+<section class="copy" id="how">
+  <h2>How it works</h2>
+  <p>Your browser decodes the video's soundtrack and encodes it to MP3 with the open-source LAME encoder, all on your device. Nothing is uploaded, so it is private and there is no file size limit beyond your computer's memory.</p>
+</section>
+<section class="copy" id="faq">
+  <h2>Questions</h2>
+  <details><summary>Which bitrate should I pick?</summary><p>192 kbps is right for most voiceovers and music. Choose 128 kbps for smaller files such as voice notes, or 320 kbps when you will edit the audio again.</p></details>
+  <details><summary>Can I convert Instagram or YouTube videos?</summary><p>Only videos saved on your own device. Use your own content or audio you have permission to use.</p></details>
+  <details><summary>Why use WAV?</summary><p>WAV is lossless, so it is best for editing in apps like CapCut, Premiere or Audacity. The file is about ten times larger than an MP3.</p></details>
+</section>
+<script src="vendor/lame.min.js"></script>
+<script>
+(() => {
+  const $ = id => document.getElementById(id);
+  let buf = null, file = null, outUrl = null;
+  const mmss = s => `${Math.floor(s / 60)}:${String(Math.floor(s % 60)).padStart(2, '0')}`;
+  const mb = n => n > 1e6 ? (n / 1e6).toFixed(1) + ' MB' : Math.round(n / 1e3) + ' KB';
+  function estimate() { if (!buf) return; const s = Math.max(0, (+$('vm-end').value || buf.duration) - (+$('vm-start').value || 0));
+    $('vm-size').textContent = '~' + mb($('vm-fmt').value === 'wav' ? s * buf.sampleRate * buf.numberOfChannels * 2 : s * +$('vm-kbps').value * 125); drawWave(); }
+  function drawWave() { const c = $('vm-wave'), g = c.getContext('2d'), W = c.width, H = c.height; g.clearRect(0, 0, W, H); if (!buf) return;
+    const d = buf.getChannelData(0), step = Math.max(1, Math.floor(d.length / W)), s0 = (+$('vm-start').value || 0) / buf.duration * W, s1 = (+$('vm-end').value || buf.duration) / buf.duration * W;
+    const css = getComputedStyle(document.documentElement); g.fillStyle = css.getPropertyValue('--tile'); g.fillRect(s0, 0, s1 - s0, H);
+    g.fillStyle = css.getPropertyValue('--green-2'); for (let x = 0; x < W; x++) { let m = 0; for (let i = x * step; i < (x + 1) * step && i < d.length; i += 4) m = Math.max(m, Math.abs(d[i])); const h = Math.max(1, m * H * .9); g.fillRect(x, (H - h) / 2, 1, h); } }
+  $('vm-file').onchange = async e => { file = e.target.files[0]; if (!file) return; $('vm-status').textContent = 'Reading the audio…'; $('vm-go').disabled = true;
+    try { const ac = new (window.AudioContext || window.webkitAudioContext)(); buf = await ac.decodeAudioData(await file.arrayBuffer()); ac.close();
+      $('vm-len').textContent = mmss(buf.duration); $('vm-ch').textContent = buf.numberOfChannels === 1 ? 'Mono' : 'Stereo'; $('vm-sr').textContent = (buf.sampleRate / 1000) + ' kHz';
+      $('vm-start').value = 0; $('vm-end').value = buf.duration.toFixed(1); $('vm-go').disabled = false; $('vm-status').textContent = 'Ready. Trim if you like, then convert.'; estimate();
+    } catch (x) { buf = null; $('vm-status').textContent = "This video has no audio track, or your browser can't read it. Try an MP4 or MOV."; } };
+  ['vm-start', 'vm-end', 'vm-fmt', 'vm-kbps'].forEach(id => $(id).addEventListener('input', estimate));
+  $('vm-fmt').addEventListener('input', () => $('vm-kbps').disabled = $('vm-fmt').value === 'wav');
+  function slice() { const sr = buf.sampleRate, a = Math.max(0, Math.floor((+$('vm-start').value || 0) * sr)), b = Math.min(buf.length, Math.floor((+$('vm-end').value || buf.duration) * sr));
+    return [...Array(Math.min(2, buf.numberOfChannels)).keys()].map(c => buf.getChannelData(c).subarray(a, Math.max(a + 1, b))); }
+  const i16 = f => { const o = new Int16Array(f.length); for (let i = 0; i < f.length; i++) { const v = Math.max(-1, Math.min(1, f[i])); o[i] = v < 0 ? v * 0x8000 : v * 0x7FFF; } return o; };
+  function wav(ch, sr) { const n = ch[0].length, nc = ch.length, b = new DataView(new ArrayBuffer(44 + n * nc * 2)); const w = (o, s) => [...s].forEach((c, i) => b.setUint8(o + i, c.charCodeAt(0)));
+    w(0, 'RIFF'); b.setUint32(4, 36 + n * nc * 2, true); w(8, 'WAVEfmt '); b.setUint32(16, 16, true); b.setUint16(20, 1, true); b.setUint16(22, nc, true); b.setUint32(24, sr, true); b.setUint32(28, sr * nc * 2, true); b.setUint16(32, nc * 2, true); b.setUint16(34, 16, true); w(36, 'data'); b.setUint32(40, n * nc * 2, true);
+    const s = ch.map(i16); let o = 44; for (let i = 0; i < n; i++) for (let c = 0; c < nc; c++) { b.setInt16(o, s[c][i], true); o += 2; } return new Blob([b], { type: 'audio/wav' }); }
+  async function mp3(ch, sr) { const enc = new lamejs.Mp3Encoder(ch.length, sr, +$('vm-kbps').value), L = i16(ch[0]), R = ch[1] ? i16(ch[1]) : null, out = [], block = 1152 * 40;
+    for (let i = 0; i < L.length; i += block) { const l = L.subarray(i, i + block), r = R ? R.subarray(i, i + block) : null; const d = R ? enc.encodeBuffer(l, r) : enc.encodeBuffer(l); if (d.length) out.push(new Uint8Array(d));
+      $('vm-bar').style.width = (i / L.length * 100) + '%'; if (i % (block * 10) === 0) await new Promise(r => setTimeout(r)); }
+    const e = enc.flush(); if (e.length) out.push(new Uint8Array(e)); return new Blob(out, { type: 'audio/mpeg' }); }
+  $('vm-go').onclick = async () => { if (!buf) return; $('vm-go').disabled = true; $('vm-status').textContent = 'Converting…'; $('vm-bar').style.width = '0%';
+    try { const ch = slice(), fmt = $('vm-fmt').value, blob = fmt === 'wav' ? wav(ch, buf.sampleRate) : await mp3(ch, buf.sampleRate);
+      $('vm-bar').style.width = '100%'; if (outUrl) URL.revokeObjectURL(outUrl); outUrl = URL.createObjectURL(blob); $('vm-audio').src = outUrl; $('vm-size').textContent = mb(blob.size);
+      const a = document.createElement('a'); a.href = outUrl; a.download = file.name.replace(/\.[^.]+$/, '') + '.' + fmt; a.click(); $('vm-status').textContent = `Done. Saved ${fmt.toUpperCase()} (${mb(blob.size)}).`;
+    } catch (x) { $('vm-status').textContent = 'Converting failed. Try WAV, or a shorter section.'; }
+    $('vm-go').disabled = false; };
+})();
+</script>

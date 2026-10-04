@@ -27,10 +27,12 @@ BASE_CSS = (HERE / 'shared' / 'base.css').read_text()
 FONTS = ('<link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>'
          '<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Newsreader:ital,opsz,wght@0,6..72,500;0,6..72,600;1,6..72,500;1,6..72,600'
          '&family=Geist:wght@400;500;600&family=Geist+Mono:wght@500&family=Caveat:wght@600&display=swap">')
-ORDER = ['youtube-earnings', 'script-timer', 'title-preview', 'image-resizer', 'word-counter', 'safe-zones', 'frame-extractor', 'caption-formatter', 'youtube-chapters', 'srt-subtitles', 'case-converter', 'qr-code', 'pdf-tools', 'map-animator']
-SHORT = {'script-timer': 'Script Timer', 'title-preview': 'Title & Thumbnail', 'safe-zones': 'Safe Zone Checker', 'caption-formatter': 'Caption Formatter', 'frame-extractor': 'Frame Extractor', 'youtube-earnings': 'YouTube Earnings', 'image-resizer': 'Image Resizer', 'word-counter': 'Word Counter', 'qr-code': 'QR Code', 'youtube-chapters': 'YouTube Chapters', 'srt-subtitles': 'Text to SRT', 'case-converter': 'Case Converter', 'pdf-tools': 'JPG to PDF', 'map-animator': 'Map Animator'}
-CARD_TITLE = {'script-timer': 'Script Timer', 'title-preview': 'Title & Thumbnail Preview', 'safe-zones': 'Shorts & Reels Safe Zones', 'caption-formatter': 'Instagram Caption Formatter', 'frame-extractor': 'Video Frame Extractor', 'youtube-earnings': 'YouTube Earnings Calculator', 'image-resizer': 'Image Resizer & Compressor', 'word-counter': 'Word & Character Counter', 'qr-code': 'QR Code Generator', 'youtube-chapters': 'YouTube Chapters Generator', 'srt-subtitles': 'Text to SRT & Subtitle Fixer', 'case-converter': 'Case Converter', 'pdf-tools': 'JPG to PDF & Merge PDF', 'map-animator': 'Map Route Animator'}
-BLURB = {'script-timer': 'Speaking time, paragraph timestamps and words to target.',
+ORDER = ['youtube-earnings', 'auto-captions', 'script-timer', 'title-preview', 'image-resizer', 'word-counter', 'safe-zones', 'frame-extractor', 'caption-formatter', 'youtube-chapters', 'srt-subtitles', 'case-converter', 'qr-code', 'pdf-tools', 'video-to-mp3', 'map-animator']
+SHORT = {'video-to-mp3': 'Video to MP3', 'auto-captions': 'Auto Captions', 'script-timer': 'Script Timer', 'title-preview': 'Title & Thumbnail', 'safe-zones': 'Safe Zone Checker', 'caption-formatter': 'Caption Formatter', 'frame-extractor': 'Frame Extractor', 'youtube-earnings': 'YouTube Earnings', 'image-resizer': 'Image Resizer', 'word-counter': 'Word Counter', 'qr-code': 'QR Code', 'youtube-chapters': 'YouTube Chapters', 'srt-subtitles': 'Text to SRT', 'case-converter': 'Case Converter', 'pdf-tools': 'JPG to PDF', 'map-animator': 'Map Animator'}
+CARD_TITLE = {'video-to-mp3': 'Video to MP3 Converter', 'auto-captions': 'Auto Captions Generator', 'script-timer': 'Script Timer', 'title-preview': 'Title & Thumbnail Preview', 'safe-zones': 'Shorts & Reels Safe Zones', 'caption-formatter': 'Instagram Caption Formatter', 'frame-extractor': 'Video Frame Extractor', 'youtube-earnings': 'YouTube Earnings Calculator', 'image-resizer': 'Image Resizer & Compressor', 'word-counter': 'Word & Character Counter', 'qr-code': 'QR Code Generator', 'youtube-chapters': 'YouTube Chapters Generator', 'srt-subtitles': 'Text to SRT & Subtitle Fixer', 'case-converter': 'Case Converter', 'pdf-tools': 'JPG to PDF & Merge PDF', 'map-animator': 'Map Route Animator'}
+BLURB = {'video-to-mp3': 'Extract audio from any video as MP3 or WAV, trimmed.',
+         'auto-captions': 'AI word-by-word captions for Reels and Shorts, no upload.',
+         'script-timer': 'Speaking time, paragraph timestamps and words to target.',
          'title-preview': 'See where your title gets cut off in every feed.',
          'safe-zones': 'Check what TikTok, Reels and Shorts buttons cover.',
          'caption-formatter': 'Line breaks that stick, plus every Instagram limit.',
@@ -39,7 +41,7 @@ BLURB = {'script-timer': 'Speaking time, paragraph timestamps and words to targe
          'word-counter': 'Words, characters and every platform limit, live.', 'qr-code': 'Links, text or WiFi. PNG or SVG, never expires.',
          'youtube-chapters': 'Build timestamps or check them against YouTube rules.', 'srt-subtitles': 'Script to subtitles, or fix out-of-sync SRT files.',
          'case-converter': 'Title Case, Sentence case, UPPER and 7 more.', 'pdf-tools': 'Images to PDF or merge PDFs, nothing uploaded.', 'map-animator': 'Explainer-style route map videos for travel and history.'}
-CATEGORY = {'script-timer': 'Scripts & Voiceover', 'title-preview': 'Titles & Thumbnails', 'safe-zones': 'Vertical Video', 'caption-formatter': 'Captions & Text', 'frame-extractor': 'Video Frames', 'youtube-earnings': 'Money & Growth', 'image-resizer': 'Images', 'word-counter': 'Text', 'qr-code': 'Links & Sharing', 'youtube-chapters': 'YouTube SEO', 'srt-subtitles': 'Subtitles', 'case-converter': 'Text Formatting', 'pdf-tools': 'PDF', 'map-animator': 'Maps & Animation'}
+CATEGORY = {'video-to-mp3': 'Audio', 'auto-captions': 'AI Captions', 'script-timer': 'Scripts & Voiceover', 'title-preview': 'Titles & Thumbnails', 'safe-zones': 'Vertical Video', 'caption-formatter': 'Captions & Text', 'frame-extractor': 'Video Frames', 'youtube-earnings': 'Money & Growth', 'image-resizer': 'Images', 'word-counter': 'Text', 'qr-code': 'Links & Sharing', 'youtube-chapters': 'YouTube SEO', 'srt-subtitles': 'Subtitles', 'case-converter': 'Text Formatting', 'pdf-tools': 'PDF', 'map-animator': 'Maps & Animation'}
 
 # ---------- icons (simple stroke icons drawn for this site) ----------
 P = {
@@ -72,9 +74,11 @@ P = {
  'aa': '<path d="M3 18l4-11 4 11M4.5 14h5"/><circle cx="17" cy="15" r="3"/><path d="M20 12v6"/>',
  'file': '<path d="M14 3H7a2 2 0 00-2 2v14a2 2 0 002 2h10a2 2 0 002-2V8z"/><path d="M14 3v5h5M9 13h6M9 17h4"/>',
  'map': '<path d="M9 4L3 6v14l6-2 6 2 6-2V4l-6 2z"/><path d="M9 4v14M15 6v14"/>',
+ 'wave': '<path d="M3 12h2M7 8v8M11 5v14M15 9v6M19 7v10M21 12h0"/>',
+ 'music': '<path d="M9 18V5l11-2v13"/><circle cx="6.5" cy="18" r="2.5"/><circle cx="17.5" cy="16" r="2.5"/>',
  'leaf': '<path d="M5 19c0-8 6-14 15-14 0 9-6 15-14 15"/><path d="M5 19l7-7"/>',
 }
-ICON = {'script-timer': 'clock', 'title-preview': 'title', 'safe-zones': 'phone', 'caption-formatter': 'caption', 'frame-extractor': 'film', 'youtube-earnings': 'money', 'image-resizer': 'image', 'word-counter': 'type', 'qr-code': 'qr', 'youtube-chapters': 'list', 'srt-subtitles': 'cc', 'case-converter': 'aa', 'pdf-tools': 'file', 'map-animator': 'map'}
+ICON = {'video-to-mp3': 'music', 'auto-captions': 'wave', 'script-timer': 'clock', 'title-preview': 'title', 'safe-zones': 'phone', 'caption-formatter': 'caption', 'frame-extractor': 'film', 'youtube-earnings': 'money', 'image-resizer': 'image', 'word-counter': 'type', 'qr-code': 'qr', 'youtube-chapters': 'list', 'srt-subtitles': 'cc', 'case-converter': 'aa', 'pdf-tools': 'file', 'map-animator': 'map'}
 def ic(name, cls='i'): return f'<svg class="{cls}" viewBox="0 0 24 24" aria-hidden="true">{P[name]}</svg>'
 def cur(flag): return CUR if flag else ''
 
