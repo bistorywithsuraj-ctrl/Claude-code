@@ -35,7 +35,7 @@ desc: Make an animated route map video for travel vlogs, history and explainer v
 <div class="cols">
   <div class="panel">
     <h2>Stops</h2>
-    <p class="hint">Type a city or click anywhere on the map to drop a point. The transport is how you travel <b>to</b> that stop.</p>
+    <p class="hint">Type a city or country, or click anywhere on the map to drop a point. The transport is how you travel <b>to</b> that stop.</p>
     <ul class="ma-stops" id="ma-stops"></ul>
     <datalist id="ma-cities"></datalist>
     <div class="row"><button type="button" class="btn ghost" id="ma-add">Add stop</button><button type="button" class="btn ghost" id="ma-clear">Clear all</button></div>
@@ -67,7 +67,7 @@ desc: Make an animated route map video for travel vlogs, history and explainer v
 <section class="copy" id="faq">
   <h2>Questions</h2>
   <details><summary>Is the video free to use on YouTube?</summary><p>Yes. The map outlines come from Natural Earth, which is in the public domain, city locations come from GeoNames (CC BY 4.0), and there is no watermark. Use the videos in monetised videos, Reels and Shorts.</p></details>
-  <details><summary>Which places can I use?</summary><p>More than 24,000 towns and cities worldwide with at least 15,000 people. Type at least two letters to see suggestions. Add a country code to pick between places with the same name, like "Hyderabad, PK". For a smaller place, click the exact spot on the map and rename the stop.</p></details>
+  <details><summary>Which places can I use?</summary><p>Every country, plus more than 24,000 towns and cities worldwide with at least 15,000 people. Type at least two letters to see suggestions. Add a country code to pick between places with the same name, like "Hyderabad, PK". For a smaller place, click the exact spot on the map and rename the stop.</p></details>
   <details><summary>Why did my export come out as WebM?</summary><p>Some browsers can only record WebM. YouTube accepts WebM directly; for Instagram, open it in CapCut or any editor and export as MP4, or use Safari, which records MP4.</p></details>
   <details><summary>Can I use it for history videos?</summary><p>Yes. Add the places in order, turn on country highlights and set a title such as "Napoleon's march, 1812" for a classic explainer look.</p></details>
 </section>
@@ -80,12 +80,18 @@ desc: Make an animated route map video for travel vlogs, history and explainer v
     .split(';').map(s => { const [n, a, o] = s.split(','); return { name: n, lat: +a, lon: +o }; });
   const byName = Object.fromEntries(CITIES.map(c => [c.name.toLowerCase(), c]));
   let BIG = [];   // ~24,000 cities (GeoNames), sorted by population
+  let NATIONS = []; const byNation = {};   // countries, placed at their Natural Earth label point
+  const ALIAS = { usa: 'united states', us: 'united states', america: 'united states', 'united states of america': 'united states', uk: 'united kingdom', britain: 'united kingdom', 'great britain': 'united kingdom',
+    england: 'united kingdom', scotland: 'united kingdom', uae: 'united arab emirates', emirates: 'united arab emirates', 'czech republic': 'czechia', holland: 'netherlands', turkey: 'türkiye', turkiye: 'türkiye',
+    burma: 'myanmar', 'ivory coast': "côte d'ivoire", swaziland: 'eswatini', 'south korea': 'south korea', korea: 'south korea', 'north korea': 'north korea', drc: 'democratic republic of the congo', vatican: 'vatican' };
   const lookup = q => { q = (q || '').trim().toLowerCase(); if (!q) return null;
+    const n = byNation[ALIAS[q] || q]; if (n) return n;
     const m = q.match(/^(.*?),\s*([a-z]{2})$/); const name = m ? m[1].trim() : q, cc = m ? m[2].toUpperCase() : null;
     const hit = BIG.find(c => c.k === name && (!cc || c.cc === cc)); if (hit) return hit;
     return byName[name] || null; };
   function suggest(q) { q = (q || '').trim().toLowerCase().replace(/,.*$/, ''); if (q.length < 2) { $('ma-cities').innerHTML = ''; return; }
-    const out = []; for (const c of BIG) { if (c.k.startsWith(q)) { out.push(c); if (out.length >= 8) break; } }
+    const out = NATIONS.filter(c => c.k.startsWith(q)).slice(0, 3).map(c => ({ name: c.name, cc: '' }));
+    for (const c of BIG) { if (out.length >= 8) break; if (c.k.startsWith(q)) out.push(c); }
     if (!out.length) CITIES.filter(c => c.name.toLowerCase().startsWith(q)).slice(0, 8).forEach(c => out.push({ name: c.name, cc: '' }));
     $('ma-cities').innerHTML = out.map(c => `<option value="${c.cc ? c.name + ', ' + c.cc : c.name}">`).join(''); }
   fetch('vendor/cities.txt').then(r => r.text()).then(txt => { BIG = txt.split('\n').map(l => { const [name, cc, lat, lon] = l.split('|'); return { name, cc, k: name.toLowerCase(), lat: +lat, lon: +lon }; }); refresh(); }).catch(() => {});
@@ -120,13 +126,16 @@ desc: Make an animated route map video for travel vlogs, history and explainer v
       const rings = polys.flatMap(p => p.map(unwrapRing)); let x0 = 1e9, x1 = -1e9, y0 = 1e9, y1 = -1e9;
       rings.forEach(r => r.forEach(([x, y]) => { x0 = Math.min(x0, x); x1 = Math.max(x1, x); y0 = Math.min(y0, y); y1 = Math.max(y1, y); }));
       return { name: f.properties.name, rings, polys: polys.map(p => p.map(unwrapRing)), bbox: [x0, y0, x1, y1] }; });
+    geo.features.forEach(f => { const p = f.properties; if (p.lx == null) return;
+      const show = p.admin && (p.admin.length <= p.name.length || p.name.includes('.')) ? p.admin : p.name, c = { name: show, k: show.toLowerCase(), lat: p.ly, lon: p.lx, nation: true };
+      NATIONS.push(c); [p.name, p.long, p.admin, show].forEach(n => { if (n && !byNation[n.toLowerCase()]) byNation[n.toLowerCase()] = c; }); });
   }
   function inRing(x, y, r) { let c = false; for (let i = 0, j = r.length - 1; i < r.length; j = i++) { const [xi, yi] = r[i], [xj, yj] = r[j]; if ((yi > y) !== (yj > y) && x < (xj - xi) * (y - yi) / (yj - yi) + xi) c = !c; } return c; }
   function countryAt(lon, lat) { const y = my(lat);
     for (const c of countries) for (const k of [0, 360, -360]) { const x = lon + k; if (x < c.bbox[0] || x > c.bbox[2] || y < c.bbox[1] || y > c.bbox[3]) continue;
       for (const p of c.polys) if (inRing(x, y, p[0]) && !p.slice(1).some(h => inRing(x, y, h))) return c; } return null; }
   // ---------- route geometry ----------
-  function resolve(s) { if (s.lat != null) return s; const c = lookup(s.name); return c ? { ...s, name: (s.name || '').replace(/,\s*[A-Za-z]{2}$/, ''), lat: c.lat, lon: c.lon } : null; }
+  function resolve(s) { if (s.lat != null) return s; const c = lookup(s.name); return c ? { ...s, name: c.name, lat: c.lat, lon: c.lon } : null; }
   function gc(a, b, n) { // great-circle points
     const p1 = [a.lat * D2R, a.lon * D2R], p2 = [b.lat * D2R, b.lon * D2R];
     const v = ([la, lo]) => [Math.cos(la) * Math.cos(lo), Math.cos(la) * Math.sin(lo), Math.sin(la)];
