@@ -10,117 +10,186 @@
 <meta property="og:type" content="website"><meta property="og:url" content="https://creatorbenchtool.com/terms">
 <meta property="og:image" content="https://creatorbenchtool.com/og.png"><meta property="og:image:width" content="1200"><meta property="og:image:height" content="630">
 <meta name="twitter:card" content="summary_large_image"><meta name="twitter:image" content="https://creatorbenchtool.com/og.png">
-<meta name="theme-color" content="#F0452F">
-<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='16' fill='%23111216'/%3E%3Ccircle cx='32' cy='32' r='12' fill='%23F0452F'/%3E%3C/svg%3E">
-<link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin><link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,600;12..96,700;12..96,800&family=Geist:wght@400;500;600;700&family=Geist+Mono:wght@500;600&display=swap">
-<style>/* CREATOR BENCH design system
-   Layout: glass header · hero band with timecode eyebrow · content column + sticky ad rail on desktop · roomy footer.
-   Motif: the recording light. One red accent, used for the REC dot, emphasis and active states. Everything else is ink on a warm studio neutral. */
+<meta name="theme-color" content="#1F4D3A">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='16' fill='%231F4D3A'/%3E%3Cpath d='M18 46c0-16 12-28 30-28 0 18-12 30-28 30M18 46l14-14' stroke='%23DCEF80' stroke-width='5' fill='none' stroke-linecap='round'/%3E%3C/svg%3E">
+<script>try{const t=localStorage.getItem('cb-theme');if(t)document.documentElement.dataset.theme=t}catch(e){}</script>
+<link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin><link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Newsreader:ital,opsz,wght@0,6..72,500;0,6..72,600;1,6..72,500;1,6..72,600&family=Geist:wght@400;500;600&family=Geist+Mono:wght@500&family=Caveat:wght@600&display=swap">
+<style>/* CREATOR BENCH design system: calm sage studio
+   Layout: left sidebar (brand, tool list, resources) · top bar · main column + right rail (ad, stats). Collapses to a drawer on phones.
+   Palette: sage paper neutrals, deep forest green for primary actions, a lime highlight for calls to action. */
 :root {
-  --bg: #F6F5F2;          /* studio wall, warm neutral */
-  --bg-2: #EEECE7;
-  --surface: #FFFFFF;
-  --surface-2: #FAF9F7;
-  --ink: #111216;
-  --ink-2: #5D5F68;
-  --ink-3: #8C8E96;
-  --line: #E4E2DC;
-  --line-2: #D7D4CC;
-  --rec: #F0452F;         /* record light */
-  --rec-soft: #FDE7E3;
-  --ok: #14804A; --warn: #C2410C; --hi: #FFE27A;
-  --shadow: 0 1px 2px rgba(17,18,22,.05), 0 8px 24px -8px rgba(17,18,22,.10);
-  --shadow-lg: 0 2px 4px rgba(17,18,22,.04), 0 24px 48px -16px rgba(17,18,22,.18);
-  --display: "Bricolage Grotesque", "Avenir Next", system-ui, sans-serif;
+  --bg: #F3F2EA;          /* sage paper */
+  --side: #F7F6EF;
+  --surface: #FBFAF5;
+  --surface-2: #F1F0E7;
+  --tile: #E4EBDC;        /* icon tile */
+  --ink: #1C2A21;
+  --ink-2: #56625A;
+  --ink-3: #87918A;
+  --line: #E2E1D6;
+  --line-2: #D3D3C5;
+  --green: #1F4D3A;       /* primary */
+  --green-2: #2E6A4E;
+  --lime: #DCEF80;        /* CTA highlight */
+  --lime-ink: #1C2A21;
+  --ok: #2E7D4F; --warn: #B4531A; --hi: #EAF3B8;
+  --shadow: 0 1px 2px rgba(28,42,33,.05), 0 6px 18px -8px rgba(28,42,33,.12);
+  --shadow-lg: 0 2px 6px rgba(28,42,33,.06), 0 20px 40px -18px rgba(28,42,33,.25);
+  --serif: "Newsreader", "Iowan Old Style", Georgia, serif;
   --body: "Geist", system-ui, -apple-system, "Segoe UI", sans-serif;
-  --mono: "Geist Mono", ui-monospace, "SFMono-Regular", Menlo, monospace;
+  --mono: "Geist Mono", ui-monospace, Menlo, monospace;
+  --hand: "Caveat", "Segoe Print", cursive;
   --radius: 16px;
-  /* legacy aliases used inside tool pages */
-  --accent: var(--rec); --accent-soft: var(--rec-soft); --panel: var(--surface); --field: var(--surface-2); --rule: var(--line);
+  /* aliases used inside tool pages */
+  --accent: var(--green-2); --accent-soft: var(--tile); --panel: var(--surface); --field: var(--surface-2); --rule: var(--line); --rec: var(--green-2); --rec-soft: var(--tile);
 }
 @media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) {
-  --bg: #0D0E11; --bg-2: #121318; --surface: #16171C; --surface-2: #1C1D23; --ink: #F2F1EE; --ink-2: #A9AAB2; --ink-3: #74767F;
-  --line: #26272E; --line-2: #33343C; --rec: #FF5A43; --rec-soft: #3A1915; --ok: #4ADE80; --warn: #FB923C; --hi: #6B5A12;
-  --shadow: 0 1px 2px rgba(0,0,0,.4), 0 8px 24px -8px rgba(0,0,0,.5); --shadow-lg: 0 24px 48px -16px rgba(0,0,0,.7); color-scheme: dark } }
+  --bg: #0F1612; --side: #111A15; --surface: #16201A; --surface-2: #1B2720; --tile: #213328; --ink: #EEF1EA; --ink-2: #A9B4AB; --ink-3: #758178;
+  --line: #24312A; --line-2: #2F3F35; --green: #9FD3A8; --green-2: #8CCB98; --lime: #C9E26B; --lime-ink: #142019; --ok: #6BD69A; --warn: #F0A15E; --hi: #2C3A1D;
+  --shadow: 0 1px 2px rgba(0,0,0,.4), 0 6px 18px -8px rgba(0,0,0,.5); --shadow-lg: 0 20px 40px -18px rgba(0,0,0,.7); color-scheme: dark } }
 :root[data-theme="dark"] {
-  --bg: #0D0E11; --bg-2: #121318; --surface: #16171C; --surface-2: #1C1D23; --ink: #F2F1EE; --ink-2: #A9AAB2; --ink-3: #74767F;
-  --line: #26272E; --line-2: #33343C; --rec: #FF5A43; --rec-soft: #3A1915; --ok: #4ADE80; --warn: #FB923C; --hi: #6B5A12;
-  --shadow: 0 1px 2px rgba(0,0,0,.4), 0 8px 24px -8px rgba(0,0,0,.5); --shadow-lg: 0 24px 48px -16px rgba(0,0,0,.7); color-scheme: dark }
+  --bg: #0F1612; --side: #111A15; --surface: #16201A; --surface-2: #1B2720; --tile: #213328; --ink: #EEF1EA; --ink-2: #A9B4AB; --ink-3: #758178;
+  --line: #24312A; --line-2: #2F3F35; --green: #9FD3A8; --green-2: #8CCB98; --lime: #C9E26B; --lime-ink: #142019; --ok: #6BD69A; --warn: #F0A15E; --hi: #2C3A1D;
+  --shadow: 0 1px 2px rgba(0,0,0,.4), 0 6px 18px -8px rgba(0,0,0,.5); --shadow-lg: 0 20px 40px -18px rgba(0,0,0,.7); color-scheme: dark }
 
 * { box-sizing: border-box }
 [hidden] { display: none !important }
 html { -webkit-text-size-adjust: 100% }
-body { background: var(--bg); color: var(--ink); font: 16px/1.6 var(--body); margin: 0; -webkit-font-smoothing: antialiased }
+body { background: var(--bg); color: var(--ink); font: 15px/1.6 var(--body); margin: 0; -webkit-font-smoothing: antialiased }
 a { color: inherit }
-::selection { background: var(--rec); color: #fff }
+::selection { background: var(--lime); color: var(--lime-ink) }
+svg.i { width: 20px; height: 20px; flex: none; stroke: currentColor; fill: none; stroke-width: 1.7; stroke-linecap: round; stroke-linejoin: round }
 
-/* ---------- header ---------- */
-.site-head { position: sticky; top: env(safe-area-inset-top, 0px); z-index: 20; backdrop-filter: saturate(1.4) blur(14px); -webkit-backdrop-filter: saturate(1.4) blur(14px);
-  background: color-mix(in srgb, var(--bg) 78%, transparent); border-bottom: 1px solid var(--line) }
-.site-head .in { max-width: 1240px; margin: 0 auto; padding-inline: 20px; height: 64px; display: flex; align-items: center; gap: 24px }
-.brand { display: inline-flex; align-items: center; gap: 10px; font: 800 19px/1 var(--display); letter-spacing: -.02em; text-decoration: none; color: var(--ink); white-space: nowrap }
-.brand .dot { width: 11px; height: 11px; border-radius: 50%; background: var(--rec); box-shadow: 0 0 0 4px var(--rec-soft) }
-@media (prefers-reduced-motion: no-preference) { .brand .dot { animation: rec 2.4s ease-in-out infinite } @keyframes rec { 50% { opacity: .35 } } }
-.brand span { color: var(--ink-3); font-weight: 600 }
-.nav { display: flex; gap: 4px; margin-left: auto; overflow-x: auto; scrollbar-width: none }
-.nav::-webkit-scrollbar { display: none }
-.nav a { font: 500 14px var(--body); color: var(--ink-2); text-decoration: none; padding: 8px 12px; border-radius: 999px; white-space: nowrap }
-.nav a:hover { color: var(--ink); background: var(--bg-2) }
-.nav a[aria-current="page"] { color: var(--ink); background: var(--surface); box-shadow: var(--shadow) }
-@media (max-width: 760px) { .site-head .in { height: auto; padding-block: 12px; flex-wrap: wrap; gap: 10px } .nav { margin-left: 0; width: 100% } }
+/* ---------- app shell ---------- */
+.app { display: grid; grid-template-columns: 256px minmax(0, 1fr); min-height: 100vh }
+.side { background: var(--side); border-right: 1px solid var(--line); padding: 22px 16px; display: flex; flex-direction: column; gap: 18px; position: sticky; top: 0; height: 100vh; overflow-y: auto }
+.brand { display: flex; align-items: center; gap: 12px; text-decoration: none; color: var(--ink); padding: 0 6px 18px; border-bottom: 1px solid var(--line) }
+.brand .mark { width: 40px; height: 40px; border-radius: 11px; background: var(--green); display: grid; place-items: center; color: var(--surface) }
+.brand .mark svg { width: 22px; height: 22px; stroke: var(--surface); fill: none; stroke-width: 2 }
+.brand b { display: block; font: 600 21px/1.1 var(--serif); letter-spacing: -.01em }
+.brand small { display: block; font-size: 12px; color: var(--ink-3); margin-top: 2px }
+.side h6 { margin: 6px 8px 4px; font: 600 11px var(--body); letter-spacing: .12em; text-transform: uppercase; color: var(--ink-3) }
+.side nav { display: grid; gap: 2px }
+.side nav a { display: flex; align-items: center; gap: 12px; padding: 9px 12px; border-radius: 10px; text-decoration: none; color: var(--ink-2); font-size: 14px; font-weight: 500 }
+.side nav a:hover { background: var(--surface-2); color: var(--ink) }
+.side nav a[aria-current="page"] { background: var(--tile); color: var(--ink); font-weight: 600 }
+.side .note { margin-top: auto; background: linear-gradient(160deg, var(--tile), var(--surface-2)); border: 1px solid var(--line); border-radius: 14px; padding: 18px; display: grid; gap: 6px }
+.side .note b { font: 600 17px/1.25 var(--serif) }
+.side .note span { font-size: 13px; color: var(--ink-2) }
+.main { min-width: 0; display: grid; grid-template-rows: auto 1fr auto }
+.topbar { display: flex; align-items: center; gap: 6px; padding: 14px 28px; border-bottom: 1px solid var(--line); position: sticky; top: 0; z-index: 15; background: color-mix(in srgb, var(--bg) 85%, transparent); backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px) }
+.topbar .tab { display: inline-flex; align-items: center; gap: 8px; padding: 9px 14px; border-radius: 999px; text-decoration: none; color: var(--ink-2); font-size: 14px; font-weight: 500 }
+.topbar .tab:hover { color: var(--ink); background: var(--surface-2) }
+.topbar .tab[aria-current="page"] { background: var(--tile); color: var(--ink); font-weight: 600 }
+.topbar .sp { flex: 1 }
+.icon-btn { width: 40px; height: 40px; border-radius: 50%; border: 1px solid transparent; background: transparent; color: var(--ink); display: grid; place-items: center; cursor: pointer }
+.icon-btn:hover { background: var(--surface-2); border-color: var(--line) }
+.btn-primary { display: inline-flex; align-items: center; gap: 8px; background: var(--green); color: var(--surface); border: 0; border-radius: 999px; padding: 10px 18px; font: 600 14px var(--body); cursor: pointer; text-decoration: none }
+.btn-primary:hover { box-shadow: var(--shadow-lg) }
+.menu-btn { display: none }
+@media (max-width: 960px) {
+  .app { grid-template-columns: 1fr }
+  .side { position: fixed; inset: 0 auto 0 0; width: min(86vw, 300px); z-index: 40; transform: translateX(-105%); transition: transform .25s; box-shadow: var(--shadow-lg) }
+  body.drawer .side { transform: none }
+  body.drawer::after { content: ""; position: fixed; inset: 0; background: rgba(0,0,0,.35); z-index: 30 }
+  .menu-btn { display: grid }
+  .topbar { padding: 10px 16px } .topbar .tab.hide-sm { display: none }
+}
 
-/* ---------- page frame ---------- */
-.wrap { max-width: 1240px; margin: 0 auto; padding-inline: 20px; padding-block: 0 64px }
-.layout { display: grid; grid-template-columns: minmax(0, 1fr) 300px; gap: 40px; align-items: start }
-.layout.single { grid-template-columns: minmax(0, 1fr) }
-@media (max-width: 1080px) { .layout { grid-template-columns: minmax(0, 1fr) } .rail { display: none } }
-.content { display: grid; gap: 28px; min-width: 0 }
-.rail { position: sticky; top: calc(env(safe-area-inset-top, 0px) + 88px); display: grid; gap: 20px }
-.rail .more { background: var(--surface); border: 1px solid var(--line); border-radius: var(--radius); padding: 18px; display: grid; gap: 6px }
-.rail .more h3 { margin: 0 0 6px; font: 600 12px var(--mono); letter-spacing: .12em; text-transform: uppercase; color: var(--ink-3) }
-.rail .more a { text-decoration: none; padding: 8px 10px; border-radius: 10px; font-weight: 500; font-size: 14px }
-.rail .more a:hover { background: var(--bg-2) }
+/* ---------- page grid ---------- */
+.wrap { padding: 24px 28px 48px; display: grid; grid-template-columns: minmax(0, 1fr) 300px; gap: 24px; align-items: start; max-width: 1320px; width: 100% }
+@media (max-width: 1200px) { .wrap { grid-template-columns: minmax(0, 1fr) } .rail { display: none } }
+@media (max-width: 960px) { .wrap { padding: 16px 16px 40px } }
+.content { display: grid; gap: 26px; min-width: 0 }
+.rail { display: grid; gap: 18px; position: sticky; top: 84px }
+.card { background: var(--surface); border: 1px solid var(--line); border-radius: var(--radius); padding: 18px; box-shadow: var(--shadow) }
+.card h3 { margin: 0 0 12px; display: flex; align-items: center; gap: 10px; font: 600 16px var(--body) }
+.card h3 svg { color: var(--green-2) }
+.stats-list { display: grid }
+.stats-list div { display: grid; grid-template-columns: 36px 1fr; gap: 12px; align-items: center; padding: 10px 0; border-top: 1px solid var(--line) }
+.stats-list div:first-child { border-top: 0 }
+.stats-list i { width: 36px; height: 36px; border-radius: 50%; background: var(--tile); display: grid; place-items: center; color: var(--green-2) }
+.stats-list b { display: block; font: 600 18px/1.1 var(--serif) }
+.stats-list span { font-size: 12px; color: var(--ink-3) }
+.checks { list-style: none; margin: 0; padding: 0; display: grid; gap: 8px; font-size: 14px; color: var(--ink-2) }
+.checks li { display: flex; gap: 10px; align-items: center }
+.checks svg { color: var(--ok); width: 16px; height: 16px }
+.quote { font: italic 400 15px/1.55 var(--serif); color: var(--ink-2) }
+.quote cite { display: block; margin-top: 8px; font: 500 12px var(--body); color: var(--ink-3); font-style: normal }
 
 /* ---------- hero ---------- */
-.hero { padding-block: 48px 8px; display: grid; gap: 14px; max-width: 820px }
-.eyebrow { display: inline-flex; align-items: center; gap: 10px; font: 500 12px var(--mono); letter-spacing: .14em; text-transform: uppercase; color: var(--ink-3) }
-.eyebrow b { color: var(--rec); font-weight: 600 }
-h1 { font: 800 clamp(36px, 5.8vw, 68px)/1.0 var(--display); letter-spacing: -.035em; margin: 0; text-wrap: balance }
-h1 em { font-style: normal; color: var(--rec) }
-.lede { max-width: 60ch; color: var(--ink-2); margin: 0; font-size: 18px; line-height: 1.6 }
-.content > div:first-child { display: grid; gap: 14px; padding-block: 40px 0; max-width: 820px }  /* tool page hero */
+.hero { position: relative; overflow: hidden; border-radius: 20px; border: 1px solid var(--line); background: var(--surface-2); min-height: 320px; display: grid; align-content: center; padding: 34px 40px; box-shadow: var(--shadow) }
+.hero .scene { position: absolute; inset: 0; width: 100%; height: 100%; display: block }
+.hero .copy { position: relative; display: grid; gap: 14px; max-width: 560px }
+.badge { justify-self: start; display: inline-flex; align-items: center; gap: 6px; background: var(--hi); color: var(--green); border: 1px solid color-mix(in srgb, var(--green) 18%, transparent); border-radius: 999px; padding: 5px 12px; font: 600 11px var(--body); letter-spacing: .08em; text-transform: uppercase }
+h1 { font: 600 clamp(36px, 5vw, 58px)/1.0 var(--serif); letter-spacing: -.02em; margin: 0; text-wrap: balance; color: var(--ink) }
+h1 em { font-style: italic; color: var(--green-2) }
+.lede { max-width: 58ch; color: var(--ink-2); margin: 0; font-size: 16.5px }
+.hand { position: absolute; right: 6%; top: 26px; font: 600 24px/1.1 var(--hand); color: var(--ink-2); transform: rotate(-8deg); text-align: center }
+@media (max-width: 760px) { .hand { display: none } .hero { padding: 26px 22px } .hero .scene { opacity: .35 } }
+.search { display: flex; align-items: center; gap: 10px; background: var(--surface); border: 1px solid var(--line-2); border-radius: 12px; padding: 4px 14px; box-shadow: var(--shadow); max-width: 520px }
+.search input { border: 0; background: transparent; box-shadow: none; padding: 10px 0; font-size: 15px }
+.search input:focus { box-shadow: none }
+.chips { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; font-size: 13px; color: var(--ink-2) }
+.chips a { text-decoration: none; background: var(--surface); border: 1px solid var(--line); border-radius: 999px; padding: 5px 12px; color: var(--ink) }
+.chips a:hover { border-color: var(--green-2) }
 
-/* ---------- tool surfaces ---------- */
+/* ---------- tool cards ---------- */
+.sec-head { display: flex; align-items: baseline; justify-content: space-between; gap: 12px }
+.sec-head h2 { margin: 0; font: 600 26px/1.15 var(--serif); letter-spacing: -.01em }
+.sec-head a { font-size: 13px; color: var(--ink-2); text-decoration: none } .sec-head a:hover { color: var(--ink) }
+.tools { display: grid; grid-template-columns: repeat(auto-fill, minmax(min(100%, 300px), 1fr)); gap: 16px }
+.tool-card { position: relative; background: var(--surface); border: 1px solid var(--line); border-radius: 16px; padding: 20px; text-decoration: none; color: inherit; display: grid; gap: 8px; align-content: start; box-shadow: var(--shadow); transition: transform .18s, box-shadow .18s, border-color .18s }
+.tool-card:hover { transform: translateY(-2px); box-shadow: var(--shadow-lg); border-color: var(--line-2) }
+.tool-card .tile { width: 48px; height: 48px; border-radius: 12px; background: var(--tile); display: grid; place-items: center; color: var(--green); margin-bottom: 6px }
+.tool-card .tile svg { width: 24px; height: 24px }
+.tool-card h3 { margin: 0; font: 600 17px/1.25 var(--body) }
+.tool-card p { margin: 0; color: var(--ink-2); font-size: 13.5px; padding-right: 30px }
+.tool-card .go { position: absolute; right: 16px; bottom: 16px; width: 30px; height: 30px; border-radius: 50%; border: 1px solid var(--line); display: grid; place-items: center }
+.tool-card .go svg { width: 15px; height: 15px }
+.tool-card .flag { position: absolute; right: 14px; top: 14px; background: var(--lime); color: var(--lime-ink); font: 600 11px var(--body); padding: 3px 9px; border-radius: 999px }
+.cats { display: grid; grid-template-columns: repeat(auto-fill, minmax(min(100%, 200px), 1fr)); gap: 12px }
+.cats a { display: flex; align-items: center; gap: 12px; background: var(--surface); border: 1px solid var(--line); border-radius: 14px; padding: 12px 14px; text-decoration: none; font-size: 14px; font-weight: 500 }
+.cats a:hover { border-color: var(--green-2) }
+.cats i { width: 36px; height: 36px; border-radius: 10px; background: var(--tile); display: grid; place-items: center; color: var(--green) }
+.no-match { color: var(--ink-3); font-size: 14px }
+
+/* ---------- tool page surfaces (shared with src/*.html) ---------- */
+.content > div:first-child:not(.hero):not(.crumbs) { display: grid; gap: 12px; max-width: 820px }
+.crumbs { font-size: 13px; color: var(--ink-3); display: flex; flex-wrap: wrap; gap: 6px; align-items: center }
+.crumbs a { color: var(--ink-2); text-decoration: none } .crumbs a:hover { color: var(--ink); text-decoration: underline }
+.eyebrow { display: inline-flex; align-items: center; gap: 8px; font: 600 11px var(--body); letter-spacing: .12em; text-transform: uppercase; color: var(--green-2) }
+.eyebrow b { color: var(--green-2) }
 .panel { background: var(--surface); border: 1px solid var(--line); border-radius: var(--radius); padding: 22px; display: grid; gap: 16px; min-width: 0; box-shadow: var(--shadow) }
-.panel h2 { font: 600 12px/1 var(--mono); text-transform: uppercase; letter-spacing: .14em; margin: 0; color: var(--ink-3); display: flex; align-items: center; gap: 8px }
-.panel h2::before { content: ""; width: 6px; height: 6px; border-radius: 50%; background: var(--rec) }
-.cols { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 20px; align-items: start }
+.panel h2 { font: 600 12px/1 var(--body); text-transform: uppercase; letter-spacing: .12em; margin: 0; color: var(--ink-3); display: flex; align-items: center; gap: 8px }
+.panel h2::before { content: ""; width: 7px; height: 7px; border-radius: 2px; background: var(--green-2) }
+.cols { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 18px; align-items: start }
 @media (max-width: 860px) { .cols { grid-template-columns: 1fr } }
 label { display: grid; gap: 7px; font-size: 14px; font-weight: 600 }
 .hint { font-weight: 400; color: var(--ink-3); font-size: 13px; line-height: 1.5 }
-input, select, textarea { width: 100%; font: 400 16px var(--body); color: var(--ink); background: var(--surface-2); border: 1px solid var(--line-2); border-radius: 10px; padding: 11px 13px; min-width: 0; transition: border-color .15s, box-shadow .15s }
+input, select, textarea { width: 100%; font: 400 15px var(--body); color: var(--ink); background: var(--surface-2); border: 1px solid var(--line-2); border-radius: 10px; padding: 11px 13px; min-width: 0; transition: border-color .15s, box-shadow .15s }
 input:hover, select:hover, textarea:hover { border-color: var(--ink-3) }
-input:focus, select:focus, textarea:focus { outline: none; border-color: var(--rec); box-shadow: 0 0 0 4px var(--rec-soft) }
+input:focus, select:focus, textarea:focus { outline: none; border-color: var(--green-2); box-shadow: 0 0 0 4px color-mix(in srgb, var(--green-2) 18%, transparent) }
 textarea { line-height: 1.65; resize: vertical }
 input[type=number] { font-family: var(--mono) }
-input[type=range] { accent-color: var(--rec); padding: 0; border: 0; background: none; box-shadow: none }
+input[type=range] { accent-color: var(--green-2); padding: 0; border: 0; background: none; box-shadow: none }
 input[type=file] { padding: 9px; font-size: 14px }
-input[type=file]::file-selector-button { font: 600 13px var(--body); background: var(--ink); color: var(--surface); border: 0; border-radius: 8px; padding: 8px 12px; margin-right: 12px; cursor: pointer }
-button:focus-visible, a:focus-visible, summary:focus-visible { outline: 3px solid var(--rec); outline-offset: 3px; border-radius: 10px }
-.seg { display: inline-flex; flex-wrap: wrap; gap: 4px; padding: 4px; background: var(--bg-2); border-radius: 12px; justify-self: start }
-.seg button { font: 500 13px var(--body); background: transparent; color: var(--ink-2); border: 0; border-radius: 9px; padding: 8px 13px; cursor: pointer; transition: background .15s, color .15s }
+input[type=file]::file-selector-button { font: 600 13px var(--body); background: var(--green); color: var(--surface); border: 0; border-radius: 8px; padding: 8px 12px; margin-right: 12px; cursor: pointer }
+button:focus-visible, a:focus-visible, summary:focus-visible { outline: 3px solid var(--green-2); outline-offset: 3px; border-radius: 10px }
+.seg { display: inline-flex; flex-wrap: wrap; gap: 4px; padding: 4px; background: var(--surface-2); border: 1px solid var(--line); border-radius: 12px; justify-self: start }
+.seg button { font: 500 13px var(--body); background: transparent; color: var(--ink-2); border: 0; border-radius: 9px; padding: 8px 13px; cursor: pointer }
 .seg button:hover { color: var(--ink) }
-.seg button[aria-pressed="true"] { background: var(--surface); color: var(--ink); box-shadow: var(--shadow) }
-.btn { font: 600 14px var(--body); background: var(--ink); color: var(--surface); border: 0; border-radius: 10px; padding: 11px 18px; cursor: pointer; transition: transform .12s, box-shadow .15s }
-.btn:hover { box-shadow: var(--shadow-lg); transform: translateY(-1px) }
+.seg button[aria-pressed="true"] { background: var(--green); color: var(--surface); box-shadow: var(--shadow) }
+.btn { font: 600 14px var(--body); background: var(--green); color: var(--surface); border: 0; border-radius: 999px; padding: 10px 18px; cursor: pointer }
+.btn:hover { box-shadow: var(--shadow-lg) }
 .btn.ghost { background: var(--surface); color: var(--ink); border: 1px solid var(--line-2) }
 .row { display: flex; flex-wrap: wrap; gap: 10px; align-items: center }
-.big { font: 800 clamp(48px, 8vw, 84px)/1 var(--display); letter-spacing: -.04em; color: var(--ink); font-variant-numeric: tabular-nums }
+.big { font: 600 clamp(48px, 8vw, 80px)/1 var(--serif); letter-spacing: -.02em; color: var(--green); font-variant-numeric: tabular-nums }
 .stats { display: grid; grid-template-columns: repeat(auto-fit, minmax(120px, 1fr)); gap: 10px }
 .stat { background: var(--surface-2); border: 1px solid var(--line); border-radius: 12px; padding: 12px 14px; display: grid; gap: 3px }
-.stat span { font: 500 11px var(--mono); color: var(--ink-3); text-transform: uppercase; letter-spacing: .1em }
-.stat b { font: 600 20px var(--mono); font-variant-numeric: tabular-nums; overflow-wrap: anywhere }
-.pill { display: inline-flex; align-items: center; font: 600 12px var(--body); padding: 4px 10px; border-radius: 999px; background: var(--bg-2); color: var(--ink) }
+.stat span { font: 500 11px var(--body); color: var(--ink-3); text-transform: uppercase; letter-spacing: .1em }
+.stat b { font: 600 19px var(--mono); font-variant-numeric: tabular-nums; overflow-wrap: anywhere }
+.pill { display: inline-flex; align-items: center; font: 600 12px var(--body); padding: 4px 10px; border-radius: 999px; background: var(--tile); color: var(--ink) }
 .pill.warn { background: color-mix(in srgb, var(--warn) 16%, transparent); color: var(--warn) }
 .pill.ok { background: color-mix(in srgb, var(--ok) 16%, transparent); color: var(--ok) }
 .toast { font-size: 13px; color: var(--ok); font-weight: 500 }
@@ -128,15 +197,13 @@ button:focus-visible, a:focus-visible, summary:focus-visible { outline: 3px soli
 table { border-collapse: collapse; width: 100%; font-size: 14px }
 th, td { text-align: left; padding: 10px 12px; border-bottom: 1px solid var(--line); vertical-align: top }
 tr:last-child td { border-bottom: 0 }
-th { font: 500 11px var(--mono); text-transform: uppercase; letter-spacing: .1em; color: var(--ink-3); background: var(--surface-2) }
-td.t { font-family: var(--mono); white-space: nowrap; color: var(--rec); font-variant-numeric: tabular-nums }
-
-/* ---------- editorial sections ---------- */
-section.copy { display: grid; gap: 14px; max-width: 68ch; padding-top: 12px }
-section.copy h2 { font: 700 28px/1.15 var(--display); letter-spacing: -.02em; margin: 0; text-wrap: balance }
+th { font: 600 11px var(--body); text-transform: uppercase; letter-spacing: .1em; color: var(--ink-3); background: var(--surface-2) }
+td.t { font-family: var(--mono); white-space: nowrap; color: var(--green-2); font-variant-numeric: tabular-nums }
+section.copy { display: grid; gap: 12px; max-width: 70ch }
+section.copy h2 { font: 600 26px/1.15 var(--serif); letter-spacing: -.01em; margin: 0; text-wrap: balance }
 section.copy p, section.copy li { color: var(--ink-2) }
 section.copy ul { margin: 0; padding-left: 20px; display: grid; gap: 6px }
-details { border-top: 1px solid var(--line); padding-block: 16px }
+details { border-top: 1px solid var(--line); padding-block: 14px }
 details:last-of-type { border-bottom: 1px solid var(--line) }
 details summary { font-weight: 600; cursor: pointer; list-style: none; display: flex; justify-content: space-between; gap: 16px }
 details summary::-webkit-details-marker { display: none }
@@ -144,40 +211,47 @@ details summary::after { content: "+"; font: 400 22px/1 var(--body); color: var(
 details[open] summary::after { transform: rotate(45deg) }
 details p { margin: 10px 0 0 }
 
-/* ---------- ad slots: space reserved up front so the page never jumps ---------- */
+/* ---------- ads: space reserved so nothing jumps ---------- */
 .ad-slot:empty { display: none }
-.ad { display: grid; gap: 6px; justify-items: center }
-.ad::before { content: "Advertisement"; font: 500 10px var(--mono); letter-spacing: .14em; text-transform: uppercase; color: var(--ink-3) }
-.ad .box { width: 100%; display: grid; place-items: center; border-radius: 12px }
-.ad.leader .box { min-height: 100px; max-width: 970px }
-.ad.inline .box { min-height: 280px }
-.ad.tower .box { min-height: 600px; width: 300px }
-.ad .ph { background: repeating-linear-gradient(-45deg, var(--bg-2) 0 10px, var(--bg) 10px 20px); border: 1px dashed var(--line-2); color: var(--ink-3); font: 500 12px var(--mono) }
-@media (max-width: 760px) { .ad.inline .box { min-height: 250px } }
+.ad { display: grid; gap: 6px }
+.ad::before { content: "Advertisement"; font: 600 10px var(--body); letter-spacing: .14em; text-transform: uppercase; color: var(--ink-3) }
+.ad .box { width: 100%; display: grid; place-items: center; border-radius: 14px; overflow: hidden }
+.ad.leader .box { min-height: 110px }
+.ad.inline .box { min-height: 260px }
+.ad.rect .box { min-height: 250px }
+.ad.tower .box { min-height: 600px }
+.ad .ph { border: 1px dashed var(--line-2); color: var(--ink-3); font: 500 12px var(--mono); text-align: center; padding: 12px;
+  background: radial-gradient(circle at 20% 20%, var(--tile), transparent 60%), repeating-linear-gradient(-45deg, var(--surface-2) 0 12px, var(--surface) 12px 24px) }
 
 /* ---------- footer ---------- */
-.site-foot { border-top: 1px solid var(--line); margin-top: 24px; background: var(--bg-2) }
-.site-foot .in { max-width: 1240px; margin: 0 auto; padding-inline: 20px; padding-block: 40px; display: grid; grid-template-columns: 1.4fr 1fr 1fr; gap: 32px }
-@media (max-width: 760px) { .site-foot .in { grid-template-columns: 1fr } }
-.site-foot h4 { margin: 0 0 10px; font: 600 12px var(--mono); letter-spacing: .12em; text-transform: uppercase; color: var(--ink-3) }
-.site-foot a { display: block; color: var(--ink-2); text-decoration: none; padding-block: 3px; font-size: 14px }
-.site-foot a:hover { color: var(--ink) }
-.site-foot p { color: var(--ink-3); font-size: 13px; margin: 10px 0 0; max-width: 42ch }
+.site-foot { border-top: 1px solid var(--line); padding: 26px 28px; display: flex; flex-wrap: wrap; justify-content: space-between; gap: 12px 24px; font-size: 13px; color: var(--ink-3) }
+.site-foot nav { display: flex; flex-wrap: wrap; gap: 6px 18px }
+.site-foot a { color: var(--ink-2); text-decoration: none } .site-foot a:hover { color: var(--ink) }
 @media (prefers-reduced-motion: reduce) { * { transition: none !important; animation: none !important } }
-.crumbs { font-size: 13px; color: var(--ink-3); display: flex; flex-wrap: wrap; gap: 6px; align-items: center }
-.crumbs a { color: var(--ink-2); text-decoration: none } .crumbs a:hover { color: var(--ink); text-decoration: underline }
 </style><script type="application/ld+json">{"@context": "https://schema.org", "@type": "BreadcrumbList", "itemListElement": [{"@type": "ListItem", "position": 1, "name": "Home", "item": "https://creatorbenchtool.com/"}, {"@type": "ListItem", "position": 2, "name": "Terms of use"}]}</script>
 </head>
 <body>
-<header class="site-head"><div class="in"><a class="brand" href="/"><i class="dot" aria-hidden="true"></i>Creator<span>Bench</span></a><nav class="nav" aria-label="Tools"><a href="/script-timer">Script Timer</a><a href="/title-preview">Title Preview</a><a href="/safe-zones">Safe Zones</a><a href="/caption-formatter">Captions</a></nav></div></header>
-<div class="wrap"><main class="content"><section class="copy" style="padding-top:40px"><nav class="crumbs" aria-label="Breadcrumb"><a href="/">Home</a> <span aria-hidden="true">/</span> <span aria-current="page">Terms of use</span></nav><span class="eyebrow"><b>●</b> Creator Bench</span><h1 style="font-size:clamp(36px,5vw,56px)">Terms of use</h1><p>The tools are free and provided "as is", without warranties. Results such as timings, previews and safe-zone guides are estimates; platforms change their apps, so always check before you publish.</p>
+<div class="app"><aside class="side" id="side" aria-label="Site navigation"><a class="brand" href="/"><span class="mark"><svg class="" viewBox="0 0 24 24" aria-hidden="true"><path d="M5 19c0-8 6-14 15-14 0 9-6 15-14 15"/><path d="M5 19l7-7"/></svg></span><span><b>Creator Bench</b><small>Tools for better uploads</small></span></a><nav><a href="/"><svg class="i" viewBox="0 0 24 24" aria-hidden="true"><path d="M3 11l9-7 9 7"/><path d="M5 10v10h14V10"/><path d="M10 20v-6h4v6"/></svg>Home</a></nav><h6>Tools</h6><nav><a href="/script-timer"><svg class="i" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></svg>Script Timer</a><a href="/title-preview"><svg class="i" viewBox="0 0 24 24" aria-hidden="true"><rect x="3" y="5" width="18" height="11" rx="2"/><path d="M7 20h10"/><path d="M8 9h8M8 12h5"/></svg>Title &amp; Thumbnail</a><a href="/safe-zones"><svg class="i" viewBox="0 0 24 24" aria-hidden="true"><rect x="7" y="2.5" width="10" height="19" rx="2.5"/><path d="M7 6.5h10M7 17.5h10"/><path d="M14.5 9.5v5"/></svg>Safe Zone Checker</a><a href="/caption-formatter"><svg class="i" viewBox="0 0 24 24" aria-hidden="true"><path d="M4 5h16v11H9l-5 4z"/><path d="M8 9h8M8 12h5"/></svg>Caption Formatter</a></nav><h6>Resources</h6><nav><a href="/about"><svg class="i" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M12 11v5"/><path d="M12 8h.01"/></svg>About</a><a href="/contact"><svg class="i" viewBox="0 0 24 24" aria-hidden="true"><rect x="3" y="5" width="18" height="14" rx="2"/><path d="M3 7l9 6 9-6"/></svg>Contact</a><a href="/privacy"><svg class="i" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3l8 3v6c0 4.5-3.4 8.2-8 9-4.6-.8-8-4.5-8-9V6z"/><path d="M9 12l2 2 4-4"/></svg>Privacy</a></nav><div class="note"><b>Small tools.<br>Big creative freedom.</b><span>Check, fix and ship your videos faster.</span></div></aside><div class="main"><header class="topbar"><button class="icon-btn menu-btn" id="menu" aria-label="Open menu" aria-controls="side"><svg class="i" viewBox="0 0 24 24" aria-hidden="true"><path d="M4 7h16M4 12h16M4 17h16"/></svg></button><a class="tab " href="/"><svg class="i" viewBox="0 0 24 24" aria-hidden="true"><path d="M3 11l9-7 9 7"/><path d="M5 10v10h14V10"/><path d="M10 20v-6h4v6"/></svg>Home</a><a class="tab hide-sm" href="/#tools"><svg class="i" viewBox="0 0 24 24" aria-hidden="true"><rect x="4" y="4" width="6" height="6" rx="1.5"/><rect x="14" y="4" width="6" height="6" rx="1.5"/><rect x="4" y="14" width="6" height="6" rx="1.5"/><rect x="14" y="14" width="6" height="6" rx="1.5"/></svg>All tools</a><a class="tab hide-sm" href="/about"><svg class="i" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M12 11v5"/><path d="M12 8h.01"/></svg>About</a><span class="sp"></span><button class="icon-btn" id="theme" aria-label="Switch light or dark mode"><svg class="i" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.9 4.9l1.4 1.4M17.7 17.7l1.4 1.4M2 12h2M20 12h2M4.9 19.1l1.4-1.4M17.7 6.3l1.4-1.4"/></svg></button><button class="btn-primary" id="share"><svg class="i" viewBox="0 0 24 24" aria-hidden="true"><circle cx="18" cy="5" r="2.5"/><circle cx="6" cy="12" r="2.5"/><circle cx="18" cy="19" r="2.5"/><path d="M8.3 10.8l7.4-4.4M8.3 13.2l7.4 4.4"/></svg><span>Share</span></button></header><div class="wrap"><main class="content"><section class="copy"><nav class="crumbs" aria-label="Breadcrumb"><a href="/">Home</a> <span aria-hidden="true">/</span> <span aria-current="page">Terms of use</span></nav><span class="eyebrow">Creator Bench</span><h1>Terms of use</h1>
+<p>The tools are free and provided "as is", without warranties. Results such as timings, previews and safe-zone guides are estimates; platforms change their apps, so always check before you publish.</p>
 <p>You may use the tools for personal and commercial projects. Please don't copy the site's code or content to republish as your own.</p>
-<p>We may update these terms; continuing to use the site means you accept the current version.</p><p class="hint">Last updated 2026-10-04</p></section></main></div>
-<footer class="site-foot"><div class="in">
-<div><a class="brand" href="/"><i class="dot" aria-hidden="true"></i>Creator<span>Bench</span></a>
-<p>Free tools for YouTube, Shorts, Reels and TikTok creators. Everything runs in your browser. Not affiliated with YouTube, Instagram or TikTok.</p></div>
-<div><h4>Tools</h4><a href="/script-timer">Script Timer</a><a href="/title-preview">Title &amp; Thumbnail Preview</a><a href="/safe-zones">Shorts &amp; Reels Safe Zones</a><a href="/caption-formatter">Instagram Caption Formatter</a></div>
-<div><h4>Site</h4><a href="/about">About</a><a href="/privacy">Privacy</a><a href="/terms">Terms</a><a href="/contact">Contact</a><p>© 2026 Creator Bench · Made by <a href="https://bistorywithsuraj.com" style="display:inline">Suraj Shukla</a></p></div>
-</div></footer>
+<p>We may update these terms; continuing to use the site means you accept the current version.</p><p class="hint">Last updated 2026-10-04</p></section></main><aside class="rail" aria-label="Sidebar"><div class="card"><h3><svg class="i" viewBox="0 0 24 24" aria-hidden="true"><path d="M3 17l6-6 4 4 8-8"/><path d="M15 7h6v6"/></svg>Quick stats</h3><div class="stats-list"><div><i><svg class="i" viewBox="0 0 24 24" aria-hidden="true"><rect x="4" y="4" width="6" height="6" rx="1.5"/><rect x="14" y="4" width="6" height="6" rx="1.5"/><rect x="4" y="14" width="6" height="6" rx="1.5"/><rect x="14" y="14" width="6" height="6" rx="1.5"/></svg></i><span><b>4+</b><span>Useful tools</span></span></div><div><i><svg class="i" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 20s-7-4.4-7-10a4 4 0 017-2.6A4 4 0 0119 10c0 5.6-7 10-7 10z"/></svg></i><span><b>100%</b><span>Free to use</span></span></div><div><i><svg class="i" viewBox="0 0 24 24" aria-hidden="true"><path d="M13 2L4 14h7l-1 8 9-12h-7z"/></svg></i><span><b>Instant</b><span>Results</span></span></div><div><i><svg class="i" viewBox="0 0 24 24" aria-hidden="true"><rect x="4" y="10" width="16" height="10" rx="2"/><path d="M8 10V7a4 4 0 018 0v3"/></svg></i><span><b>No signup</b><span>Required</span></span></div></div></div><div class="card"><h3><svg class="i" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 20s-7-4.4-7-10a4 4 0 017-2.6A4 4 0 0119 10c0 5.6-7 10-7 10z"/></svg>Why creators use it</h3><ul class="checks"><li><svg class="i" viewBox="0 0 24 24" aria-hidden="true"><path d="M5 12l5 5 9-10"/></svg>Simple and fast</li><li><svg class="i" viewBox="0 0 24 24" aria-hidden="true"><path d="M5 12l5 5 9-10"/></svg>No account needed</li><li><svg class="i" viewBox="0 0 24 24" aria-hidden="true"><path d="M5 12l5 5 9-10"/></svg>Works on every device</li><li><svg class="i" viewBox="0 0 24 24" aria-hidden="true"><path d="M5 12l5 5 9-10"/></svg>Nothing gets uploaded</li></ul></div><div class="card"><p class="quote" style="margin:0">“Good tools don't just save time. They give you back your creative energy.”<cite>— Creator Bench</cite></p></div></aside></div><footer class="site-foot"><span>© 2026 Creator Bench · Made by <a href="https://bistorywithsuraj.com">Suraj Shukla</a> · Not affiliated with YouTube, Instagram or TikTok.</span><nav><a href="/about">About</a><a href="/privacy">Privacy</a><a href="/terms">Terms</a><a href="/contact">Contact</a></nav></footer></div></div>
+<script>
+(() => {
+  const root = document.documentElement;
+  document.getElementById('theme')?.addEventListener('click', () => {
+    const dark = root.dataset.theme ? root.dataset.theme === 'dark' : matchMedia('(prefers-color-scheme: dark)').matches;
+    root.dataset.theme = dark ? 'light' : 'dark'; try { localStorage.setItem('cb-theme', root.dataset.theme); } catch (e) {}
+  });
+  document.getElementById('menu')?.addEventListener('click', () => document.body.classList.toggle('drawer'));
+  document.addEventListener('click', e => { if (document.body.classList.contains('drawer') && !e.target.closest('#side') && !e.target.closest('#menu')) document.body.classList.remove('drawer'); });
+  const share = document.getElementById('share'), label = share?.querySelector('span');
+  share?.addEventListener('click', async () => {
+    try { if (navigator.share) { await navigator.share({ title: document.title, url: location.href }); return; }
+          await navigator.clipboard.writeText(location.href); label.textContent = 'Link copied'; }
+    catch (e) { label.textContent = 'Copy the address bar'; }
+    setTimeout(() => label.textContent = 'Share', 2000);
+  });
+})();
+</script>
 </body>
 </html>
