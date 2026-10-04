@@ -149,3 +149,5 @@ details p { margin: 10px 0 0 }
 .site-foot a:hover { color: var(--ink) }
 .site-foot p { color: var(--ink-3); font-size: 13px; margin: 10px 0 0; max-width: 42ch }
 @media (prefers-reduced-motion: reduce) { * { transition: none !important; animation: none !important } }
+.crumbs { font-size: 13px; color: var(--ink-3); display: flex; flex-wrap: wrap; gap: 6px; align-items: center }
+.crumbs a { color: var(--ink-2); text-decoration: none } .crumbs a:hover { color: var(--ink); text-decoration: underline }

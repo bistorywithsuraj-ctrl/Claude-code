@@ -2,7 +2,7 @@
 slug: title-preview
 title: YouTube Title & Thumbnail Preview: see where your title gets cut off
 name: Title & Thumbnail Preview
-desc: Preview your YouTube title and thumbnail in the home feed, search results, sidebar and phone app, in light and dark mode. See exactly where the title gets cut off. Free, private.
+desc: Preview your YouTube title and thumbnail in the home feed, search, sidebar and phone app, in light and dark mode. See where the title gets cut off.
 -->
 <style>
 /* Mock feed surfaces. These copy the look of the YouTube light/dark themes on purpose, so they set their own colours. */
@@ -102,7 +102,7 @@ desc: Preview your YouTube title and thumbnail in the home feed, search results,
   const ghost = (w) => `<div class="card ghost"><div class="thumb"></div><div class="meta"><div class="avatar" style="opacity:.3"></div><div><p class="t clamp2">${w}</p><div class="sub">Another channel · 1.2M views · 2 weeks ago</div></div></div></div>`;
   function render() {
     const title = $('tp-title').value || 'Untitled video', chan = esc($('tp-chan').value || 'Your channel'), dur = esc($('tp-dur').value || '10:00');
-    const T = esc(title), img = `<img src="${thumbURL || sampleThumb()}" alt="">`;
+    const T = esc(title), img = `<img src="${thumbURL || sampleThumb()}" alt="Thumbnail preview for ${T}" width="640" height="360">`;
     const thumb = `<div class="thumb">${img}<span class="dur">${dur}</span></div>`;
     const sub = `${chan} · 48K views · 3 days ago`;
     $('tp-home').innerHTML = `<div class="card">${thumb}<div class="meta"><div class="avatar"></div><div><p class="t clamp2">${T}</p><div class="sub">${chan}<br>48K views · 3 days ago</div></div></div></div>` +

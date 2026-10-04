@@ -14,12 +14,15 @@ to add a tool: it gets its own page, a card on the homepage, a nav link and a si
 import os, re, json, html, datetime, pathlib
 
 HERE = pathlib.Path(__file__).parent
-DIST = HERE / 'dist'
+PREVIEW = os.environ.get('PREVIEW', '0') == '1'   # PREVIEW=1: .html links + ad placeholders, for the Claude preview
+DIST = HERE / ('preview_dist' if PREVIEW else 'dist')
 NAME = os.environ.get('SITE_NAME', 'Creator Bench')
 SITE_URL = os.environ.get('SITE_URL', 'https://example.com').rstrip('/')
 CLIENT = os.environ.get('ADSENSE_CLIENT', '').strip()
 EMAIL = os.environ.get('CONTACT_EMAIL', 'hello@example.com')
-PLACEHOLDERS = os.environ.get('AD_PLACEHOLDERS', '1' if not CLIENT else '0') == '1'
+PLACEHOLDERS = PREVIEW and not CLIENT
+AUTHOR = os.environ.get('AUTHOR_NAME', 'Suraj Shukla')
+AUTHOR_URL = os.environ.get('AUTHOR_URL', 'https://bistorywithsuraj.com')
 TODAY = datetime.date.today()
 BASE_CSS = (HERE / 'shared' / 'base.css').read_text()
 FONTS = ('<link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>'
@@ -53,7 +56,7 @@ FOOT = f'''<footer class="site-foot"><div class="in">
 <div><a class="brand" href="index.html"><i class="dot" aria-hidden="true"></i>{html.escape(first)}<span>{html.escape(rest)}</span></a>
 <p>Free tools for YouTube, Shorts, Reels and TikTok creators. Everything runs in your browser. Not affiliated with YouTube, Instagram or TikTok.</p></div>
 <div><h4>Tools</h4>{''.join(f'<a href="{t["slug"]}.html">{html.escape(t["name"])}</a>' for t in TOOLS)}</div>
-<div><h4>Site</h4><a href="about.html">About</a><a href="privacy.html">Privacy</a><a href="terms.html">Terms</a><a href="contact.html">Contact</a><p>© {TODAY.year} {html.escape(NAME)}</p></div>
+<div><h4>Site</h4><a href="about.html">About</a><a href="privacy.html">Privacy</a><a href="terms.html">Terms</a><a href="contact.html">Contact</a><p>© {TODAY.year} {html.escape(NAME)} · Made by <a href="{AUTHOR_URL}" style="display:inline">{html.escape(AUTHOR)}</a></p></div>
 </div></footer>'''
 
 def ad(kind):
@@ -77,7 +80,9 @@ def head(title, desc, path, extra=''):
 <link rel="canonical" href="{SITE_URL}{path}">
 <meta property="og:title" content="{html.escape(title)}"><meta property="og:description" content="{html.escape(desc)}">
 <meta property="og:type" content="website"><meta property="og:url" content="{SITE_URL}{path}">
-<meta name="theme-color" content="#F0452F">
+<meta property="og:image" content="{SITE_URL}/og.png"><meta property="og:image:width" content="1200"><meta property="og:image:height" content="630">
+<meta name="twitter:card" content="summary_large_image"><meta name="twitter:image" content="{SITE_URL}/og.png">
+<meta name="theme-color" content="#F0452F">{'<meta name="robots" content="noindex">' if path == "/404" else ""}
 <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='16' fill='%23111216'/%3E%3Ccircle cx='32' cy='32' r='12' fill='%23F0452F'/%3E%3C/svg%3E">
 {FONTS}{ads}
 <style>{BASE_CSS}</style>{extra}'''
@@ -86,13 +91,30 @@ def full(title, desc, path, main, extra='', active=None):
     return (f'<!doctype html>\n<html lang="en">\n<head>\n{head(title, desc, path, extra)}\n</head>\n<body>\n{header(active)}\n'
             f'<div class="wrap">{main}</div>\n{FOOT}\n</body>\n</html>\n')
 
+def write(path, doc): (DIST / path).write_text(clean_links(doc))
+
+def clean_links(doc):
+    if PREVIEW: return doc
+    doc = re.sub(r'href="index\.html"', 'href="/"', doc)
+    return re.sub(r'href="([a-z0-9-]+)\.html"', r'href="/\1"', doc)
+
+def crumbs(items):
+    """items: [(label, path or None)] -> visible breadcrumb + BreadcrumbList JSON-LD"""
+    vis = '<nav class="crumbs" aria-label="Breadcrumb"><a href="index.html">Home</a>' + ''.join(
+        f' <span aria-hidden="true">/</span> ' + (f'<a href="{p}.html">{html.escape(l)}</a>' if p else f'<span aria-current="page">{html.escape(l)}</span>') for l, p in items) + '</nav>'
+    data = {'@context': 'https://schema.org', '@type': 'BreadcrumbList', 'itemListElement':
+            [{'@type': 'ListItem', 'position': 1, 'name': 'Home', 'item': SITE_URL + '/'}] +
+            [{'@type': 'ListItem', 'position': i + 2, 'name': l, **({'item': f'{SITE_URL}/{p}'} if p else {})} for i, (l, p) in enumerate(items)]}
+    return vis, ld(data)
+
 def ld(obj): return f'<script type="application/ld+json">{json.dumps(obj)}</script>'
 
 DIST.mkdir(exist_ok=True)
 # ---------- tool pages: content column + sticky ad rail ----------
 for t in TOOLS:
     body = t['body']
-    body = re.sub(r'<h1>', f'<span class="eyebrow"><b>●</b> Free tool · No sign-up</span><h1>', body, count=1)
+    bc_vis, bc_ld = crumbs([(t['name'], None)])
+    body = re.sub(r'<h1>', f'{bc_vis}<span class="eyebrow"><b>●</b> Free tool · No sign-up</span><h1>', body, count=1)
     body = body.replace('<div class="ad-slot" data-slot="top"></div>', ad('leader'))
     body = body.replace('<div class="ad-slot" data-slot="mid"></div>', ad('inline'))
     others = [o for o in TOOLS if o is not t]
@@ -101,13 +123,13 @@ for t in TOOLS:
     rail = (f'<aside class="rail" aria-label="Sidebar">{ad("tower")}<div class="more"><h3>Other tools</h3>' +
             ''.join(f'<a href="{o["slug"]}.html">{html.escape(o["name"])}</a>' for o in others) + '</div></aside>')
     main = f'<div class="layout"><main class="content">{body}</main>{rail}</div>'
-    extra = ld({'@context': 'https://schema.org', '@type': 'WebApplication', 'name': t['name'], 'url': f'{SITE_URL}/{t["slug"]}',
+    extra = bc_ld + ld({'@context': 'https://schema.org', '@type': 'WebApplication', 'name': t['name'], 'url': f'{SITE_URL}/{t["slug"]}',
                 'applicationCategory': 'MultimediaApplication', 'operatingSystem': 'Any', 'description': t['desc'],
                 'offers': {'@type': 'Offer', 'price': '0', 'priceCurrency': 'USD'}})
     if t['faq']:
         extra += ld({'@context': 'https://schema.org', '@type': 'FAQPage', 'mainEntity': [
             {'@type': 'Question', 'name': q, 'acceptedAnswer': {'@type': 'Answer', 'text': a}} for q, a in t['faq']]})
-    (DIST / f'{t["slug"]}.html').write_text(full(t['title'], t['desc'], f'/{t["slug"]}', main, extra, active=t['slug']))
+    write(f'{t["slug"]}.html', full(t['title'], t['desc'], f'/{t["slug"]}', main, extra, active=t['slug']))
 
 # ---------- homepage ----------
 # small code-drawn previews of each tool (no images needed)
@@ -166,25 +188,33 @@ home = f'''{HOME_CSS}<main class="content">
 <div><h3>Instant, every time</h3><p>No queues, no watermarks, no limits. Open a tool and get the answer.</p></div>
 </section></main>'''
 HOME_DESC = 'Free tools for YouTube, Shorts, Reels and TikTok creators: script timer, title and thumbnail preview, safe zone checker and Instagram caption formatter.'
-(DIST / 'index.html').write_text(full(f'{NAME}: free tools for video creators', HOME_DESC, '/', home,
+write('index.html', full(f'{NAME}: free tools for video creators', HOME_DESC, '/', home,
      ld({'@context': 'https://schema.org', '@type': 'WebSite', 'name': NAME, 'url': SITE_URL + '/'})))
 
 # ---------- trust pages ----------
 def page(slug, title, desc, inner):
-    main = f'<main class="content"><section class="copy" style="padding-top:48px"><span class="eyebrow"><b>●</b> {html.escape(NAME)}</span><h1 style="font-size:clamp(36px,5vw,56px)">{title}</h1>{inner}<p class="hint">Last updated {TODAY.isoformat()}</p></section></main>'
-    (DIST / f'{slug}.html').write_text(full(f'{title} · {NAME}', desc, f'/{slug}', main))
-page('about', 'About', f'About {NAME}.', f'''<p>{html.escape(NAME)} is a set of free, simple tools for people who make videos for YouTube, Shorts, Reels and TikTok. Each tool does one job well and runs entirely in your browser.</p>
+    bc_vis, bc_ld = crumbs([(title, None)])
+    main = f'<main class="content"><section class="copy" style="padding-top:40px">{bc_vis}<span class="eyebrow"><b>●</b> {html.escape(NAME)}</span><h1 style="font-size:clamp(36px,5vw,56px)">{title}</h1>{inner}<p class="hint">Last updated {TODAY.isoformat()}</p></section></main>'
+    write(f'{slug}.html', full(f'{title} · {NAME}', desc, f'/{slug}', main, bc_ld))
+page('about', 'About', f'{NAME} is a free set of browser-based tools for YouTube, Shorts, Reels and TikTok creators, made by {AUTHOR}. No sign-up, nothing uploaded.', f'''<p>{html.escape(NAME)} is a set of free, simple tools for people who make videos for YouTube, Shorts, Reels and TikTok. Each tool does one job well and runs entirely in your browser.</p>
 <p>We don't ask for an account, and your scripts, images and videos are never uploaded. The site is supported by ads.</p>
-<p>{html.escape(NAME)} is independent and is not affiliated with YouTube, Google, Instagram, Meta or TikTok. Their names are trademarks of their owners.</p>''')
-page('privacy', 'Privacy policy', f'How {NAME} handles data, cookies and ads.', f'''<p><b>Your content stays on your device.</b> Scripts, captions, images and videos you use in our tools are processed in your browser and are never sent to our servers. Some tools remember your last input in your browser's local storage; you can clear it in your browser settings.</p>
+<p>{html.escape(NAME)} is independent and is not affiliated with YouTube, Google, Instagram, Meta or TikTok. Their names are trademarks of their owners.</p>
+<h2>Who makes it</h2>
+<p><b>{html.escape(AUTHOR)}</b> is a data analyst and documentary filmmaker who runs YouTube channels and builds tools for his own video workflow. Every tool here started as something he needed before an upload. More of his work: <a href="{AUTHOR_URL}">{html.escape(AUTHOR_URL.replace('https://', ''))}</a>.</p>''')
+page('privacy', 'Privacy policy', f'How {NAME} handles your data, cookies and Google ads. Your scripts, images and videos stay in your browser and are never uploaded.', f'''<p><b>Your content stays on your device.</b> Scripts, captions, images and videos you use in our tools are processed in your browser and are never sent to our servers. Some tools remember your last input in your browser's local storage; you can clear it in your browser settings.</p>
 <p><b>Advertising.</b> This site may show ads from Google AdSense. Google and its partners use cookies to serve ads based on your visits to this and other websites. You can turn off personalised ads in <a href="https://adssettings.google.com">Google Ads Settings</a> and read <a href="https://policies.google.com/technologies/ads">how Google uses information from sites that use its services</a>.</p>
 <p><b>Analytics.</b> If enabled, analytics record anonymous usage such as page views and device type. We don't sell personal information.</p>
 <p><b>EEA, UK and Switzerland.</b> Where the law requires it, you are asked for consent before advertising cookies are used.</p>
 <p><b>Contact:</b> {html.escape(EMAIL)}</p>''')
-page('terms', 'Terms of use', f'Terms for using {NAME}.', '''<p>The tools are free and provided "as is", without warranties. Results such as timings, previews and safe-zone guides are estimates; platforms change their apps, so always check before you publish.</p>
+page('terms', 'Terms of use', f'Terms for using the free {NAME} creator tools: results are estimates, provided as is, free for personal and commercial projects.', '''<p>The tools are free and provided "as is", without warranties. Results such as timings, previews and safe-zone guides are estimates; platforms change their apps, so always check before you publish.</p>
 <p>You may use the tools for personal and commercial projects. Please don't copy the site's code or content to republish as your own.</p>
 <p>We may update these terms; continuing to use the site means you accept the current version.</p>''')
-page('contact', 'Contact', f'Contact {NAME}.', f'<p>Bug, idea or a tool you wish existed? Email us:</p><p style="font:600 20px var(--mono);color:var(--ink)">{html.escape(EMAIL)}</p>')
+page('contact', 'Contact', f'Contact {NAME} to report a bug, suggest a new creator tool, or ask how one of our calculations works. We reply by email.', f'<p>Bug, idea or a tool you wish existed? Email us:</p><p style="font:600 20px var(--mono);color:var(--ink)">{html.escape(EMAIL)}</p>')
+
+write('404.html', full(f'Page not found · {NAME}', 'This page does not exist. Try one of the free creator tools instead.', '/404',
+    '<main class="content"><section class="hero"><span class="eyebrow"><b>● 404</b> Nothing recorded here</span><h1>This page <em>doesn\'t exist.</em></h1>'
+    '<p class="lede">The link may be old or mistyped. Try one of the tools instead:</p><ul>' +
+    ''.join(f'<li><a href="{t["slug"]}.html">{html.escape(t["name"])}</a></li>' for t in TOOLS) + '</ul></section></main>'))
 
 urls = ['/'] + [f'/{t["slug"]}' for t in TOOLS] + ['/about', '/privacy', '/terms', '/contact']
 (DIST / 'sitemap.xml').write_text('<?xml version="1.0" encoding="UTF-8"?>\n<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">\n' +
@@ -193,8 +223,9 @@ urls = ['/'] + [f'/{t["slug"]}' for t in TOOLS] + ['/about', '/privacy', '/terms
 (DIST / 'ads.txt').write_text(f'google.com, {CLIENT.replace("ca-pub-", "pub-") if CLIENT else "pub-0000000000000000"}, DIRECT, f08c47fec0942fa0\n')
 
 # ---------- preview copy of the homepage for the Claude artifact viewer ----------
-prev = re.sub(r'^<!doctype html>\n<html lang="en">\n<head>\n', '', (DIST / 'index.html').read_text())
-prev = prev.replace('\n</head>\n<body>\n', '\n').replace('\n</body>\n</html>\n', '\n')
-prev = re.sub(r'<meta charset="utf-8">\n<meta name="viewport"[^>]*>\n', '', prev)
-(HERE / 'preview_index.html').write_text(prev)
+if PREVIEW:
+  prev = re.sub(r'^<!doctype html>\n<html lang="en">\n<head>\n', '', (DIST / 'index.html').read_text())
+  prev = prev.replace('\n</head>\n<body>\n', '\n').replace('\n</body>\n</html>\n', '\n')
+  prev = re.sub(r'<meta charset="utf-8">\n<meta name="viewport"[^>]*>\n', '', prev)
+  (HERE / 'preview_index.html').write_text(prev)
 print('built', len(TOOLS), 'tools | ads', 'ON' if CLIENT else ('placeholders' if PLACEHOLDERS else 'off'))
