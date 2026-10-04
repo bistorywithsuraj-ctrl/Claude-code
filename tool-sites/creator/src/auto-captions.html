@@ -4,7 +4,7 @@ title: Auto Captions: free AI captions for Reels, Shorts and TikTok
 name: Auto Captions Generator
 desc: Free AI auto captions for Reels, Shorts and TikTok. Transcribe your video in the browser, style animated word-by-word captions, and export SRT or a captioned video. No upload.
 -->
-<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Anton&family=Montserrat:wght@800;900&display=swap">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Anton&family=Bangers&family=Montserrat:wght@800;900&display=swap">
 <style>
 .ac-stage { position: relative; background: #111; border-radius: 12px; overflow: hidden; display: grid; place-items: center; min-height: 240px }
 .ac-stage video { display: block; max-width: 100%; max-height: 70vh }
@@ -23,10 +23,16 @@ desc: Free AI auto captions for Reels, Shorts and TikTok. Transcribe your video 
 .ac-styles .s-pop { font: 400 20px Anton, Impact, sans-serif; text-transform: uppercase; letter-spacing: .02em } .ac-styles .s-pop b { color: #FFE14D; font-weight: 400 }
 .ac-styles .s-kara { font: 900 17px Montserrat, Arial Black, sans-serif } .ac-styles .s-kara b { color: #3BE37A; font-weight: 900 }
 .ac-styles .s-sub { font: 600 14px var(--body); background: #333 } .ac-styles .s-min { font: 500 15px var(--body); text-transform: lowercase }
+.ac-styles .s-box { font: 900 16px Montserrat, Arial Black, sans-serif } .ac-styles .s-box b { background: #FFE14D; color: #111; padding: 0 5px; border-radius: 5px; font-weight: 900 }
+.ac-styles .s-horm { font: 400 21px Anton, Impact, sans-serif; text-transform: uppercase } .ac-styles .s-horm b { color: #3BE37A; font-weight: 400; font-size: 25px }
+.ac-styles .s-neon { font: 900 16px Montserrat, Arial Black, sans-serif; color: #fff; text-shadow: 0 0 6px #FF3DCB, 0 0 14px #FF3DCB }
+.ac-styles .s-type { font: 800 16px Montserrat, Arial Black, sans-serif } .ac-styles .s-type i { opacity: .25; font-style: normal }
+.ac-styles .s-comic { font: 400 21px Bangers, Impact, sans-serif; letter-spacing: .04em; color: #FFE14D; -webkit-text-stroke: 1px #000 }
+.ac-styles .s-out { font: 400 21px Anton, Impact, sans-serif; text-transform: uppercase; color: transparent; -webkit-text-stroke: 1px #fff } .ac-styles .s-out b { color: #FFE14D; -webkit-text-stroke: 0; font-weight: 400 }
 </style>
 <div>
   <h1>Auto captions, <em>no upload</em></h1>
-  <p class="lede">Drop in a Reel, Short or TikTok. AI transcribes it right in your browser, you fix any word, pick an animated caption style, and download an SRT file or the finished video with captions burned in.</p>
+  <p class="lede">Drop in a Reel, Short or TikTok. AI transcribes it right in your browser, you fix any word, pick one of 10 animated caption styles, and download an SRT file or the finished video with captions burned in.</p>
 </div>
 <div class="ad-slot" data-slot="top"></div>
 <div class="panel">
@@ -53,6 +59,12 @@ desc: Free AI auto captions for Reels, Shorts and TikTok. Transcribe your video 
       <button type="button" data-s="kara" aria-pressed="false"><span class="s-kara">Karao<b>ke</b></span></button>
       <button type="button" data-s="sub" aria-pressed="false"><span class="s-sub">Clean subtitle</span></button>
       <button type="button" data-s="min" aria-pressed="false"><span class="s-min">Minimal</span></button>
+      <button type="button" data-s="box" aria-pressed="false"><span class="s-box">Word <b>box</b></span></button>
+      <button type="button" data-s="horm" aria-pressed="false"><span class="s-horm">Big <b>word</b></span></button>
+      <button type="button" data-s="neon" aria-pressed="false"><span class="s-neon">Neon glow</span></button>
+      <button type="button" data-s="type" aria-pressed="false"><span class="s-type">Type<i>writer</i></span></button>
+      <button type="button" data-s="comic" aria-pressed="false"><span class="s-comic">COMIC!</span></button>
+      <button type="button" data-s="out" aria-pressed="false"><span class="s-out">Out<b>line</b></span></button>
     </div>
     <div class="row">
       <label style="flex:1">Words per caption <select id="ac-wpc"><option value="1">1 · punchy</option><option value="3" selected>Up to 3</option><option value="5">Up to 5</option><option value="8">Full lines</option></select></label>
@@ -146,24 +158,50 @@ desc: Free AI auto captions for Reels, Shorts and TikTok. Transcribe your video 
   $('ac-srt').onclick = () => save(base() + '.srt', srt(), 'text/plain'); $('ac-vtt').onclick = () => save(base() + '.vtt', vtt(), 'text/vtt');
   $('ac-txt').onclick = () => save(base() + '.txt', cues.map(c => c.text).join(' '), 'text/plain');
   // ---------- drawing (shared by preview and export) ----------
+  // style table: font (relative to S), case, outline width, and how the spoken word is marked
+  const ST = {
+    pop:   { f: S => `400 ${S * 1.15}px Anton, Impact, sans-serif`, up: 1, stroke: .16, pop: 1, mark: 'color' },
+    kara:  { f: S => `900 ${S}px Montserrat, "Arial Black", sans-serif`, stroke: .16, mark: 'said' },
+    sub:   { f: S => `600 ${S * .62}px Geist, system-ui, sans-serif`, lh: .85, band: 1 },
+    min:   { f: S => `500 ${S * .7}px Geist, system-ui, sans-serif`, lh: .85, low: 1, shadow: 1 },
+    box:   { f: S => `900 ${S * .9}px Montserrat, "Arial Black", sans-serif`, shadow: 1, mark: 'box', pop: 1 },
+    horm:  { f: S => `400 ${S * 1.2}px Anton, Impact, sans-serif`, up: 1, stroke: .15, mark: 'grow', alt: 1 },
+    neon:  { f: S => `900 ${S * .95}px Montserrat, "Arial Black", sans-serif`, neon: 1, mark: 'glow' },
+    type:  { f: S => `800 ${S * .85}px Montserrat, "Arial Black", sans-serif`, shadow: 1, mark: 'type' },
+    comic: { f: S => `400 ${S * 1.2}px Bangers, Impact, sans-serif`, up: 1, stroke: .14, mark: 'comic', pop: 1 },
+    out:   { f: S => `400 ${S * 1.2}px Anton, Impact, sans-serif`, up: 1, mark: 'fill' },
+  };
   function drawCaption(g, W, H, t) {
     const c = cues.find(c => t >= c.s - .02 && t <= c.e + .15); if (!c) return;
-    const S = Math.min(W, H) * .085 * (+$('ac-size').value / 100), hi = $('ac-hi').value, y = H * +$('ac-pos').value;
-    const pop = Math.min(1, (t - c.s) / .12), scale = style === 'pop' ? .82 + .18 * (1 - Math.pow(1 - pop, 3)) * 1.0 + (pop < 1 ? Math.sin(pop * Math.PI) * .06 : 0) : 1;
-    const words = c.words.map(w => style === 'pop' ? w.t.toUpperCase() : style === 'min' ? w.t.toLowerCase() : w.t);
-    const font = style === 'pop' ? `400 ${S * 1.15}px Anton, Impact, sans-serif` : style === 'kara' ? `900 ${S}px Montserrat, "Arial Black", sans-serif` : style === 'sub' ? `600 ${S * .62}px Geist, system-ui, sans-serif` : `500 ${S * .7}px Geist, system-ui, sans-serif`;
-    g.save(); g.font = font; g.textBaseline = 'middle'; const space = g.measureText(' ').width, ws = words.map(w => g.measureText(w).width);
+    const st = ST[style] || ST.pop, S = Math.min(W, H) * .085 * (+$('ac-size').value / 100), hi = $('ac-hi').value, y = H * +$('ac-pos').value;
+    const p = Math.min(1, (t - c.s) / .12), scale = st.pop ? .82 + .18 * (1 - Math.pow(1 - p, 3)) + (p < 1 ? Math.sin(p * Math.PI) * .06 : 0) : 1;
+    const words = c.words.map(w => st.up ? w.t.toUpperCase() : st.low ? w.t.toLowerCase() : w.t);
+    let cur = -1; c.words.forEach((w, i) => { if (t >= w.s - .02) cur = i; });
+    const grow = st.mark === 'grow' ? 1.18 : st.mark === 'comic' ? 1.12 : 1;
+    g.save(); g.font = st.f(S); g.textBaseline = 'middle'; g.lineJoin = 'round'; const space = g.measureText(' ').width * (st.mark === 'box' ? 1.5 : st.mark === 'comic' ? 1.6 : 1), ws = words.map((w, i) => g.measureText(w).width * (i === cur ? grow : 1)), raw = words.map(w => g.measureText(w).width);
     // wrap into lines that fit 88% of the width
     const lines = [[]]; let lw = 0; ws.forEach((w, i) => { if (lw && lw + space + w > W * .88) { lines.push([]); lw = 0; } lines[lines.length - 1].push(i); lw += (lw ? space : 0) + w; });
-    const lh = (style === 'sub' || style === 'min' ? S * .85 : S * 1.25), total = lh * lines.length;
+    const lh = S * (st.lh || 1.3), total = lh * lines.length;
     g.translate(W / 2, y); g.scale(scale, scale);
     lines.forEach((ln, li) => { const width = ln.reduce((a, i, k) => a + ws[i] + (k ? space : 0), 0); let x = -width / 2; const yy = -total / 2 + lh * (li + .5);
-      if (style === 'sub') { g.fillStyle = 'rgba(0,0,0,.72)'; const p = S * .25; g.beginPath(); g.roundRect(x - p, yy - lh / 2 + 2, width + p * 2, lh - 4, 8); g.fill(); }
-      ln.forEach(i => { const w = c.words[i], active = t >= w.s && t < w.e + .05, said = t >= w.s;
-        let col = '#FFFFFF'; if (style === 'pop' && active) col = hi; if (style === 'kara') col = said ? hi : '#FFFFFF';
-        if (style === 'pop' || style === 'kara') { g.lineJoin = 'round'; g.lineWidth = S * .16; g.strokeStyle = '#000'; g.strokeText(words[i], x, yy); }
-        if (style === 'min') { g.shadowColor = 'rgba(0,0,0,.6)'; g.shadowBlur = S * .2; }
-        g.fillStyle = col; g.fillText(words[i], x, yy); x += ws[i] + space; }); });
+      if (st.band) { g.fillStyle = 'rgba(0,0,0,.72)'; const pd = S * .25; g.beginPath(); g.roundRect(x - pd, yy - lh / 2 + 2, width + pd * 2, lh - 4, 8); g.fill(); }
+      ln.forEach(i => { const w = c.words[i], active = i === cur, said = t >= w.s - .02, cx = x + ws[i] / 2;
+        if (st.mark === 'type' && !said) { x += ws[i] + space; return; }
+        let col = '#FFFFFF', k = 1;
+        if (st.mark === 'color' && active) col = hi;
+        if (st.mark === 'said' && said) col = hi;
+        if (st.mark === 'grow' && active) { col = st.alt && i % 2 ? '#3BE37A' : hi; k = 1.18; }
+        if (st.mark === 'comic') col = i % 2 ? '#FFFFFF' : hi;
+        g.save(); g.translate(cx, yy); if (st.mark === 'comic') g.rotate(((i * 37) % 7 - 3) * .025 + (active ? Math.sin(t * 20) * .03 : 0)); if (st.mark === 'comic' && active) k = 1.12;
+        if (st.mark === 'type') { const a = Math.min(1, (t - w.s) / .08); g.globalAlpha = a; k = .9 + .1 * a; }
+        g.scale(k, k);
+        if (st.mark === 'box' && active) { g.fillStyle = hi; const pw = S * .18; g.beginPath(); g.roundRect(-raw[i] / 2 - pw, -S * .55, raw[i] + pw * 2, S * 1.1, S * .2); g.fill(); col = '#111111'; }
+        if (st.shadow && !(st.mark === 'box' && active)) { g.shadowColor = 'rgba(0,0,0,.7)'; g.shadowBlur = S * .22; g.shadowOffsetY = S * .04; }
+        if (st.neon) { g.shadowColor = hi; g.shadowBlur = S * (active ? .9 : .45); }
+        if (st.stroke) { g.lineWidth = S * st.stroke; g.strokeStyle = '#000'; g.strokeText(words[i], -raw[i] / 2, 0); }
+        if (st.mark === 'fill' && !active) { g.lineWidth = Math.max(2, S * .05); g.strokeStyle = '#FFFFFF'; g.shadowColor = 'rgba(0,0,0,.6)'; g.shadowBlur = S * .15; g.strokeText(words[i], -raw[i] / 2, 0); }
+        else { g.fillStyle = st.mark === 'fill' ? hi : col; g.fillText(words[i], -raw[i] / 2, 0); if (st.neon && active) g.fillText(words[i], -raw[i] / 2, 0); }
+        g.restore(); x += ws[i] + space; }); });
     g.restore();
   }
   function fitOverlay() { const r = video.getBoundingClientRect(), sr = $('ac-stage').getBoundingClientRect(); ov.width = video.videoWidth || r.width; ov.height = video.videoHeight || r.height;
