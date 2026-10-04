@@ -1,0 +1,97 @@
+<!--meta
+slug: ai-voiceover
+title: Free AI Voiceover: text to speech for YouTube and Reels
+name: AI Voiceover Generator
+desc: Free AI text to speech with natural voices for YouTube, Reels and Shorts. Type your script, pick a voice and download MP3 or WAV. Runs in your browser, no sign-up, no limits.
+-->
+<style>
+.av-voices { display: grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: 8px }
+.av-voices button { text-align: left; padding: 10px 12px; border-radius: 12px; border: 2px solid var(--line-2); background: var(--surface-2); color: var(--ink); cursor: pointer; display: grid; gap: 2px }
+.av-voices button[aria-pressed="true"] { border-color: var(--green-2); box-shadow: 0 0 0 3px var(--tile) }
+.av-voices b { font: 600 15px var(--body) } .av-voices small { color: var(--ink-3); font-size: 12px }
+.av-bar { height: 8px; border-radius: 99px; background: var(--surface-2); border: 1px solid var(--line); overflow: hidden } .av-bar i { display: block; height: 100%; width: 0; background: var(--green-2); transition: width .2s }
+</style>
+<div>
+  <h1>AI voiceover, <em>free and private</em></h1>
+  <p class="lede">Type or paste your script, choose a natural-sounding voice, and download the audio for your YouTube video, Reel or Short. The AI runs on your device, so there are no credits, limits or sign-ups.</p>
+</div>
+<div class="ad-slot" data-slot="top"></div>
+<div class="panel">
+  <h2>Your script</h2>
+  <textarea id="av-text" rows="7" aria-label="Script">Every video comes with the same boring jobs. Timing the script, writing captions, resizing thumbnails. Creator Bench does all of it for free, right in your browser.</textarea>
+  <p class="hint" id="av-count"></p>
+  <h2>Voice</h2>
+  <div class="av-voices" id="av-voices" role="group" aria-label="Voice"></div>
+  <div class="row">
+    <label style="flex:1">Speed <select id="av-speed"><option value="0.85">Slow</option><option value="1" selected>Normal</option><option value="1.1">Brisk</option><option value="1.25">Fast</option></select></label>
+    <label style="flex:1">Format <select id="av-fmt"><option value="mp3">MP3</option><option value="wav">WAV</option></select></label>
+  </div>
+  <div class="row"><button type="button" class="btn" id="av-go">Generate voiceover</button><button type="button" class="btn ghost" id="av-dl" disabled>Download</button><span class="hint" id="av-status">The voice model (about 90 MB) downloads once, then works offline.</span></div>
+  <div class="av-bar" aria-hidden="true"><i id="av-bar"></i></div>
+  <audio id="av-audio" controls style="width:100%;margin-top:6px" hidden></audio>
+</div>
+<div class="ad-slot" data-slot="mid"></div>
+<section class="copy" id="how">
+  <h2>How it works</h2>
+  <p>Creator Bench runs Kokoro, an open-source text-to-speech model released under the Apache 2.0 licence, directly in your browser. Your script is never sent anywhere. Long scripts are split into sentences and joined into one audio file.</p>
+</section>
+<section class="copy" id="faq">
+  <h2>Questions</h2>
+  <details><summary>Can I use the voiceover in monetised YouTube videos?</summary><p>Yes. The Kokoro model is Apache 2.0 licensed, which allows commercial use, and the audio you generate is yours. Disclose AI voices where a platform asks you to.</p></details>
+  <details><summary>How long can the script be?</summary><p>There is no hard limit. A laptop generates roughly a minute of audio in under a minute; phones are slower. Very long scripts are best done in parts.</p></details>
+  <details><summary>Does it speak Hindi?</summary><p>This version speaks English with American and British voices. Write Hindi words in English letters for the best result.</p></details>
+</section>
+<script src="vendor/lame.min.js"></script>
+<script>
+(() => {
+  const $ = id => document.getElementById(id);
+  const VOICES = [['af_heart', 'Heart', 'US female · warm'], ['af_bella', 'Bella', 'US female · bright'], ['af_nicole', 'Nicole', 'US female · soft'], ['am_michael', 'Michael', 'US male · calm'],
+    ['am_fenrir', 'Fenrir', 'US male · deep'], ['am_puck', 'Puck', 'US male · lively'], ['bf_emma', 'Emma', 'UK female · clear'], ['bf_isabella', 'Isabella', 'UK female · warm'], ['bm_george', 'George', 'UK male · narrator'], ['bm_fable', 'Fable', 'UK male · storyteller']];
+  let voice = 'am_michael', worker = null, out = null;
+  $('av-voices').innerHTML = VOICES.map(([id, n, d]) => `<button type="button" data-v="${id}" aria-pressed="${id === voice}"><b>${n}</b><small>${d}</small></button>`).join('');
+  $('av-voices').onclick = e => { const b = e.target.closest('button'); if (!b) return; voice = b.dataset.v; document.querySelectorAll('#av-voices button').forEach(x => x.setAttribute('aria-pressed', x === b)); };
+  const count = () => { const w = $('av-text').value.trim().split(/\s+/).filter(Boolean).length; $('av-count').textContent = `${w} words · about ${Math.max(1, Math.round(w / 2.5))} seconds of audio`; };
+  $('av-text').oninput = count; count();
+  const WORKER = `
+    import { KokoroTTS } from 'https://cdn.jsdelivr.net/npm/kokoro-js@1.2.1/dist/kokoro.web.js';
+    let tts = null;
+    self.onmessage = async ({ data }) => {
+      try {
+        if (!tts) {
+          let device = 'wasm'; try { if (navigator.gpu && await navigator.gpu.requestAdapter()) device = 'webgpu'; } catch (e) {}
+          const files = {};
+          const load = d => KokoroTTS.from_pretrained('onnx-community/Kokoro-82M-v1.0-ONNX', { dtype: d === 'webgpu' ? 'fp32' : 'q8', device: d,
+            progress_callback: p => { if (p.status === 'progress' && p.total) { files[p.file] = [p.loaded, p.total]; const v = Object.values(files); self.postMessage({ type: 'load', p: v.reduce((a, x) => a + x[0], 0) / v.reduce((a, x) => a + x[1], 0) }); } } });
+          try { tts = await load(device); } catch (e) { if (device === 'wasm') throw e; tts = await load('wasm'); }
+        }
+        const parts = data.text.replace(/\\s+/g, ' ').match(/[^.!?]+[.!?]*["')\\]]*\\s*/g) || [data.text];
+        const chunks = []; let sr = 24000;
+        for (let i = 0; i < parts.length; i++) { const t = parts[i].trim(); if (!t) continue;
+          const a = await tts.generate(t, { voice: data.voice, speed: data.speed }); sr = a.sampling_rate; chunks.push(a.audio); chunks.push(new Float32Array(Math.round(sr * 0.18)));
+          self.postMessage({ type: 'progress', p: (i + 1) / parts.length }); }
+        const n = chunks.reduce((s, c) => s + c.length, 0), all = new Float32Array(n); let o = 0; for (const c of chunks) { all.set(c, o); o += c.length; }
+        self.postMessage({ type: 'done', audio: all, sr }, [all.buffer]);
+      } catch (e) { self.postMessage({ type: 'error', message: String(e && e.message || e) }); }
+    };`;
+  const i16 = f => { const o = new Int16Array(f.length); for (let i = 0; i < f.length; i++) { const v = Math.max(-1, Math.min(1, f[i])); o[i] = v < 0 ? v * 0x8000 : v * 0x7FFF; } return o; };
+  function wav(f, sr) { const s = i16(f), b = new DataView(new ArrayBuffer(44 + s.length * 2)), w = (o, t) => [...t].forEach((c, i) => b.setUint8(o + i, c.charCodeAt(0)));
+    w(0, 'RIFF'); b.setUint32(4, 36 + s.length * 2, true); w(8, 'WAVEfmt '); b.setUint32(16, 16, true); b.setUint16(20, 1, true); b.setUint16(22, 1, true); b.setUint32(24, sr, true); b.setUint32(28, sr * 2, true); b.setUint16(32, 2, true); b.setUint16(34, 16, true); w(36, 'data'); b.setUint32(40, s.length * 2, true);
+    s.forEach((v, i) => b.setInt16(44 + i * 2, v, true)); return new Blob([b], { type: 'audio/wav' }); }
+  function mp3(f, sr) { const enc = new lamejs.Mp3Encoder(1, sr, 128), s = i16(f), out = []; for (let i = 0; i < s.length; i += 1152 * 20) { const d = enc.encodeBuffer(s.subarray(i, i + 1152 * 20)); if (d.length) out.push(new Uint8Array(d)); } const e = enc.flush(); if (e.length) out.push(new Uint8Array(e)); return new Blob(out, { type: 'audio/mpeg' }); }
+  $('av-go').onclick = () => {
+    const text = $('av-text').value.trim(); if (!text) { $('av-status').textContent = 'Type a script first.'; return; }
+    $('av-go').disabled = true; $('av-dl').disabled = true; $('av-bar').style.width = '0%'; $('av-status').textContent = 'Loading the voice model…';
+    if (!worker) worker = new Worker(URL.createObjectURL(new Blob([WORKER], { type: 'text/javascript' })), { type: 'module' });
+    worker.onerror = e => { e.preventDefault && e.preventDefault(); worker = null; $('av-status').textContent = "The voice model couldn't load. Check your connection and try again."; $('av-go').disabled = false; };
+    worker.onmessage = ({ data }) => {
+      if (data.type === 'load') { $('av-status').textContent = `Downloading the voice model (one time only)… ${Math.round(data.p * 100)}%`; $('av-bar').style.width = data.p * 40 + '%'; }
+      if (data.type === 'progress') { $('av-status').textContent = `Speaking… ${Math.round(data.p * 100)}%`; $('av-bar').style.width = 40 + data.p * 60 + '%'; }
+      if (data.type === 'done') { out = { f: data.audio, sr: data.sr }; const blob = wav(out.f, out.sr); $('av-audio').src = URL.createObjectURL(blob); $('av-audio').hidden = false;
+        $('av-status').textContent = `Done: ${(out.f.length / out.sr).toFixed(1)} seconds. Play it, then download.`; $('av-go').disabled = false; $('av-dl').disabled = false; $('av-bar').style.width = '100%'; }
+      if (data.type === 'error') { $('av-status').textContent = 'Something went wrong: ' + data.message; $('av-go').disabled = false; }
+    };
+    worker.postMessage({ text, voice, speed: +$('av-speed').value });
+  };
+  $('av-dl').onclick = () => { if (!out) return; const fmt = $('av-fmt').value, blob = fmt === 'mp3' ? mp3(out.f, out.sr) : wav(out.f, out.sr), a = document.createElement('a'); a.href = URL.createObjectURL(blob); a.download = `voiceover-${voice}.${fmt}`; a.click(); };
+})();
+</script>
