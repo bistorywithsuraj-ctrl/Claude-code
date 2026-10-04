@@ -1,0 +1,69 @@
+<!--meta
+slug: video-to-gif
+title: Video to GIF Converter: make GIFs from MP4 free
+name: Video to GIF Converter
+desc: Turn any part of a video into a GIF. Pick the start and end, frame rate and size, then download. Free, no watermark, and your video never leaves your device.
+-->
+<style>
+.vg-video { width: 100%; max-height: 360px; border-radius: 12px; background: #111; display: block }
+.vg-bar { height: 8px; border-radius: 99px; background: var(--surface-2); border: 1px solid var(--line); overflow: hidden } .vg-bar i { display: block; height: 100%; width: 0; background: var(--green-2) }
+.vg-out { max-width: 100%; border-radius: 10px; display: block; background: repeating-conic-gradient(var(--surface-2) 0 25%, var(--surface) 0 50%) 0 0 / 20px 20px }
+</style>
+<div>
+  <h1>Video to GIF, <em>no watermark</em></h1>
+  <p class="lede">Pick a moment from your video, set the length and size, and get a GIF for comments, chats or your website. Everything happens in your browser.</p>
+</div>
+<div class="ad-slot" data-slot="top"></div>
+<div class="cols">
+  <div class="panel">
+    <h2>Your video</h2>
+    <label>Video <input id="vg-file" type="file" accept="video/*"></label>
+    <video class="vg-video" id="vg-video" controls playsinline muted hidden></video>
+    <div class="row">
+      <label style="flex:1">Start (s) <input id="vg-start" type="number" min="0" step="0.1" value="0"></label>
+      <label style="flex:1">End (s) <input id="vg-end" type="number" min="0" step="0.1" value="3"></label>
+      <button type="button" class="btn ghost" id="vg-here" style="align-self:end">Start here</button>
+    </div>
+    <div class="row">
+      <label style="flex:1">Frame rate <select id="vg-fps"><option value="8">8 fps · smallest</option><option value="12" selected>12 fps</option><option value="15">15 fps</option><option value="20">20 fps · smoothest</option></select></label>
+      <label style="flex:1">Width <select id="vg-w"><option>320</option><option selected>480</option><option>640</option><option>800</option></select></label>
+    </div>
+    <div class="row"><button type="button" class="btn" id="vg-go" disabled>Make GIF</button><span class="hint" id="vg-status">Choose a video to start.</span></div>
+    <div class="vg-bar" aria-hidden="true"><i id="vg-bar"></i></div>
+  </div>
+  <div class="panel" aria-live="polite">
+    <h2>Your GIF</h2>
+    <img class="vg-out" id="vg-out" alt="Your GIF" hidden>
+    <p class="hint" id="vg-info">Keep GIFs short: 2 to 5 seconds at 480 px is usually under 5 MB.</p>
+    <div class="row"><button type="button" class="btn" id="vg-dl" disabled>Download GIF</button></div>
+  </div>
+</div>
+<div class="ad-slot" data-slot="mid"></div>
+<section class="copy" id="faq">
+  <h2>Questions</h2>
+  <details><summary>How do I make my GIF smaller?</summary><p>Shorten it, lower the frame rate to 8 or 12, or pick a smaller width. Each of these cuts the file size a lot.</p></details>
+  <details><summary>Which videos work?</summary><p>MP4, MOV and WebM files that your browser can play. iPhone HEVC videos work in Safari; in other browsers, export them as MP4 first.</p></details>
+</section>
+<script src="vendor/gif.js"></script>
+<script>
+(() => {
+  const $ = id => document.getElementById(id), v = $('vg-video'); let blob = null, name = 'clip';
+  $('vg-file').onchange = e => { const f = e.target.files[0]; if (!f) return; name = f.name.replace(/\.[^.]+$/, ''); v.src = URL.createObjectURL(f); v.hidden = false; };
+  v.addEventListener('loadedmetadata', () => { $('vg-end').value = Math.min(v.duration, 3).toFixed(1); $('vg-go').disabled = false; $('vg-status').textContent = `Video loaded (${v.duration.toFixed(1)} s). Set the part you want.`; });
+  $('vg-here').onclick = () => { const len = (+$('vg-end').value) - (+$('vg-start').value) || 3; $('vg-start').value = v.currentTime.toFixed(1); $('vg-end').value = Math.min(v.duration, v.currentTime + len).toFixed(1); };
+  const seek = t => new Promise(r => { const h = () => { v.removeEventListener('seeked', h); r(); }; v.addEventListener('seeked', h); v.currentTime = t; });
+  $('vg-go').onclick = async () => {
+    const s = Math.max(0, +$('vg-start').value), e = Math.min(v.duration, +$('vg-end').value), fps = +$('vg-fps').value, w = +$('vg-w').value, h = Math.round(w * v.videoHeight / v.videoWidth / 2) * 2;
+    if (e <= s) { $('vg-status').textContent = 'The end must be after the start.'; return; }
+    if (e - s > 15) { $('vg-status').textContent = 'Keep it under 15 seconds; long GIFs get very large.'; return; }
+    $('vg-go').disabled = true; v.pause(); const c = document.createElement('canvas'); c.width = w; c.height = h; const g = c.getContext('2d', { willReadFrequently: true });
+    const gif = new GIF({ workers: 2, quality: 10, width: w, height: h, workerScript: 'vendor/gif.worker.js' }); const n = Math.max(1, Math.round((e - s) * fps));
+    for (let i = 0; i < n; i++) { await seek(s + i / fps); g.drawImage(v, 0, 0, w, h); gif.addFrame(g, { copy: true, delay: Math.round(1000 / fps) }); $('vg-bar').style.width = (i / n * 50) + '%'; $('vg-status').textContent = `Reading frames… ${i + 1}/${n}`; }
+    gif.on('progress', p => { $('vg-bar').style.width = (50 + p * 50) + '%'; $('vg-status').textContent = `Building GIF… ${Math.round(p * 100)}%`; });
+    gif.on('finished', b => { blob = b; $('vg-out').src = URL.createObjectURL(b); $('vg-out').hidden = false; $('vg-dl').disabled = false; $('vg-go').disabled = false; $('vg-bar').style.width = '100%';
+      $('vg-info').textContent = `${w} × ${h} · ${n} frames · ${(b.size / 1e6).toFixed(2)} MB`; $('vg-status').textContent = 'Done.'; });
+    gif.render();
+  };
+  $('vg-dl').onclick = () => { if (!blob) return; const a = document.createElement('a'); a.href = URL.createObjectURL(blob); a.download = name + '.gif'; a.click(); };
+})();
+</script>

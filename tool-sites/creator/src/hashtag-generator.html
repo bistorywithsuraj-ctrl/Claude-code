@@ -1,0 +1,100 @@
+<!--meta
+slug: hashtag-generator
+title: Hashtag Generator for Instagram, TikTok and YouTube
+name: Hashtag Generator
+desc: Free hashtag generator for Reels, TikTok and YouTube Shorts. Pick your niche and topic and get a balanced mix of broad, medium and niche hashtags to copy. No sign-up.
+-->
+<style>
+.hg-tags { display: flex; flex-wrap: wrap; gap: 8px }
+.hg-tags button { border: 1px solid var(--line-2); background: var(--surface-2); color: var(--ink); border-radius: 99px; padding: 6px 12px; font: 500 14px var(--body); cursor: pointer }
+.hg-tags button.off { opacity: .35; text-decoration: line-through }
+.hg-tags button[data-tier="broad"] { border-color: var(--green-2) } .hg-tags button[data-tier="niche"] { background: var(--tile) }
+.hg-legend { display: flex; gap: 14px; flex-wrap: wrap; font-size: 13px; color: var(--ink-2) } .hg-legend i { display: inline-block; width: 10px; height: 10px; border-radius: 50%; margin-right: 6px; vertical-align: -1px }
+</style>
+<div>
+  <h1>Hashtags that <em>fit your video</em></h1>
+  <p class="lede">Pick your niche, add your topic, and get a mix of broad, medium and niche hashtags. Tap any tag to drop it, then copy the set into your caption.</p>
+</div>
+<div class="ad-slot" data-slot="top"></div>
+<div class="cols">
+  <div class="panel">
+    <h2>Your video</h2>
+    <label>Niche <select id="hg-niche"></select></label>
+    <label>Topic or keyword <span class="hint">optional, e.g. "F1" or "budget travel"</span><input id="hg-kw" placeholder="F1"></label>
+    <div class="row">
+      <label style="flex:1">Platform <select id="hg-plat"><option value="ig">Instagram Reels</option><option value="tt">TikTok</option><option value="yt">YouTube Shorts</option></select></label>
+      <label style="flex:1">How many <select id="hg-n"><option>5</option><option selected>10</option><option>15</option><option>20</option><option>30</option></select></label>
+    </div>
+    <p class="hint" id="hg-tip"></p>
+  </div>
+  <div class="panel" aria-live="polite">
+    <h2>Your hashtags</h2>
+    <div class="hg-legend"><span><i style="background:var(--green-2)"></i>Broad reach</span><span><i style="background:var(--line-2)"></i>Medium</span><span><i style="background:var(--tile);border:1px solid var(--line-2)"></i>Niche, easier to rank</span></div>
+    <div class="hg-tags" id="hg-tags"></div>
+    <div class="row"><button type="button" class="btn" id="hg-copy">Copy hashtags</button><button type="button" class="btn ghost" id="hg-shuffle">Shuffle</button><span class="toast" id="hg-msg" role="status"></span></div>
+  </div>
+</div>
+<div class="ad-slot" data-slot="mid"></div>
+<section class="copy" id="how">
+  <h2>How many hashtags should you use?</h2>
+  <p>Fewer, more relevant hashtags beat a wall of popular ones. A good mix is one or two broad tags for reach, a few medium tags, and several niche tags where your video can actually rank. Platforms change their guidance often: Instagram currently suggests a handful of relevant tags, TikTok works well with three to five, and YouTube shows the first three hashtags above your title.</p>
+</section>
+<section class="copy" id="faq">
+  <h2>Questions</h2>
+  <details><summary>Do hashtags still work in 2026?</summary><p>They help platforms understand what your video is about and who to show it to. They will not make a weak video go viral, but the right niche tags help the right people find you.</p></details>
+  <details><summary>Should I use the same hashtags on every post?</summary><p>Keep a core of niche tags that describe your channel, and change the topic tags for each video. Press Shuffle for a fresh mix.</p></details>
+</section>
+<script>
+(() => {
+  const $ = id => document.getElementById(id);
+  // tiers: broad (huge), medium, niche (specific)
+  const N = {
+    'Content creators': [['contentcreator', 'creator', 'youtuber', 'reels'], ['contentcreation', 'creatorlife', 'smallyoutuber', 'videoediting', 'creatortips'], ['youtubetips', 'growonyoutube', 'reelstips', 'contentstrategy', 'creatoreconomy', 'editingtips', 'newyoutuber']],
+    'Travel': [['travel', 'travelgram', 'wanderlust', 'explore'], ['travelvlog', 'traveltips', 'travelblogger', 'instatravel', 'travelreels'], ['budgettravel', 'solotravel', 'hiddengems', 'travelhacks', 'backpacking', 'travelguide', 'itinerary']],
+    'Food & cooking': [['food', 'foodie', 'recipe', 'cooking'], ['foodreels', 'homecooking', 'easyrecipes', 'foodblogger', 'instafood'], ['quickrecipes', 'mealprep', 'recipeoftheday', 'streetfood', 'healthyrecipes', 'desifood', 'cookingtips']],
+    'Fitness': [['fitness', 'gym', 'workout', 'fitnessmotivation'], ['fitnessreels', 'homeworkout', 'gymlife', 'strengthtraining', 'fitfam'], ['workouttips', 'fatloss', 'gymtips', 'beginnerworkout', 'calisthenics', 'mobility', 'fitnessjourney']],
+    'Tech': [['tech', 'technology', 'gadgets', 'ai'], ['techreview', 'techtips', 'smartphone', 'techreels', 'innovation'], ['techhacks', 'aitools', 'productivityapps', 'unboxing', 'iphonetips', 'androidtips', 'techexplained']],
+    'Finance & money': [['finance', 'money', 'investing', 'business'], ['personalfinance', 'financetips', 'stockmarket', 'wealth', 'moneytips'], ['financialfreedom', 'budgeting', 'savingmoney', 'passiveincome', 'sip', 'mutualfunds', 'sidehustle']],
+    'Education': [['education', 'learning', 'facts', 'didyouknow'], ['edutok', 'learnontiktok', 'studytips', 'knowledge', 'explained'], ['historyfacts', 'sciencefacts', 'funfacts', 'explainervideo', 'studygram', 'learnsomethingnew', 'edtech']],
+    'History': [['history', 'historyfacts', 'ancienthistory', 'facts'], ['historybuff', 'historylovers', 'worldhistory', 'historytime', 'historical'], ['historyexplained', 'militaryhistory', 'indianhistory', 'historytok', 'mapanimation', 'historyvideos', 'onthisday']],
+    'Gaming': [['gaming', 'gamer', 'games', 'videogames'], ['gamingcommunity', 'gamingclips', 'twitchstreamer', 'gameplay', 'pcgaming'], ['gamingsetup', 'bgmi', 'valorantclips', 'minecraftbuilds', 'indiegame', 'gamingtips', 'speedrun']],
+    'Beauty & fashion': [['fashion', 'beauty', 'style', 'makeup'], ['ootd', 'makeuptutorial', 'skincare', 'fashionreels', 'outfitideas'], ['skincareroutine', 'grwm', 'makeuptips', 'streetstyle', 'outfitinspo', 'affordablefashion', 'beautyhacks']],
+    'Motivation': [['motivation', 'inspiration', 'success', 'mindset'], ['motivationalquotes', 'selfimprovement', 'growthmindset', 'discipline', 'positivevibes'], ['dailymotivation', 'productivitytips', 'morningroutine', 'selfdevelopment', 'goalsetting', 'mindsetcoach', 'stoicism']],
+    'Comedy': [['comedy', 'funny', 'memes', 'lol'], ['funnyvideos', 'comedyreels', 'relatable', 'skit', 'humor'], ['comedyskits', 'relatablecontent', 'desimemes', 'funnyreels', 'standupcomedy', 'parody', 'sketchcomedy']],
+    'Sports & F1': [['sports', 'football', 'cricket', 'f1'], ['formula1', 'sportsnews', 'motorsport', 'fifa', 'ipl'], ['f1fans', 'f1memes', 'racingcars', 'cricketlovers', 'footballskills', 'sportsanalysis', 'grandprix']],
+    'Music': [['music', 'song', 'singer', 'musician'], ['newmusic', 'cover', 'singing', 'producer', 'musicreels'], ['coversong', 'indiemusic', 'beatmaker', 'songwriter', 'guitarcover', 'musicproducer', 'originalsong']],
+    'Photography': [['photography', 'photo', 'photooftheday', 'camera'], ['photographer', 'naturephotography', 'portrait', 'streetphotography', 'mobilephotography'], ['phototips', 'lightroom', 'photoediting', 'goldenhour', 'cinematic', 'shotoniphone', 'landscapephotography']],
+    'Small business': [['smallbusiness', 'business', 'entrepreneur', 'marketing'], ['shopsmall', 'supportsmallbusiness', 'digitalmarketing', 'brand', 'startup'], ['smallbusinessowner', 'marketingtips', 'branding', 'instagrammarketing', 'businesstips', 'handmade', 'localbusiness']],
+    'Pets': [['pets', 'dog', 'cat', 'puppy'], ['dogsofinstagram', 'catsofinstagram', 'petlovers', 'cutepets', 'doglover'], ['puppylove', 'dogtraining', 'rescuedog', 'catlife', 'petcare', 'funnypets', 'indiedog']],
+    'Cars': [['cars', 'car', 'supercars', 'automotive'], ['carlifestyle', 'carsofinstagram', 'carreview', 'jdm', 'evcars'], ['carspotting', 'cardetailing', 'electricvehicle', 'carmods', 'dreamcar', 'carvlog', 'motorhead']],
+  };
+  const TIP = { ig: 'Instagram: a handful of relevant tags usually works best. Put them at the end of your caption.', tt: 'TikTok: 3 to 5 tags that describe the video are usually enough.', yt: 'YouTube: the first three hashtags appear above your title, so put the best ones first.' };
+  Object.keys(N).forEach(k => $('hg-niche').insertAdjacentHTML('beforeend', `<option>${k}</option>`));
+  let seed = 1, current = [];
+  const rnd = () => (seed = (seed * 16807) % 2147483647) / 2147483647;
+  const shuffle = a => a.map(v => [rnd(), v]).sort((x, y) => x[0] - y[0]).map(x => x[1]);
+  const slug = s => s.toLowerCase().replace(/[^a-z0-9ऀ-ॿ]+/g, '');
+  function kwTags(kw) { const k = slug(kw); if (!k) return []; const base = [k, k + 'tips', k + 'fans', k + 'reels', k + 'community', k + 'life', k + 'explained', k + 'daily'];
+    const words = kw.toLowerCase().split(/\s+/).map(slug).filter(w => w.length > 2); return [...new Set([...base, ...words])]; }
+  function gen() {
+    const [broad, med, niche] = N[$('hg-niche').value], n = +$('hg-n').value, plat = $('hg-plat').value, kw = kwTags($('hg-kw').value);
+    const plan = n <= 5 ? [1, 1, 3] : [Math.max(1, Math.round(n * .2)), Math.round(n * .35), 0]; plan[2] = n - plan[0] - plan[1];
+    const picks = [...shuffle(broad).slice(0, plan[0]).map(t => [t, 'broad']), ...shuffle(med).slice(0, plan[1]).map(t => [t, 'medium'])];
+    const nichePool = shuffle([...kw.map(t => [t, 'niche']), ...niche.map(t => [t, 'niche'])]);
+    if (kw.length) nichePool.unshift([kw[0], 'niche']);
+    for (const p of nichePool) { if (picks.length >= n) break; if (!picks.some(x => x[0] === p[0])) picks.push(p); }
+    if (plat === 'tt') picks.push(['fyp', 'broad']); if (plat === 'yt') picks.unshift(['shorts', 'broad']);
+    current = picks.slice(0, plat === 'yt' ? n + 1 : n + (plat === 'tt' ? 1 : 0)).map(([t, tier]) => ({ t, tier, on: true }));
+    $('hg-tip').textContent = TIP[plat]; render();
+    try { localStorage.setItem('hg-v1', JSON.stringify({ niche: $('hg-niche').value, kw: $('hg-kw').value, plat, n })); } catch (e) {}
+  }
+  function render() { $('hg-tags').innerHTML = current.map((x, i) => `<button type="button" data-i="${i}" data-tier="${x.tier}" class="${x.on ? '' : 'off'}">#${x.t}</button>`).join(''); }
+  $('hg-tags').onclick = e => { const b = e.target.closest('button'); if (!b) return; const x = current[+b.dataset.i]; x.on = !x.on; render(); };
+  $('hg-copy').onclick = () => { const txt = current.filter(x => x.on).map(x => '#' + x.t).join(' ');
+    navigator.clipboard?.writeText(txt).then(() => { $('hg-msg').textContent = 'Copied. Paste at the end of your caption.'; setTimeout(() => $('hg-msg').textContent = '', 2200); }, () => { $('hg-msg').textContent = txt; }); };
+  $('hg-shuffle').onclick = () => { seed = Math.floor(Math.random() * 1e6) + 1; gen(); };
+  ['hg-niche', 'hg-plat', 'hg-n'].forEach(id => $(id).addEventListener('change', gen)); $('hg-kw').addEventListener('input', gen);
+  try { const s = JSON.parse(localStorage.getItem('hg-v1') || 'null'); if (s) { $('hg-niche').value = s.niche; $('hg-kw').value = s.kw; $('hg-plat').value = s.plat; $('hg-n').value = s.n; } } catch (e) {}
+  gen();
+})();
+</script>

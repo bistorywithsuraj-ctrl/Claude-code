@@ -1,0 +1,93 @@
+<!--meta
+slug: video-compressor
+title: Video Compressor and 9:16 Resizer for Reels free
+name: Video Compressor & 9:16 Resizer
+desc: Compress a video for WhatsApp or email, or turn a 16:9 video into 9:16 for Reels, Shorts and TikTok with a blurred background. Free, no upload, no watermark.
+-->
+<style>
+.vc-video { width: 100%; max-height: 340px; border-radius: 12px; background: #111; display: block }
+.vc-seg { display: grid; grid-template-columns: repeat(auto-fit, minmax(120px, 1fr)); gap: 8px }
+.vc-seg button { padding: 12px 8px; border-radius: 12px; border: 2px solid var(--line-2); background: var(--surface-2); color: var(--ink); cursor: pointer; font: 600 14px var(--body); display: grid; gap: 6px; justify-items: center }
+.vc-seg button[aria-pressed="true"] { border-color: var(--green-2); box-shadow: 0 0 0 3px var(--tile) }
+.vc-seg i { display: block; background: var(--ink-3); border-radius: 3px }
+.vc-bar { height: 8px; border-radius: 99px; background: var(--surface-2); border: 1px solid var(--line); overflow: hidden } .vc-bar i { display: block; height: 100%; width: 0; background: var(--green-2) }
+.vc-prev { width: 100%; max-height: 300px; object-fit: contain; background: #111; border-radius: 10px; display: block }
+</style>
+<div>
+  <h1>Shrink it, or <em>make it vertical</em></h1>
+  <p class="lede">Compress a video to fit WhatsApp or email, or reframe a landscape video as 9:16 for Reels, Shorts and TikTok, with a blurred background so nothing gets cut off.</p>
+</div>
+<div class="ad-slot" data-slot="top"></div>
+<div class="cols">
+  <div class="panel">
+    <h2>Your video</h2>
+    <label>Video <input id="vc-file" type="file" accept="video/*"></label>
+    <video class="vc-video" id="vc-video" playsinline controls hidden></video>
+    <p class="hint" id="vc-src">Choose a video to start.</p>
+    <h2>Frame</h2>
+    <div class="vc-seg" id="vc-frame" role="group" aria-label="Frame">
+      <button type="button" data-f="orig" aria-pressed="true"><i style="width:40px;height:22px"></i>Original</button>
+      <button type="button" data-f="crop" aria-pressed="false"><i style="width:14px;height:26px"></i>9:16 crop</button>
+      <button type="button" data-f="blur" aria-pressed="false"><i style="width:14px;height:26px;box-shadow:inset 0 9px 0 var(--line-2),inset 0 -9px 0 var(--line-2)"></i>9:16 blur fill</button>
+      <button type="button" data-f="square" aria-pressed="false"><i style="width:22px;height:22px"></i>1:1</button>
+    </div>
+  </div>
+  <div class="panel">
+    <h2>Size</h2>
+    <div class="row">
+      <label style="flex:1">Target <select id="vc-target"><option value="16">WhatsApp · under 16 MB</option><option value="25">Email · under 25 MB</option><option value="8">Discord · under 8 MB</option><option value="0">Custom quality</option></select></label>
+      <label style="flex:1">Resolution <select id="vc-res"><option value="1080">1080p</option><option value="720" selected>720p</option><option value="480">480p</option></select></label>
+    </div>
+    <label id="vc-qwrap" hidden>Quality <input id="vc-q" type="range" min="1" max="10" value="6"></label>
+    <p class="hint" id="vc-est"></p>
+    <div class="row"><button type="button" class="btn" id="vc-go" disabled>Convert video</button><span class="hint" id="vc-status"></span></div>
+    <div class="vc-bar" aria-hidden="true"><i id="vc-bar"></i></div>
+    <canvas id="vc-canvas" class="vc-prev" hidden></canvas>
+  </div>
+</div>
+<div class="ad-slot" data-slot="mid"></div>
+<section class="copy" id="how">
+  <h2>How it works</h2>
+  <p>Your browser plays the video once and records it again at the size and bitrate you choose, so a one-minute video takes about a minute. Keep this tab open while it converts. Nothing is uploaded, and there is no watermark.</p>
+</section>
+<section class="copy" id="faq">
+  <h2>Questions</h2>
+  <details><summary>How do I turn a YouTube video into a Reel?</summary><p>Choose "9:16 blur fill": your full landscape video sits in the middle of a vertical frame with a soft blurred copy behind it. Choose "9:16 crop" to fill the screen by cutting the sides.</p></details>
+  <details><summary>Why is the output WebM?</summary><p>Some browsers can only record WebM. Chrome, Edge and Safari on recent versions save MP4. YouTube, TikTok and WhatsApp accept both.</p></details>
+</section>
+<script>
+(() => {
+  const $ = id => document.getElementById(id), v = $('vc-video'), cv = $('vc-canvas'), g = cv.getContext('2d');
+  let frame = 'orig', name = 'video', busy = false;
+  $('vc-frame').onclick = e => { const b = e.target.closest('button'); if (!b) return; frame = b.dataset.f; document.querySelectorAll('#vc-frame button').forEach(x => x.setAttribute('aria-pressed', x === b)); est(); };
+  $('vc-target').onchange = () => { $('vc-qwrap').hidden = $('vc-target').value !== '0'; est(); }; ['vc-res', 'vc-q'].forEach(id => $(id).addEventListener('input', est));
+  $('vc-file').onchange = e => { const f = e.target.files[0]; if (!f) return; name = f.name.replace(/\.[^.]+$/, ''); v.src = URL.createObjectURL(f); v.hidden = false; v.dataset.size = f.size; };
+  v.addEventListener('loadedmetadata', () => { $('vc-src').textContent = `${v.videoWidth} × ${v.videoHeight} · ${v.duration.toFixed(1)} s · ${(v.dataset.size / 1e6).toFixed(1)} MB`; $('vc-go').disabled = false; est(); });
+  function dims() { const r = +$('vc-res').value, vw = v.videoWidth || 1920, vh = v.videoHeight || 1080, even = n => Math.round(n / 2) * 2;
+    if (frame === 'crop' || frame === 'blur') return [even(r * 9 / 16), r]; if (frame === 'square') return [r, r];
+    const s = r / Math.min(vw, vh); return [even(vw * s), even(vh * s)]; }
+  function bitrate() { const d = v.duration || 60, t = +$('vc-target').value, cap = { 1080: 8e6, 720: 5e6, 480: 2.5e6 }[$('vc-res').value], src = v.dataset.size ? v.dataset.size * 8 / d : cap;
+    if (t) return Math.max(250e3, Math.min(cap, src * 1.1, (t * 8e6 * .92) / d - 128e3));
+    const [w, h] = dims(); return w * h * 30 * .035 * (+$('vc-q').value / 6); }
+  function est() { if (!v.duration) return; const [w, h] = dims(), b = bitrate(); $('vc-est').textContent = `Output: ${w} × ${h} at about ${(b / 1e6).toFixed(1)} Mbps → around ${((b + 128e3) * v.duration / 8e6).toFixed(1)} MB.`;
+    if (b < 600e3 && +$('vc-res').value > 480) $('vc-est').textContent += ' This video is long for that target; 480p will look better.'; }
+  function paint() { const [W, H] = [cv.width, cv.height], vw = v.videoWidth, vh = v.videoHeight;
+    if (frame === 'blur') { const s = Math.max(W / vw, H / vh); g.filter = 'blur(28px) brightness(.7)'; g.drawImage(v, (W - vw * s) / 2, (H - vh * s) / 2, vw * s, vh * s); g.filter = 'none';
+      const f = W / vw; g.drawImage(v, 0, (H - vh * f) / 2, W, vh * f); }
+    else if (frame === 'orig') g.drawImage(v, 0, 0, W, H);
+    else { const s = Math.max(W / vw, H / vh); g.drawImage(v, (W - vw * s) / 2, (H - vh * s) / 2, vw * s, vh * s); } }
+  $('vc-go').onclick = async () => {
+    if (busy) return; const [W, H] = dims(); cv.width = W; cv.height = H; cv.hidden = false;
+    const types = ['video/mp4;codecs=avc1,mp4a.40.2', 'video/mp4', 'video/webm;codecs=vp9,opus', 'video/webm'], mime = types.find(m => window.MediaRecorder && MediaRecorder.isTypeSupported(m));
+    if (!mime || !cv.captureStream) { $('vc-status').textContent = "This browser can't convert video. Use Chrome, Edge or Safari on a computer."; return; }
+    const stream = cv.captureStream(30);
+    try { if (!v._src) { const ac = new AudioContext(); v._src = ac.createMediaElementSource(v); v._dst = ac.createMediaStreamDestination(); v._src.connect(v._dst); v._src.connect(ac.destination); v._ac = ac; } v._dst.stream.getAudioTracks().forEach(t => stream.addTrack(t)); } catch (e) {}
+    const rec = new MediaRecorder(stream, { mimeType: mime, videoBitsPerSecond: Math.round(bitrate()), audioBitsPerSecond: 128000 }), chunks = [];
+    rec.ondataavailable = e => e.data.size && chunks.push(e.data);
+    rec.onstop = () => { const ext = mime.includes('mp4') ? 'mp4' : 'webm', b = new Blob(chunks, { type: mime }), a = document.createElement('a'); a.href = URL.createObjectURL(b); a.download = `${name}-${frame === 'orig' ? 'compressed' : frame === 'square' ? '1x1' : '9x16'}.${ext}`; a.click();
+      $('vc-status').textContent = `Saved ${ext.toUpperCase()}: ${(b.size / 1e6).toFixed(1)} MB (was ${(v.dataset.size / 1e6).toFixed(1)} MB).`; busy = false; $('vc-go').disabled = false; v.controls = true; };
+    busy = true; $('vc-go').disabled = true; v.controls = false; v.muted = false; v.currentTime = 0; if (v._ac) await v._ac.resume(); await v.play(); rec.start(500); $('vc-status').textContent = 'Converting… keep this tab open.';
+    const step = () => { paint(); $('vc-bar').style.width = (v.currentTime / v.duration * 100) + '%'; if (!v.ended && !v.paused) requestAnimationFrame(step); else { rec.stop(); $('vc-bar').style.width = '100%'; } }; step();
+  };
+})();
+</script>
