@@ -98,7 +98,6 @@ def scene_svg():
             f'<rect width="{W}" height="{H}" fill="url(#fade)"/></svg>')
 SCENE_CSS = '''<style>
 :root { --sky1: #E7EEDF; --sky2: #F3F2EA; --sun: #F6E7A8; --sc1: #C9D6C1; --sc2: #A9BFA4; --sc3: #7FA083; --sc4: #4F7A5C; --lake: #B9CDBE; --shine: #E8F0E6 }
-@media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) { --sky1: #142019; --sky2: #1B2720; --sun: #5D5A33; --sc1: #22352B; --sc2: #2A4334; --sc3: #33563F; --sc4: #3D6A4B; --lake: #1F3329; --shine: #3B5546 } }
 :root[data-theme="dark"] { --sky1: #142019; --sky2: #1B2720; --sun: #5D5A33; --sc1: #22352B; --sc2: #2A4334; --sc3: #33563F; --sc4: #3D6A4B; --lake: #1F3329; --shine: #3B5546 }
 </style>'''
 
@@ -123,7 +122,7 @@ SHELL_JS = '''<script>
 (() => {
   const root = document.documentElement;
   document.getElementById('theme')?.addEventListener('click', () => {
-    const dark = root.dataset.theme ? root.dataset.theme === 'dark' : matchMedia('(prefers-color-scheme: dark)').matches;
+    const dark = root.dataset.theme === 'dark';
     root.dataset.theme = dark ? 'light' : 'dark'; try { localStorage.setItem('cb-theme', root.dataset.theme); } catch (e) {}
   });
   document.getElementById('menu')?.addEventListener('click', () => document.body.classList.toggle('drawer'));

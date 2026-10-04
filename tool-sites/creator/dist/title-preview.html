@@ -43,10 +43,6 @@
   /* aliases used inside tool pages */
   --accent: var(--green-2); --accent-soft: var(--tile); --panel: var(--surface); --field: var(--surface-2); --rule: var(--line); --rec: var(--green-2); --rec-soft: var(--tile);
 }
-@media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) {
-  --bg: #0F1612; --side: #111A15; --surface: #16201A; --surface-2: #1B2720; --tile: #213328; --ink: #EEF1EA; --ink-2: #A9B4AB; --ink-3: #758178;
-  --line: #24312A; --line-2: #2F3F35; --green: #9FD3A8; --green-2: #8CCB98; --lime: #C9E26B; --lime-ink: #142019; --ok: #6BD69A; --warn: #F0A15E; --hi: #2C3A1D;
-  --shadow: 0 1px 2px rgba(0,0,0,.4), 0 6px 18px -8px rgba(0,0,0,.5); --shadow-lg: 0 20px 40px -18px rgba(0,0,0,.7); color-scheme: dark } }
 :root[data-theme="dark"] {
   --bg: #0F1612; --side: #111A15; --surface: #16201A; --surface-2: #1B2720; --tile: #213328; --ink: #EEF1EA; --ink-2: #A9B4AB; --ink-3: #758178;
   --line: #24312A; --line-2: #2F3F35; --green: #9FD3A8; --green-2: #8CCB98; --lime: #C9E26B; --lime-ink: #142019; --ok: #6BD69A; --warn: #F0A15E; --hi: #2C3A1D;
@@ -363,7 +359,7 @@ details p { margin: 10px 0 0 }
 (() => {
   const root = document.documentElement;
   document.getElementById('theme')?.addEventListener('click', () => {
-    const dark = root.dataset.theme ? root.dataset.theme === 'dark' : matchMedia('(prefers-color-scheme: dark)').matches;
+    const dark = root.dataset.theme === 'dark';
     root.dataset.theme = dark ? 'light' : 'dark'; try { localStorage.setItem('cb-theme', root.dataset.theme); } catch (e) {}
   });
   document.getElementById('menu')?.addEventListener('click', () => document.body.classList.toggle('drawer'));
