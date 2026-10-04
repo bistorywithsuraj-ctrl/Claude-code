@@ -1,0 +1,102 @@
+<!--meta
+slug: pdf-tools
+title: JPG to PDF & Merge PDF: free, private, no upload
+name: JPG to PDF & Merge PDF
+desc: Turn JPG and PNG images into a PDF, or merge several PDFs into one, right in your browser. Reorder pages, choose page size. Files are never uploaded.
+-->
+<style>
+.pf-list { display: grid; gap: 8px; list-style: none; margin: 0; padding: 0 }
+.pf-list li { display: grid; grid-template-columns: 48px minmax(0, 1fr) auto; gap: 10px; align-items: center; background: var(--surface-2); border: 1px solid var(--line); border-radius: 10px; padding: 8px }
+.pf-list img, .pf-list .ic { width: 48px; height: 48px; object-fit: cover; border-radius: 6px; background: var(--tile); display: grid; place-items: center; font: 600 11px var(--mono); color: var(--green) }
+.pf-list .nm { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-size: 14px }
+.pf-list .ctl { display: flex; gap: 4px }
+.pf-list button { font: 600 13px var(--body); width: 32px; height: 32px; border-radius: 8px; border: 1px solid var(--line-2); background: var(--surface); color: var(--ink); cursor: pointer }
+</style>
+<div>
+  <h1>Make and merge PDFs, <em>privately</em></h1>
+  <p class="lede">Combine photos or screenshots into one PDF, or join several PDFs together. It all happens in your browser, so contracts, invoices and IDs stay on your device.</p>
+</div>
+<div class="ad-slot" data-slot="top"></div>
+<div class="seg" id="pf-mode" role="group" aria-label="Mode">
+  <button type="button" data-m="img" aria-pressed="true">Images to PDF</button>
+  <button type="button" data-m="merge" aria-pressed="false">Merge PDFs</button>
+</div>
+<div class="cols">
+  <div class="panel">
+    <h2 id="pf-title">Your images</h2>
+    <label>Add files <input id="pf-file" type="file" multiple accept="image/jpeg,image/png"></label>
+    <ul class="pf-list" id="pf-list"></ul>
+    <p class="hint" id="pf-empty">No files yet. Add some above, then use the arrows to change the order.</p>
+  </div>
+  <div class="panel">
+    <h2>Options</h2>
+    <div id="pf-img-opts" style="display:grid;gap:12px">
+      <div class="row">
+        <label style="flex:1">Page size <select id="pf-size"><option value="fit">Same as image</option><option value="a4">A4</option><option value="letter">US Letter</option></select></label>
+        <label style="flex:1">Margin <select id="pf-margin"><option value="0">None</option><option value="20" selected>Small</option><option value="40">Large</option></select></label>
+      </div>
+    </div>
+    <div class="row"><button type="button" class="btn" id="pf-go" disabled>Create PDF</button><span class="toast" id="pf-msg" role="status"></span></div>
+    <p class="hint">PNG and JPG images are supported. Password-protected PDFs can't be merged.</p>
+  </div>
+</div>
+<div class="ad-slot" data-slot="mid"></div>
+<section class="copy" id="how">
+  <h2>How it works</h2>
+  <p>Your files are read by your own browser, which builds the new PDF and hands it straight back to you. Nothing is sent to a server, so there are no upload limits, no waiting and no watermarks.</p>
+</section>
+<section class="copy" id="faq">
+  <h2>Questions</h2>
+  <details><summary>Are my files uploaded?</summary><p>No. The PDF is created on your device. You can even disconnect from the internet after the page loads.</p></details>
+  <details><summary>Is there a file limit?</summary><p>There's no fixed limit, but very large files depend on your device's memory. Dozens of photos or PDFs work fine on most computers and phones.</p></details>
+  <details><summary>Can I change the page order?</summary><p>Yes. Use the up and down arrows next to each file before creating the PDF.</p></details>
+  <details><summary>Will image quality drop?</summary><p>No. Images are placed in the PDF at their original quality.</p></details>
+</section>
+<script src="vendor/pdf-lib.min.js"></script>
+<script>
+(() => {
+  const $ = id => document.getElementById(id);
+  let mode = 'img', files = [];
+  const SIZES = { a4: [595.28, 841.89], letter: [612, 792] };
+  function render() {
+    document.querySelectorAll('#pf-mode button').forEach(b => b.setAttribute('aria-pressed', b.dataset.m === mode));
+    $('pf-title').textContent = mode === 'img' ? 'Your images' : 'Your PDFs'; $('pf-img-opts').hidden = mode !== 'img';
+    $('pf-file').accept = mode === 'img' ? 'image/jpeg,image/png' : 'application/pdf';
+    $('pf-go').textContent = mode === 'img' ? 'Create PDF' : 'Merge PDFs'; $('pf-go').disabled = !files.length; $('pf-empty').hidden = !!files.length;
+    $('pf-list').innerHTML = '';
+    files.forEach((f, i) => { const li = document.createElement('li');
+      li.innerHTML = `${f.thumb ? `<img src="${f.thumb}" alt="">` : '<span class="ic">PDF</span>'}<span class="nm"></span><span class="ctl"><button type="button" aria-label="Move up">↑</button><button type="button" aria-label="Move down">↓</button><button type="button" aria-label="Remove">✕</button></span>`;
+      li.querySelector('.nm').textContent = f.file.name; const [up, down, rm] = li.querySelectorAll('button');
+      up.onclick = () => { if (i) { [files[i - 1], files[i]] = [files[i], files[i - 1]]; render(); } };
+      down.onclick = () => { if (i < files.length - 1) { [files[i + 1], files[i]] = [files[i], files[i + 1]]; render(); } };
+      rm.onclick = () => { files.splice(i, 1); render(); };
+      $('pf-list').appendChild(li); });
+  }
+  document.querySelectorAll('#pf-mode button').forEach(b => b.addEventListener('click', () => { mode = b.dataset.m; files = []; $('pf-msg').textContent = ''; render(); }));
+  $('pf-file').addEventListener('change', e => { [...e.target.files].forEach(f => files.push({ file: f, thumb: mode === 'img' ? URL.createObjectURL(f) : null })); e.target.value = ''; render(); });
+  $('pf-go').addEventListener('click', async () => {
+    if (!window.PDFLib) { $('pf-msg').textContent = 'The PDF library did not load. Check your connection and refresh.'; return; }
+    const { PDFDocument } = PDFLib; $('pf-go').disabled = true; $('pf-msg').textContent = 'Working…';
+    try {
+      const out = await PDFDocument.create();
+      for (const f of files) {
+        const bytes = await f.file.arrayBuffer();
+        if (mode === 'img') {
+          const img = /png$/i.test(f.file.type) ? await out.embedPng(bytes) : await out.embedJpg(bytes);
+          const m = +$('pf-margin').value, sz = $('pf-size').value;
+          const [pw, ph] = sz === 'fit' ? [img.width + m * 2, img.height + m * 2] : (img.width > img.height ? [SIZES[sz][1], SIZES[sz][0]] : SIZES[sz]);
+          const s = Math.min((pw - m * 2) / img.width, (ph - m * 2) / img.height), w = img.width * s, h = img.height * s;
+          out.addPage([pw, ph]).drawImage(img, { x: (pw - w) / 2, y: (ph - h) / 2, width: w, height: h });
+        } else {
+          const src = await PDFDocument.load(bytes); const pages = await out.copyPages(src, src.getPageIndices()); pages.forEach(p => out.addPage(p));
+        }
+      }
+      const blob = new Blob([await out.save()], { type: 'application/pdf' }); const a = document.createElement('a');
+      a.href = URL.createObjectURL(blob); a.download = mode === 'img' ? 'images.pdf' : 'merged.pdf'; a.click();
+      $('pf-msg').textContent = `Done: ${out.getPageCount()} page${out.getPageCount() === 1 ? '' : 's'}.`;
+    } catch (err) { $('pf-msg').textContent = mode === 'img' ? "One of the images couldn't be read. Use JPG or PNG." : "One of the PDFs couldn't be opened. It may be password-protected or damaged."; }
+    $('pf-go').disabled = false;
+  });
+  render();
+})();
+</script>

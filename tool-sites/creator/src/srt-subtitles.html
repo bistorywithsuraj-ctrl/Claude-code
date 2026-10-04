@@ -1,0 +1,84 @@
+<!--meta
+slug: srt-subtitles
+title: Text to SRT Subtitles & SRT Timing Fixer
+name: Text to SRT & Subtitle Fixer
+desc: Turn a script into an SRT subtitle file with automatic timing, or shift an SRT file earlier or later to fix out-of-sync subtitles. Free, works in your browser.
+-->
+<div>
+  <h1>Subtitles from text, <em>timing fixed</em></h1>
+  <p class="lede">Make an SRT subtitle file straight from your script, or fix a subtitle file that's out of sync by shifting every line earlier or later.</p>
+</div>
+<div class="ad-slot" data-slot="top"></div>
+<div class="seg" id="sr-mode" role="group" aria-label="Mode">
+  <button type="button" data-m="make" aria-pressed="true">Text to SRT</button>
+  <button type="button" data-m="shift" aria-pressed="false">Fix SRT timing</button>
+</div>
+<div class="cols">
+  <div class="panel">
+    <h2 id="sr-in-title">Your script</h2>
+    <textarea id="sr-in" rows="14" aria-label="Input"></textarea>
+    <label id="sr-file-wrap" hidden>Or open an .srt file <input id="sr-file" type="file" accept=".srt,text/plain"></label>
+    <div id="sr-make-opts" class="row">
+      <label style="flex:1">Speaking pace (wpm) <input id="sr-wpm" type="number" min="80" max="260" value="160"></label>
+      <label style="flex:1">Max characters per line <input id="sr-cpl" type="number" min="20" max="60" value="42"></label>
+      <label style="flex:1">Start at (seconds) <input id="sr-start" type="number" min="0" step="0.1" value="0"></label>
+    </div>
+    <div id="sr-shift-opts" class="row" hidden>
+      <label style="flex:1">Shift by (seconds) <span class="hint">negative = earlier</span><input id="sr-off" type="number" step="0.1" value="1.5"></label>
+      <label style="flex:1">Speed factor <span class="hint">e.g. 1.001 for 23.976 ↔ 24 fps</span><input id="sr-fac" type="number" step="0.001" value="1"></label>
+    </div>
+  </div>
+  <div class="panel" aria-live="polite">
+    <h2>SRT output</h2>
+    <textarea id="sr-out" rows="14" readonly aria-label="SRT output"></textarea>
+    <div class="row"><button type="button" class="btn" id="sr-dl">Download .srt</button><button type="button" class="btn ghost" id="sr-copy">Copy</button><span class="toast" id="sr-msg" role="status"></span></div>
+  </div>
+</div>
+<div class="ad-slot" data-slot="mid"></div>
+<section class="copy" id="how">
+  <h2>How it works</h2>
+  <p><b>Text to SRT</b> splits your script into short subtitle cards of up to two lines, then times each card from its word count and your speaking pace, with a small gap between cards. Upload the file to YouTube, Premiere, DaVinci Resolve or CapCut, and nudge any card that needs it.</p>
+  <p><b>Fix SRT timing</b> moves every subtitle by the same amount. If subtitles appear too late, use a negative number. The speed factor stretches the timing to fix drift between different frame rates.</p>
+</section>
+<section class="copy" id="faq">
+  <h2>Questions</h2>
+  <details><summary>What is an SRT file?</summary><p>A plain-text subtitle file: a number, a start and end time, and the caption text for each line. Almost every video platform and editor accepts it.</p></details>
+  <details><summary>How do I add SRT subtitles to YouTube?</summary><p>In YouTube Studio open the video, choose Subtitles, add a language, then "Upload file" and pick "With timing".</p></details>
+  <details><summary>My subtitles slowly drift out of sync. What do I do?</summary><p>That's usually a frame-rate mismatch. Try a speed factor of 1.001 or 0.999 along with a small shift.</p></details>
+  <details><summary>Is my script uploaded?</summary><p>No. Everything happens in your browser.</p></details>
+</section>
+<script>
+(() => {
+  const $ = id => document.getElementById(id);
+  const SAMPLE_TEXT = 'A Formula 1 race is about 300 kilometres long. And the car finishes it without adding a single drop of fuel.\n\nRefuelling was banned from 2010, to cut costs and the risk of fires in the pit lane.';
+  const SAMPLE_SRT = '1\n00:00:00,000 --> 00:00:03,200\nA Formula 1 race is about\n300 kilometres long.\n\n2\n00:00:03,400 --> 00:00:06,100\nAnd the car finishes it without\nadding a single drop of fuel.\n';
+  let mode = 'make';
+  const ts = s => { s = Math.max(0, s); const h = Math.floor(s / 3600), m = Math.floor(s % 3600 / 60), sec = Math.floor(s % 60), ms = Math.round((s % 1) * 1000) % 1000;
+    return `${String(h).padStart(2, '0')}:${String(m).padStart(2, '0')}:${String(sec).padStart(2, '0')},${String(ms).padStart(3, '0')}`; };
+  const pts = t => { const m = t.match(/(\d+):(\d+):(\d+)[,.](\d+)/); return m ? +m[1] * 3600 + +m[2] * 60 + +m[3] + +m[4].padEnd(3, '0').slice(0, 3) / 1000 : 0; };
+  function wrap(words, cpl) { const lines = []; let cur = ''; words.forEach(w => { if ((cur + ' ' + w).trim().length > cpl && cur) { lines.push(cur); cur = w; } else cur = (cur + ' ' + w).trim(); }); if (cur) lines.push(cur); return lines; }
+  function make() {
+    const wpm = Math.max(80, +$('sr-wpm').value || 160), cpl = Math.max(20, +$('sr-cpl').value || 42); let t = Math.max(0, +$('sr-start').value || 0);
+    const sentences = $('sr-in').value.replace(/\s+/g, ' ').match(/[^.!?]+[.!?]*/g) || []; const cards = [];
+    sentences.forEach(s => { const lines = wrap(s.trim().split(' ').filter(Boolean), cpl); for (let i = 0; i < lines.length; i += 2) cards.push(lines.slice(i, i + 2).join('\n')); });
+    return cards.map((c, i) => { const words = c.split(/\s+/).length, d = Math.max(1.2, words / wpm * 60); const out = `${i + 1}\n${ts(t)} --> ${ts(t + d)}\n${c}\n`; t += d + 0.2; return out; }).join('\n');
+  }
+  function shift() {
+    const off = +$('sr-off').value || 0, fac = +$('sr-fac').value || 1;
+    return $('sr-in').value.replace(/\r/g, '').replace(/(\d+:\d+:\d+[,.]\d+)\s*-->\s*(\d+:\d+:\d+[,.]\d+)/g, (_, a, b) => `${ts(pts(a) * fac + off)} --> ${ts(pts(b) * fac + off)}`);
+  }
+  function run() {
+    document.querySelectorAll('#sr-mode button').forEach(b => b.setAttribute('aria-pressed', b.dataset.m === mode));
+    $('sr-make-opts').hidden = mode !== 'make'; $('sr-shift-opts').hidden = mode !== 'shift'; $('sr-file-wrap').hidden = mode !== 'shift';
+    $('sr-in-title').textContent = mode === 'make' ? 'Your script' : 'Your SRT file';
+    $('sr-out').value = mode === 'make' ? make() : shift();
+  }
+  $('sr-in').value = SAMPLE_TEXT;
+  document.querySelectorAll('#sr-mode button').forEach(b => b.addEventListener('click', () => { mode = b.dataset.m; $('sr-in').value = mode === 'make' ? SAMPLE_TEXT : SAMPLE_SRT; run(); }));
+  ['sr-in', 'sr-wpm', 'sr-cpl', 'sr-start', 'sr-off', 'sr-fac'].forEach(id => $(id).addEventListener('input', run));
+  $('sr-file').addEventListener('change', e => { const f = e.target.files[0]; if (!f) return; const r = new FileReader(); r.onload = () => { $('sr-in').value = r.result; run(); }; r.readAsText(f); });
+  $('sr-dl').addEventListener('click', () => { const a = document.createElement('a'); a.href = URL.createObjectURL(new Blob([$('sr-out').value], { type: 'text/plain' })); a.download = mode === 'make' ? 'subtitles.srt' : 'subtitles_fixed.srt'; a.click(); });
+  $('sr-copy').addEventListener('click', () => navigator.clipboard?.writeText($('sr-out').value).then(() => { $('sr-msg').textContent = 'Copied'; setTimeout(() => $('sr-msg').textContent = '', 1500); }, () => { $('sr-out').select(); }));
+  run();
+})();
+</script>

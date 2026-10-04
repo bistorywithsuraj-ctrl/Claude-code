@@ -1,0 +1,85 @@
+<!--meta
+slug: youtube-chapters
+title: YouTube Chapters Generator: timestamps that YouTube accepts
+name: YouTube Chapters Generator
+desc: Turn section titles and lengths into YouTube chapter timestamps, or check your existing timestamps against YouTube's rules: starts at 0:00, 3+ chapters, 10 seconds each.
+-->
+<div>
+  <h1>Chapters YouTube <em>actually shows</em></h1>
+  <p class="lede">Build timestamps from your section lengths, or paste the ones you have and we'll check them against YouTube's chapter rules and fix the format.</p>
+</div>
+<div class="ad-slot" data-slot="top"></div>
+<div class="cols">
+  <div class="panel">
+    <h2>Your sections</h2>
+    <div class="seg" id="yc-mode" role="group" aria-label="Mode">
+      <button type="button" data-m="build" aria-pressed="true">From section lengths</button>
+      <button type="button" data-m="check" aria-pressed="false">Check my timestamps</button>
+    </div>
+    <p class="hint" id="yc-help">One section per line: title, then its length. Example: <code>Intro | 0:45</code></p>
+    <textarea id="yc-in" rows="12" aria-label="Sections"></textarea>
+  </div>
+  <div class="panel" aria-live="polite">
+    <h2>Chapters for your description</h2>
+    <textarea id="yc-out" rows="10" readonly aria-label="Generated chapters"></textarea>
+    <div id="yc-checks" style="display:grid;gap:6px"></div>
+    <div class="row"><button type="button" class="btn" id="yc-copy">Copy chapters</button><span class="toast" id="yc-msg" role="status"></span></div>
+  </div>
+</div>
+<div class="ad-slot" data-slot="mid"></div>
+<section class="copy" id="how">
+  <h2>YouTube's chapter rules</h2>
+  <ul>
+    <li>The first timestamp must be <b>0:00</b>.</li>
+    <li>You need at least <b>three</b> timestamps, in order.</li>
+    <li>Each chapter must be at least <b>10 seconds</b> long.</li>
+    <li>Put the list in your video description, one chapter per line.</li>
+  </ul>
+  <p>If any rule is broken, YouTube quietly ignores all of your chapters. This tool checks each rule and tells you what to change.</p>
+</section>
+<section class="copy" id="faq">
+  <h2>Questions</h2>
+  <details><summary>Why aren't my YouTube chapters showing?</summary><p>Usually because the first timestamp isn't 0:00, there are fewer than three, one chapter is shorter than 10 seconds, or automatic chapters were turned off. Paste yours in "Check my timestamps" to find the problem.</p></details>
+  <details><summary>Where do chapters go?</summary><p>In the video description, as a list of timestamps followed by titles. They can be anywhere in the description, but most creators put them near the top.</p></details>
+  <details><summary>Do chapters help my video rank?</summary><p>They can appear as "key moments" in Google search and help viewers find what they want, which often improves watch time.</p></details>
+</section>
+<script>
+(() => {
+  const $ = id => document.getElementById(id);
+  const SAMPLE = { build: 'Intro | 0:45\nWhy F1 cars never refuel | 2:10\nHow much fuel they carry | 1:30\nMileage compared | 1:15\nThe lighter-car trick | 1:40\nOutro | 0:30',
+                   check: '0:00 Intro\n0:45 Why F1 cars never refuel\n2:55 How much fuel they carry\n4:25 Mileage compared\n5:40 The lighter-car trick\n7:20 Outro' };
+  let mode = 'build';
+  const parse = s => { const p = s.trim().split(':').map(Number); if (p.some(isNaN) || !p.length) return null; return p.reduce((a, v) => a * 60 + v, 0); };
+  const fmt = (sec, long) => { const h = Math.floor(sec / 3600), m = Math.floor(sec % 3600 / 60), s = Math.floor(sec % 60);
+    return long ? `${h}:${String(m).padStart(2, '0')}:${String(s).padStart(2, '0')}` : `${m}:${String(s).padStart(2, '0')}`; };
+  function run() {
+    document.querySelectorAll('#yc-mode button').forEach(b => b.setAttribute('aria-pressed', b.dataset.m === mode));
+    $('yc-help').innerHTML = mode === 'build' ? 'One section per line: title, then its length. Example: <code>Intro | 0:45</code>' : 'Paste your timestamps, one per line. Example: <code>0:00 Intro</code>';
+    const lines = $('yc-in').value.split('\n').map(l => l.trim()).filter(Boolean); let rows = [], issues = [];
+    if (mode === 'build') {
+      let t = 0; lines.forEach((l, i) => { const m = l.match(/^(.*?)[|,\t]\s*([\d:]+)\s*$/); if (!m) { issues.push(`Line ${i + 1}: add a length after a "|", like "Intro | 0:45".`); return; }
+        const len = parse(m[2]); rows.push({ t, title: m[1].trim() || `Chapter ${i + 1}`, len }); t += len || 0; });
+    } else {
+      lines.forEach((l, i) => { const m = l.match(/^\(?(\d{1,2}(?::\d{1,2}){1,2})\)?\s*[-–—:]?\s*(.*)$/); if (!m) { issues.push(`Line ${i + 1} has no timestamp at the start.`); return; }
+        rows.push({ t: parse(m[1]), title: m[2].trim() || `Chapter ${i + 1}` }); });
+      rows.forEach((r, i) => { r.len = i < rows.length - 1 ? rows[i + 1].t - r.t : null; });
+    }
+    const long = rows.some(r => r.t >= 3600);
+    $('yc-out').value = rows.map(r => `${fmt(r.t, long)} ${r.title}`).join('\n');
+    if (rows.length) {
+      if (rows[0].t !== 0) issues.push('The first chapter must start at 0:00.');
+      if (rows.length < 3) issues.push('YouTube needs at least 3 chapters.');
+      rows.forEach((r, i) => { if (i && r.t <= rows[i - 1].t) issues.push(`"${r.title}" is not after the chapter before it.`);
+        if (r.len != null && r.len < 10) issues.push(`"${r.title}" is ${Math.max(0, r.len)} seconds. Chapters must be at least 10 seconds.`); });
+    }
+    $('yc-checks').innerHTML = !rows.length ? '' : issues.length ? issues.map(t => `<div><span class="pill warn">Fix</span> ${t.replace(/</g, '&lt;')}</div>`).join('') : '<div><span class="pill ok">OK</span> These chapters follow all of YouTube\'s rules.</div>';
+    try { localStorage.setItem('yc-v1', JSON.stringify({ mode, text: $('yc-in').value })); } catch (e) {}
+  }
+  try { const s = JSON.parse(localStorage.getItem('yc-v1') || 'null'); if (s) { mode = s.mode; $('yc-in').value = s.text; } } catch (e) {}
+  if (!$('yc-in').value) $('yc-in').value = SAMPLE[mode];
+  document.querySelectorAll('#yc-mode button').forEach(b => b.addEventListener('click', () => { mode = b.dataset.m; $('yc-in').value = SAMPLE[mode]; run(); }));
+  $('yc-in').addEventListener('input', run);
+  $('yc-copy').addEventListener('click', () => navigator.clipboard?.writeText($('yc-out').value).then(() => { $('yc-msg').textContent = 'Copied. Paste it into your description.'; setTimeout(() => $('yc-msg').textContent = '', 2200); }, () => { $('yc-out').select(); $('yc-msg').textContent = 'Press Ctrl+C to copy.'; }));
+  run();
+})();
+</script>

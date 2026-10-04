@@ -1,0 +1,94 @@
+<!--meta
+slug: qr-code
+title: Free QR Code Generator: links, text and WiFi, download PNG or SVG
+name: QR Code Generator
+desc: Make a free QR code for a link, text or WiFi network. Choose colours and size, then download as PNG or SVG. No sign-up, no expiry, no tracking.
+-->
+<style>
+.qr-box { display: grid; place-items: center; background: var(--surface-2); border: 1px solid var(--line); border-radius: 12px; padding: 18px }
+.qr-box canvas { max-width: 100%; height: auto; image-rendering: pixelated }
+</style>
+<div>
+  <h1>A QR code that <em>never expires</em></h1>
+  <p class="lede">Make a QR code for your channel link, a message or your WiFi. It works forever, because the information is stored in the code itself, not on our server.</p>
+</div>
+<div class="ad-slot" data-slot="top"></div>
+<div class="cols">
+  <div class="panel">
+    <h2>What should it open?</h2>
+    <div class="seg" id="qr-type" role="group" aria-label="QR type">
+      <button type="button" data-t="url" aria-pressed="true">Link</button>
+      <button type="button" data-t="text" aria-pressed="false">Text</button>
+      <button type="button" data-t="wifi" aria-pressed="false">WiFi</button>
+    </div>
+    <label id="qr-url-wrap">Link <input id="qr-url" type="url" value="https://creatorbenchtool.com"></label>
+    <label id="qr-text-wrap" hidden>Text <textarea id="qr-text" rows="4">Thanks for watching! Subscribe for more.</textarea></label>
+    <div id="qr-wifi-wrap" hidden style="display:grid;gap:12px">
+      <label>Network name (SSID) <input id="qr-ssid" value="MyStudio"></label>
+      <label>Password <input id="qr-pass" value=""></label>
+      <label>Security <select id="qr-enc"><option value="WPA">WPA / WPA2 / WPA3</option><option value="WEP">WEP</option><option value="nopass">No password</option></select></label>
+    </div>
+    <div class="row">
+      <label style="flex:1">Colour <input id="qr-fg" type="color" value="#1C2A21" style="height:44px;padding:4px"></label>
+      <label style="flex:1">Background <input id="qr-bgc" type="color" value="#FFFFFF" style="height:44px;padding:4px"></label>
+    </div>
+    <div class="row">
+      <label style="flex:1">Size (px) <select id="qr-size"><option>256</option><option selected>512</option><option>1024</option><option>2048</option></select></label>
+      <label style="flex:1">Error correction <select id="qr-ec"><option value="L">Low</option><option value="M" selected>Medium</option><option value="Q">High</option><option value="H">Highest</option></select></label>
+    </div>
+  </div>
+  <div class="panel" aria-live="polite">
+    <h2>Your QR code</h2>
+    <div class="qr-box"><canvas id="qr-canvas" width="512" height="512" aria-label="Generated QR code"></canvas></div>
+    <div class="row"><button type="button" class="btn" id="qr-png">Download PNG</button><button type="button" class="btn ghost" id="qr-svg">Download SVG</button><span class="toast" id="qr-msg" role="status"></span></div>
+    <p class="hint">Test it with your phone camera before printing. Keep strong contrast: dark code on a light background scans best.</p>
+  </div>
+</div>
+<div class="ad-slot" data-slot="mid"></div>
+<section class="copy" id="how">
+  <h2>How these QR codes work</h2>
+  <p>The link, text or WiFi details are stored inside the pattern itself. That means the code works offline, never expires and doesn't pass through any tracking service. If you change your link later, you need to make a new code.</p>
+  <p>Higher error correction lets the code scan even when part of it is damaged or covered, at the cost of a denser pattern.</p>
+</section>
+<section class="copy" id="faq">
+  <h2>Questions</h2>
+  <details><summary>Do these QR codes expire?</summary><p>No. They contain your information directly and don't depend on our website, so they keep working forever.</p></details>
+  <details><summary>Can I use them commercially?</summary><p>Yes. Print them on merch, business cards, video end screens or packaging.</p></details>
+  <details><summary>PNG or SVG?</summary><p>PNG for social media and documents, SVG for printing at any size without blur.</p></details>
+  <details><summary>How does the WiFi QR code work?</summary><p>When someone scans it, their phone offers to join your network without typing the password. The password is only stored in the code, not on our site.</p></details>
+</section>
+<script src="vendor/qrcode.min.js"></script>
+<script>
+(() => {
+  const $ = id => document.getElementById(id);
+  let type = 'url', qr = null;
+  const esc = s => s.replace(/([\\;,:"])/g, '\\$1');
+  const utf8 = s => unescape(encodeURIComponent(s));
+  function payload() {
+    if (type === 'url') return $('qr-url').value.trim();
+    if (type === 'text') return $('qr-text').value;
+    const enc = $('qr-enc').value; return `WIFI:T:${enc};S:${esc($('qr-ssid').value)};${enc === 'nopass' ? '' : 'P:' + esc($('qr-pass').value) + ';'};`;
+  }
+  function draw() {
+    document.querySelectorAll('#qr-type button').forEach(b => b.setAttribute('aria-pressed', b.dataset.t === type));
+    $('qr-url-wrap').hidden = type !== 'url'; $('qr-text-wrap').hidden = type !== 'text'; $('qr-wifi-wrap').hidden = type !== 'wifi';
+    const c = $('qr-canvas'), size = +$('qr-size').value; c.width = c.height = size; const g = c.getContext('2d');
+    if (!window.qrcode) { $('qr-msg').textContent = 'The QR library did not load. Check your connection and refresh.'; return; }
+    const data = payload(); if (!data) { g.clearRect(0, 0, size, size); return; }
+    try { qr = qrcode(0, $('qr-ec').value); qr.addData(utf8(data), 'Byte'); qr.make(); $('qr-msg').textContent = ''; }
+    catch (e) { qr = null; $('qr-msg').textContent = 'That is too much text for one QR code. Shorten it.'; return; }
+    const n = qr.getModuleCount(), quiet = 4, cell = size / (n + quiet * 2);
+    g.fillStyle = $('qr-bgc').value; g.fillRect(0, 0, size, size); g.fillStyle = $('qr-fg').value;
+    for (let r = 0; r < n; r++) for (let col = 0; col < n; col++) if (qr.isDark(r, col)) g.fillRect(Math.floor((col + quiet) * cell), Math.floor((r + quiet) * cell), Math.ceil(cell), Math.ceil(cell));
+  }
+  function save(href, name) { const a = document.createElement('a'); a.href = href; a.download = name; a.click(); }
+  document.querySelectorAll('#qr-type button').forEach(b => b.addEventListener('click', () => { type = b.dataset.t; draw(); }));
+  ['qr-url', 'qr-text', 'qr-ssid', 'qr-pass', 'qr-enc', 'qr-fg', 'qr-bgc', 'qr-size', 'qr-ec'].forEach(id => $(id).addEventListener('input', draw));
+  $('qr-png').addEventListener('click', () => save($('qr-canvas').toDataURL('image/png'), 'qr-code.png'));
+  $('qr-svg').addEventListener('click', () => { if (!qr) return; const n = qr.getModuleCount(), q = 4, N = n + q * 2; let d = '';
+    for (let r = 0; r < n; r++) for (let c = 0; c < n; c++) if (qr.isDark(r, c)) d += `M${c + q} ${r + q}h1v1h-1z`;
+    const svg = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 ${N} ${N}" shape-rendering="crispEdges"><rect width="${N}" height="${N}" fill="${$('qr-bgc').value}"/><path d="${d}" fill="${$('qr-fg').value}"/></svg>`;
+    save(URL.createObjectURL(new Blob([svg], { type: 'image/svg+xml' })), 'qr-code.svg'); });
+  window.addEventListener('load', draw); draw();
+})();
+</script>

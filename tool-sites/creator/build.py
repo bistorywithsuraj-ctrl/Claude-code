@@ -27,15 +27,19 @@ BASE_CSS = (HERE / 'shared' / 'base.css').read_text()
 FONTS = ('<link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>'
          '<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Newsreader:ital,opsz,wght@0,6..72,500;0,6..72,600;1,6..72,500;1,6..72,600'
          '&family=Geist:wght@400;500;600&family=Geist+Mono:wght@500&family=Caveat:wght@600&display=swap">')
-ORDER = ['script-timer', 'title-preview', 'safe-zones', 'caption-formatter', 'frame-extractor']
-SHORT = {'script-timer': 'Script Timer', 'title-preview': 'Title & Thumbnail', 'safe-zones': 'Safe Zone Checker', 'caption-formatter': 'Caption Formatter', 'frame-extractor': 'Frame Extractor'}
-CARD_TITLE = {'script-timer': 'Script Timer', 'title-preview': 'Title & Thumbnail Preview', 'safe-zones': 'Shorts & Reels Safe Zones', 'caption-formatter': 'Instagram Caption Formatter', 'frame-extractor': 'Video Frame Extractor'}
+ORDER = ['youtube-earnings', 'script-timer', 'title-preview', 'image-resizer', 'word-counter', 'safe-zones', 'frame-extractor', 'caption-formatter', 'youtube-chapters', 'srt-subtitles', 'case-converter', 'qr-code', 'pdf-tools']
+SHORT = {'script-timer': 'Script Timer', 'title-preview': 'Title & Thumbnail', 'safe-zones': 'Safe Zone Checker', 'caption-formatter': 'Caption Formatter', 'frame-extractor': 'Frame Extractor', 'youtube-earnings': 'YouTube Earnings', 'image-resizer': 'Image Resizer', 'word-counter': 'Word Counter', 'qr-code': 'QR Code', 'youtube-chapters': 'YouTube Chapters', 'srt-subtitles': 'Text to SRT', 'case-converter': 'Case Converter', 'pdf-tools': 'JPG to PDF'}
+CARD_TITLE = {'script-timer': 'Script Timer', 'title-preview': 'Title & Thumbnail Preview', 'safe-zones': 'Shorts & Reels Safe Zones', 'caption-formatter': 'Instagram Caption Formatter', 'frame-extractor': 'Video Frame Extractor', 'youtube-earnings': 'YouTube Earnings Calculator', 'image-resizer': 'Image Resizer & Compressor', 'word-counter': 'Word & Character Counter', 'qr-code': 'QR Code Generator', 'youtube-chapters': 'YouTube Chapters Generator', 'srt-subtitles': 'Text to SRT & Subtitle Fixer', 'case-converter': 'Case Converter', 'pdf-tools': 'JPG to PDF & Merge PDF'}
 BLURB = {'script-timer': 'Speaking time, paragraph timestamps and words to target.',
          'title-preview': 'See where your title gets cut off in every feed.',
          'safe-zones': 'Check what TikTok, Reels and Shorts buttons cover.',
          'caption-formatter': 'Line breaks that stick, plus every Instagram limit.',
-         'frame-extractor': 'Save frames from any video as JPG or PNG, or a ZIP.'}
-CATEGORY = {'script-timer': 'Scripts & Voiceover', 'title-preview': 'Titles & Thumbnails', 'safe-zones': 'Vertical Video', 'caption-formatter': 'Captions & Text', 'frame-extractor': 'Video Frames'}
+         'frame-extractor': 'Save frames from any video as JPG or PNG, or a ZIP.',
+         'youtube-earnings': 'Estimate ad income from views, niche and country.', 'image-resizer': 'Exact sizes for thumbnails, posts and Shorts, compressed.',
+         'word-counter': 'Words, characters and every platform limit, live.', 'qr-code': 'Links, text or WiFi. PNG or SVG, never expires.',
+         'youtube-chapters': 'Build timestamps or check them against YouTube rules.', 'srt-subtitles': 'Script to subtitles, or fix out-of-sync SRT files.',
+         'case-converter': 'Title Case, Sentence case, UPPER and 7 more.', 'pdf-tools': 'Images to PDF or merge PDFs, nothing uploaded.'}
+CATEGORY = {'script-timer': 'Scripts & Voiceover', 'title-preview': 'Titles & Thumbnails', 'safe-zones': 'Vertical Video', 'caption-formatter': 'Captions & Text', 'frame-extractor': 'Video Frames', 'youtube-earnings': 'Money & Growth', 'image-resizer': 'Images', 'word-counter': 'Text', 'qr-code': 'Links & Sharing', 'youtube-chapters': 'YouTube SEO', 'srt-subtitles': 'Subtitles', 'case-converter': 'Text Formatting', 'pdf-tools': 'PDF'}
 
 # ---------- icons (simple stroke icons drawn for this site) ----------
 P = {
@@ -59,9 +63,17 @@ P = {
  'heart': '<path d="M12 20s-7-4.4-7-10a4 4 0 017-2.6A4 4 0 0119 10c0 5.6-7 10-7 10z"/>',
  'check': '<path d="M5 12l5 5 9-10"/>',
  'film': '<rect x="3" y="4" width="18" height="16" rx="2"/><path d="M7 4v16M17 4v16M3 9h4M3 15h4M17 9h4M17 15h4"/>',
+ 'money': '<circle cx="12" cy="12" r="9"/><path d="M15 9.5c-.5-1-1.6-1.5-3-1.5-1.7 0-3 .9-3 2.2 0 3 6 1.6 6 4.6 0 1.3-1.3 2.2-3 2.2-1.5 0-2.6-.6-3.1-1.6M12 6.5v11"/>',
+ 'image': '<rect x="3" y="5" width="18" height="14" rx="2"/><circle cx="9" cy="10" r="1.6"/><path d="M21 16l-5-5-8 8"/>',
+ 'type': '<path d="M4 7V5h16v2M12 5v14M9 19h6"/>',
+ 'qr': '<rect x="4" y="4" width="6" height="6" rx="1"/><rect x="14" y="4" width="6" height="6" rx="1"/><rect x="4" y="14" width="6" height="6" rx="1"/><path d="M14 14h2v2h-2zM18 18h2v2h-2zM14 18h2M18 14h2"/>',
+ 'list': '<path d="M9 6h11M9 12h11M9 18h11"/><circle cx="4.5" cy="6" r="1"/><circle cx="4.5" cy="12" r="1"/><circle cx="4.5" cy="18" r="1"/>',
+ 'cc': '<rect x="3" y="5" width="18" height="14" rx="2"/><path d="M10 10.5a2 2 0 100 3M16 10.5a2 2 0 100 3"/>',
+ 'aa': '<path d="M3 18l4-11 4 11M4.5 14h5"/><circle cx="17" cy="15" r="3"/><path d="M20 12v6"/>',
+ 'file': '<path d="M14 3H7a2 2 0 00-2 2v14a2 2 0 002 2h10a2 2 0 002-2V8z"/><path d="M14 3v5h5M9 13h6M9 17h4"/>',
  'leaf': '<path d="M5 19c0-8 6-14 15-14 0 9-6 15-14 15"/><path d="M5 19l7-7"/>',
 }
-ICON = {'script-timer': 'clock', 'title-preview': 'title', 'safe-zones': 'phone', 'caption-formatter': 'caption', 'frame-extractor': 'film'}
+ICON = {'script-timer': 'clock', 'title-preview': 'title', 'safe-zones': 'phone', 'caption-formatter': 'caption', 'frame-extractor': 'film', 'youtube-earnings': 'money', 'image-resizer': 'image', 'word-counter': 'type', 'qr-code': 'qr', 'youtube-chapters': 'list', 'srt-subtitles': 'cc', 'case-converter': 'aa', 'pdf-tools': 'file'}
 def ic(name, cls='i'): return f'<svg class="{cls}" viewBox="0 0 24 24" aria-hidden="true">{P[name]}</svg>'
 def cur(flag): return CUR if flag else ''
 
@@ -225,7 +237,7 @@ for t in TOOLS:
     write(f'{t["slug"]}.html', full(t['title'], t['desc'], f'/{t["slug"]}', body, extra, active=t['slug'], rail_html=rail('tower')))
 
 # ---------- homepage ----------
-popular = ''.join(f'<a href="{t["slug"]}.html">{html.escape(SHORT.get(t["slug"], t["name"]))}</a>' for t in TOOLS)
+popular = ''.join(f'<a href="{t["slug"]}.html">{html.escape(SHORT.get(t["slug"], t["name"]))}</a>' for t in TOOLS[:6])
 cards = ''.join(card(t, flag=(i == 0), search=True) for i, t in enumerate(TOOLS))
 cats = ''.join(f'<a href="{t["slug"]}.html"><i>{ic(ICON.get(t["slug"], "grid"))}</i>{html.escape(CATEGORY.get(t["slug"], t["name"]))}</a>' for t in TOOLS)
 HOME_JS = '''<script>
@@ -244,7 +256,7 @@ home = (f'<section class="hero">{scene_svg()}<p class="hand" aria-hidden="true">
         f'{ad("leader")}<div class="sec-head" id="cats"><h2>Browse by category</h2></div><div class="cats">{cats}</div>'
         '<section class="copy"><h2>Why Creator Bench</h2><p>Each tool answers a question creators ask before every upload: how long is this script, will my title get cut off, '
         'is my text hidden behind the buttons, will my caption keep its spacing. No accounts, no watermarks, no uploads. Your work stays on your device.</p></section>' + HOME_JS)
-HOME_DESC = 'Free tools for YouTube, Shorts, Reels and TikTok creators: script timer, title and thumbnail preview, safe zone checker and Instagram caption formatter.'
+HOME_DESC = 'Free tools for creators: YouTube earnings calculator, image resizer, word counter, frame extractor, subtitles, QR codes, PDF tools and more. No sign-up.'
 write('index.html', full(f'{NAME}: free tools for video creators', HOME_DESC, '/', home,
       SCENE_CSS + ld({'@context': 'https://schema.org', '@type': 'WebSite', 'name': NAME, 'url': SITE_URL + '/'}), active='home'))
 
@@ -274,6 +286,11 @@ page('contact', 'Contact', f'Contact {NAME} to report a bug, suggest a new creat
 write('404.html', full(f'Page not found · {NAME}', 'This page does not exist. Try one of the free creator tools instead.', '/404',
       '<section class="copy"><span class="eyebrow">404 · Nothing here</span><h1>This page <em>doesn\'t exist.</em></h1><p>The link may be old or mistyped. Try one of the tools instead:</p><ul>' +
       ''.join(f'<li><a href="{t["slug"]}.html">{html.escape(t["name"])}</a></li>' for t in TOOLS) + '</ul></section>'))
+
+# ---------- self-hosted libraries ----------
+import shutil
+(DIST / 'vendor').mkdir(exist_ok=True)
+for f in (HERE / 'shared' / 'vendor').glob('*.js'): shutil.copy(f, DIST / 'vendor' / f.name)
 
 # ---------- crawl files ----------
 if not PREVIEW and 'example.com' not in SITE_URL: (DIST / 'CNAME').write_text(SITE_URL.split('://', 1)[1] + '\n')

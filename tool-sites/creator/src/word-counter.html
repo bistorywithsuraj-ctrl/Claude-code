@@ -1,0 +1,68 @@
+<!--meta
+slug: word-counter
+title: Word & Character Counter with YouTube, Instagram, TikTok and X limits
+name: Word & Character Counter
+desc: Count words, characters, sentences and reading time, and check your text against YouTube, Instagram, TikTok, X, LinkedIn and Threads limits as you type. Free.
+-->
+<style>
+.wc-limit { display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 4px 12px; align-items: center; font-size: 14px }
+.wc-limit .meter { grid-column: 1 / -1; height: 6px; border-radius: 999px; background: var(--surface-2); overflow: hidden; border: 1px solid var(--line) }
+.wc-limit .meter i { display: block; height: 100%; background: var(--green-2) }
+.wc-limit .meter i.over { background: var(--warn) }
+.wc-limit b { font: 600 13px var(--mono) }
+</style>
+<div>
+  <h1>Count it, then <em>check every limit</em></h1>
+  <p class="lede">Type or paste your text. Word count, character count and reading time update instantly, with live checks against every platform's limit.</p>
+</div>
+<div class="ad-slot" data-slot="top"></div>
+<div class="cols">
+  <div class="panel">
+    <h2>Your text</h2>
+    <textarea id="wc-text" rows="14" aria-label="Text to count">Paste a title, caption, description or script here.
+
+Every count below updates as you type, including how much room you have left on each platform.</textarea>
+    <div class="row"><button type="button" class="btn ghost" id="wc-clear">Clear</button><button type="button" class="btn ghost" id="wc-copy">Copy text</button><span class="toast" id="wc-msg" role="status"></span></div>
+  </div>
+  <div class="panel" aria-live="polite">
+    <h2>Counts</h2>
+    <div class="stats" id="wc-stats"></div>
+    <h2>Platform limits</h2>
+    <div id="wc-limits" style="display:grid;gap:12px"></div>
+  </div>
+</div>
+<div class="ad-slot" data-slot="mid"></div>
+<section class="copy" id="how">
+  <h2>How we count</h2>
+  <p>Words are groups of letters or numbers separated by spaces. Characters include spaces, punctuation and line breaks, the way most platforms count them; emoji count as one character here, although some apps count certain emoji as two. Reading time assumes 238 words per minute and speaking time 150.</p>
+</section>
+<section class="copy" id="faq">
+  <h2>Questions</h2>
+  <details><summary>What is the YouTube title and description limit?</summary><p>Titles can be 100 characters and descriptions 5,000 characters. Only about the first 60 characters of a title show in most places.</p></details>
+  <details><summary>What is the Instagram caption limit?</summary><p>2,200 characters for captions and 150 characters for your bio.</p></details>
+  <details><summary>How long can a TikTok caption be?</summary><p>Up to 4,000 characters.</p></details>
+  <details><summary>How many characters can a post on X have?</summary><p>280 characters for standard accounts. Paid accounts can post longer.</p></details>
+  <details><summary>Is my text saved?</summary><p>Only in your own browser, so it's still there if you come back. It's never sent to a server.</p></details>
+</section>
+<script>
+(() => {
+  const $ = id => document.getElementById(id);
+  const LIMITS = [['YouTube title', 100], ['YouTube description', 5000], ['Instagram caption', 2200], ['Instagram bio', 150], ['TikTok caption', 4000], ['X post', 280], ['LinkedIn post', 3000], ['Threads post', 500]];
+  try { const v = localStorage.getItem('wc-v1'); if (v) $('wc-text').value = v; } catch (e) {}
+  const t = m => m < 1 ? `${Math.max(1, Math.round(m * 60))} sec` : `${Math.floor(m)} min ${Math.round((m % 1) * 60)} sec`;
+  function calc() {
+    const s = $('wc-text').value, words = (s.match(/[\p{L}\p{N}'’-]+/gu) || []).length, chars = [...s].length;
+    const noSpace = [...s.replace(/\s/g, '')].length, sentences = (s.match(/[^.!?]+[.!?]+/g) || []).length || (s.trim() ? 1 : 0);
+    const paras = s.split(/\n\s*\n/).filter(p => p.trim()).length;
+    $('wc-stats').innerHTML = [['Words', words], ['Characters', chars], ['No spaces', noSpace], ['Sentences', sentences], ['Paragraphs', paras], ['Reading time', t(words / 238)], ['Speaking time', t(words / 150)]]
+      .map(([k, v]) => `<div class="stat"><span>${k}</span><b>${typeof v === 'number' ? v.toLocaleString() : v}</b></div>`).join('');
+    $('wc-limits').innerHTML = LIMITS.map(([n, max]) => { const over = chars > max, pct = Math.min(100, chars / max * 100);
+      return `<div class="wc-limit"><span>${n}</span><b style="color:${over ? 'var(--warn)' : 'var(--ink-2)'}">${chars.toLocaleString()} / ${max.toLocaleString()}${over ? ` · ${(chars - max).toLocaleString()} over` : ''}</b><div class="meter"><i class="${over ? 'over' : ''}" style="width:${pct}%"></i></div></div>`; }).join('');
+    try { localStorage.setItem('wc-v1', s); } catch (e) {}
+  }
+  $('wc-text').addEventListener('input', calc);
+  $('wc-clear').addEventListener('click', () => { $('wc-text').value = ''; calc(); $('wc-text').focus(); });
+  $('wc-copy').addEventListener('click', () => navigator.clipboard?.writeText($('wc-text').value).then(() => { $('wc-msg').textContent = 'Copied'; setTimeout(() => $('wc-msg').textContent = '', 1500); }, () => { $('wc-msg').textContent = 'Select the text and copy it.'; }));
+  calc();
+})();
+</script>

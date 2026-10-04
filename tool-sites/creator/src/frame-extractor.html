@@ -23,6 +23,9 @@ desc: Upload a video and extract frames as JPG or PNG images, every few seconds 
   <div class="panel">
     <h2>Your video</h2>
     <label>Video file <span class="hint">MP4, MOV or WebM. Whatever your browser can play.</span><input id="fx-file" type="file" accept="video/*"></label>
+    <div style="display:grid;gap:6px"><label for="fx-url">Or paste a direct video link</label>
+    <div class="row"><input id="fx-url" type="url" placeholder="https://example.com/my-video.mp4" style="flex:1"><button type="button" class="btn ghost" id="fx-load">Load</button></div>
+    <span class="hint">A link that ends in .mp4 or .webm, from your own site or storage. YouTube, Instagram and TikTok links aren't supported.</span></div>
     <video id="fx-video" class="fx-video" controls playsinline muted hidden></video>
     <div class="hint" id="fx-info">No video yet.</div>
     <button type="button" class="btn ghost" id="fx-grab" disabled>Save this exact frame</button>
@@ -64,7 +67,7 @@ desc: Upload a video and extract frames as JPG or PNG images, every few seconds 
   <details><summary>Which image format should I choose?</summary><p>JPG for small files and sharing, PNG for the best quality or for editing, WebP for small files with good quality.</p></details>
   <details><summary>Can I use a frame as a YouTube thumbnail?</summary><p>Yes, if the video is yours. Extract at original size, then add text in your editor. YouTube thumbnails are 1280 × 720.</p></details>
 </section>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
+<script src="vendor/jszip.min.js"></script>
 <script>
 (() => {
   const $ = id => document.getElementById(id);
@@ -80,9 +83,10 @@ desc: Upload a video and extract frames as JPG or PNG images, every few seconds 
   function estimate() { const n = times().length; $('fx-est').textContent = v.duration ? `This will create ${n} frame${n === 1 ? '' : 's'}${n >= MAX ? ' (the 300-frame limit)' : ''}.` : 'Up to 300 frames per run.'; }
   const seek = t => new Promise(res => { const on = () => { v.removeEventListener('seeked', on); res(); }; v.addEventListener('seeked', on); v.currentTime = t; });
   function capture(t) {
+    try { ctx.getImageData; } catch (e) {}
     const s = +$('fx-scale').value; cv.width = Math.round(v.videoWidth * s); cv.height = Math.round(v.videoHeight * s);
     ctx.drawImage(v, 0, 0, cv.width, cv.height);
-    return new Promise(res => cv.toBlob(b => res({ t, blob: b, url: URL.createObjectURL(b) }), $('fx-fmt').value, 0.92));
+    return new Promise((res, rej) => { try { cv.toBlob(b => b ? res({ t, blob: b, url: URL.createObjectURL(b) }) : rej(new Error('blocked')), $('fx-fmt').value, 0.92); } catch (e) { rej(e); } });
   }
   function addCard(f, i) {
     const name = `${baseName}_${String(i + 1).padStart(3, '0')}_${ts(f.t).replace(':', 'm').replace('.', 's')}.${ext()}`; f.name = name;
@@ -94,10 +98,18 @@ desc: Upload a video and extract frames as JPG or PNG images, every few seconds 
   $('fx-file').addEventListener('change', e => {
     const f = e.target.files[0]; if (!f) return; if (url) URL.revokeObjectURL(url);
     baseName = f.name.replace(/\.[^.]+$/, '').replace(/[^\w-]+/g, '_').slice(0, 40) || 'video';
-    url = URL.createObjectURL(f); v.src = url; v.hidden = false; $('fx-info').textContent = 'Loading…';
+    url = URL.createObjectURL(f); v.removeAttribute('crossorigin'); v.src = url; v.hidden = false; $('fx-info').textContent = 'Loading…';
+  });
+  $('fx-load').addEventListener('click', () => {
+    const raw = $('fx-url').value.trim(); let u; try { u = new URL(raw); } catch (e) { $('fx-info').textContent = 'Paste a full link that starts with https://'; return; }
+    if (/(^|\.)(youtube\.com|youtu\.be|instagram\.com|tiktok\.com|facebook\.com|fb\.watch|x\.com|twitter\.com|vimeo\.com)$/i.test(u.hostname)) {
+      $('fx-info').textContent = "Links from YouTube, Instagram, TikTok and other social sites aren't supported. Download your own video from your editor or phone and upload the file instead."; return; }
+    if (url) { URL.revokeObjectURL(url); url = null; }
+    baseName = (u.pathname.split('/').pop() || 'video').replace(/\.[^.]+$/, '').replace(/[^\w-]+/g, '_').slice(0, 40) || 'video';
+    v.crossOrigin = 'anonymous'; v.src = u.href; v.hidden = false; $('fx-info').textContent = 'Loading…';
   });
   v.addEventListener('loadedmetadata', () => { $('fx-info').textContent = `${v.videoWidth} × ${v.videoHeight} · ${ts(v.duration)} long`; $('fx-go').disabled = false; $('fx-grab').disabled = false; estimate(); });
-  v.addEventListener('error', () => { $('fx-info').textContent = "Your browser can't play this file. Try MP4 (H.264) or WebM, or open it in another browser."; });
+  v.addEventListener('error', () => { $('fx-info').textContent = v.crossOrigin ? "That link couldn't be opened. The site hosting it may block other websites from reading it, or it isn't a direct video file. Download the video and upload it instead." : "Your browser can't play this file. Try MP4 (H.264) or WebM, or open it in another browser."; });
   document.querySelectorAll('#fx-mode button').forEach(b => b.addEventListener('click', () => { mode = b.dataset.m;
     document.querySelectorAll('#fx-mode button').forEach(x => x.setAttribute('aria-pressed', x === b)); $('fx-int-wrap').hidden = mode !== 'interval'; $('fx-cnt-wrap').hidden = mode !== 'count'; estimate(); }));
   ['fx-int', 'fx-cnt'].forEach(id => $(id).addEventListener('input', estimate));
@@ -105,7 +117,7 @@ desc: Upload a video and extract frames as JPG or PNG images, every few seconds 
     const list = times(); if (!list.length) return; stop = false; v.pause();
     $('fx-go').disabled = true; $('fx-stop').hidden = false;
     for (let i = 0; i < list.length && !stop; i++) {
-      await seek(list[i]); const f = await capture(list[i]); frames.push(f); addCard(f, frames.length - 1);
+      await seek(list[i]); let f; try { f = await capture(list[i]); } catch (e) { $('fx-status').textContent = "The site hosting this video doesn't allow its frames to be saved. Download the video and upload the file instead."; break; } frames.push(f); addCard(f, frames.length - 1);
       $('fx-bar').style.width = ((i + 1) / list.length * 100) + '%'; $('fx-status').textContent = `Extracted ${i + 1} of ${list.length}`;
     }
     $('fx-status').textContent = stop ? `Stopped. ${frames.length} frames ready.` : `Done. ${frames.length} frames ready.`;

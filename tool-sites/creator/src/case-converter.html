@@ -1,0 +1,60 @@
+<!--meta
+slug: case-converter
+title: Case Converter: UPPER, lower, Title Case, Sentence case and more
+name: Case Converter
+desc: Convert text to UPPERCASE, lowercase, Title Case, Sentence case, camelCase, snake_case and more in one click. Ideal for YouTube titles and captions. Free.
+-->
+<div>
+  <h1>Fix the caps <em>in one click</em></h1>
+  <p class="lede">Paste text and switch it to Title Case for a YouTube title, Sentence case for a caption, or any of ten other styles. Then copy it.</p>
+</div>
+<div class="ad-slot" data-slot="top"></div>
+<div class="panel">
+  <h2>Your text</h2>
+  <textarea id="cc-text" rows="10" aria-label="Text to convert">how f1 cars finish a 300 km race WITHOUT refuelling</textarea>
+  <div class="row" id="cc-btns"></div>
+  <div class="row"><button type="button" class="btn" id="cc-copy">Copy text</button><span class="hint" id="cc-count"></span><span class="toast" id="cc-msg" role="status"></span></div>
+</div>
+<div class="ad-slot" data-slot="mid"></div>
+<section class="copy" id="how">
+  <h2>Which case to use</h2>
+  <div class="tablewrap"><table><thead><tr><th>Style</th><th>Example</th><th>Best for</th></tr></thead><tbody>
+    <tr><td>Title Case</td><td>How F1 Cars Finish a Race</td><td>YouTube titles, headlines</td></tr>
+    <tr><td>Sentence case</td><td>How F1 cars finish a race</td><td>Captions, descriptions</td></tr>
+    <tr><td>UPPERCASE</td><td>HOW F1 CARS FINISH</td><td>Thumbnail text, short emphasis</td></tr>
+    <tr><td>camelCase / snake_case / kebab-case</td><td>f1CarsRace · f1_cars_race · f1-cars-race</td><td>File names, code, URLs</td></tr>
+  </tbody></table></div>
+</section>
+<section class="copy" id="faq">
+  <h2>Questions</h2>
+  <details><summary>What's the difference between Title Case and Capitalize Each Word?</summary><p>Title Case keeps small words like "a", "of" and "the" lowercase unless they start the title. Capitalize Each Word capitalises every word.</p></details>
+  <details><summary>Should YouTube titles use Title Case?</summary><p>Many creators use Title Case because it looks tidy in the feed. Avoid writing the whole title in capitals: it reads as shouting and can look spammy.</p></details>
+  <details><summary>Does it keep acronyms like F1 or NASA?</summary><p>Title Case and Sentence case keep words that are already all capitals, such as NASA, as they are. Use lowercase first if you want them changed too.</p></details>
+</section>
+<script>
+(() => {
+  const $ = id => document.getElementById(id);
+  const SMALL = new Set('a an and as at but by for from in into nor of on or per the to vs via with'.split(' '));
+  const words = s => s.replace(/([a-z])([A-Z])/g, '$1 $2').split(/[^\p{L}\p{N}]+/u).filter(Boolean);
+  const keepAcr = w => w.length > 1 && w === w.toUpperCase() && /\p{L}/u.test(w);
+  const cap = w => keepAcr(w) ? w : w.charAt(0).toUpperCase() + w.slice(1).toLowerCase();
+  const C = {
+    'Title Case': s => s.replace(/[\p{L}\p{N}'’]+/gu, (w, i) => { const lw = w.toLowerCase(); return i > 0 && SMALL.has(lw) ? lw : cap(w); }),
+    'Sentence case': s => s.replace(/[\p{L}\p{N}'’]+/gu, w => keepAcr(w) ? w : w.toLowerCase()).replace(/(^\s*|[.!?]\s+)(\p{L})/gu, (m, a, b) => a + b.toUpperCase()),
+    'UPPERCASE': s => s.toUpperCase(),
+    'lowercase': s => s.toLowerCase(),
+    'Capitalize Each Word': s => s.replace(/[\p{L}\p{N}'’]+/gu, w => w.charAt(0).toUpperCase() + w.slice(1).toLowerCase()),
+    'aLtErNaTiNg': s => { let i = 0; return s.replace(/\p{L}/gu, c => (i++ % 2 ? c.toUpperCase() : c.toLowerCase())); },
+    'iNVERSE': s => s.replace(/\p{L}/gu, c => c === c.toUpperCase() ? c.toLowerCase() : c.toUpperCase()),
+    'camelCase': s => words(s).map((w, i) => i ? w.charAt(0).toUpperCase() + w.slice(1).toLowerCase() : w.toLowerCase()).join(''),
+    'snake_case': s => words(s).map(w => w.toLowerCase()).join('_'),
+    'kebab-case': s => words(s).map(w => w.toLowerCase()).join('-'),
+  };
+  Object.keys(C).forEach(k => { const b = document.createElement('button'); b.type = 'button'; b.className = 'btn ghost'; b.textContent = k;
+    b.addEventListener('click', () => { $('cc-text').value = C[k]($('cc-text').value); count(); }); $('cc-btns').appendChild(b); });
+  const count = () => { const s = $('cc-text').value; $('cc-count').textContent = `${(s.match(/[\p{L}\p{N}'’-]+/gu) || []).length} words · ${[...s].length} characters`; };
+  $('cc-text').addEventListener('input', count);
+  $('cc-copy').addEventListener('click', () => navigator.clipboard?.writeText($('cc-text').value).then(() => { $('cc-msg').textContent = 'Copied'; setTimeout(() => $('cc-msg').textContent = '', 1500); }, () => { $('cc-text').select(); }));
+  count();
+})();
+</script>

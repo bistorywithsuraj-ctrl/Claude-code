@@ -1,0 +1,98 @@
+<!--meta
+slug: youtube-earnings
+title: YouTube Earnings Calculator: how much do YouTubers make per view?
+name: YouTube Earnings Calculator
+desc: Estimate YouTube ad earnings from your views, niche and audience country. See daily, monthly and yearly income for long videos and Shorts, in dollars or rupees.
+-->
+<div>
+  <h1>What could your views <em>actually earn?</em></h1>
+  <p class="lede">Enter your views, pick your niche and where your viewers live. We estimate your YouTube ad income per day, month and year, as a realistic low-to-high range.</p>
+</div>
+<div class="ad-slot" data-slot="top"></div>
+<div class="cols">
+  <div class="panel">
+    <h2>Your channel</h2>
+    <div class="seg" id="ye-type" role="group" aria-label="Video type">
+      <button type="button" data-t="long" aria-pressed="true">Long videos</button>
+      <button type="button" data-t="shorts" aria-pressed="false">Shorts</button>
+    </div>
+    <label>Views per day <input id="ye-views" type="number" min="0" step="100" value="5000"></label>
+    <label>Niche
+      <select id="ye-niche">
+        <option value="finance">Finance, investing, business</option>
+        <option value="tech" selected>Tech, software, AI</option>
+        <option value="education">Education, documentaries</option>
+        <option value="health">Health, fitness</option>
+        <option value="travel">Travel, food, lifestyle</option>
+        <option value="gaming">Gaming</option>
+        <option value="entertainment">Entertainment, comedy, vlogs</option>
+        <option value="music">Music</option>
+      </select>
+    </label>
+    <label>Where most viewers live
+      <select id="ye-geo">
+        <option value="1">USA, UK, Canada, Australia</option>
+        <option value="0.7">Western Europe</option>
+        <option value="0.5" selected>Mixed worldwide</option>
+        <option value="0.3">Southeast Asia, Latin America</option>
+        <option value="0.22">India, Pakistan, Bangladesh</option>
+      </select>
+    </label>
+    <div class="row">
+      <label style="flex:1">Show in <select id="ye-cur"><option value="USD">US dollars ($)</option><option value="INR">Indian rupees (₹)</option></select></label>
+      <label style="flex:1" id="ye-rate-wrap" hidden>₹ per $1 <input id="ye-rate" type="number" min="1" step="0.5" value="88"></label>
+    </div>
+  </div>
+  <div class="panel" aria-live="polite">
+    <h2>Estimated earnings</h2>
+    <div><div class="hint">Per month</div><div class="big" id="ye-month">–</div></div>
+    <div class="stats" id="ye-stats"></div>
+    <p class="hint" id="ye-rpm"></p>
+    <p class="hint">Estimates only. YouTube keeps 45% of ad revenue on long videos and pays creators from a shared pool on Shorts; the figures here are what you'd receive. You need to be in the YouTube Partner Program to earn from ads.</p>
+  </div>
+</div>
+<div class="ad-slot" data-slot="mid"></div>
+<section class="copy" id="how">
+  <h2>How the estimate works</h2>
+  <p>Creators are paid per 1,000 views, a number YouTube calls RPM (revenue per mille). RPM depends mostly on two things: what your videos are about, because advertisers pay more to reach people thinking about money or software, and where your viewers live, because ads shown in the US cost far more than ads shown in India.</p>
+  <p>We start from typical RPM ranges for each niche with a US audience, scale them by your audience region, then multiply by your views. Shorts are paid differently and earn much less per view, so they use their own lower range.</p>
+  <div class="tablewrap"><table><thead><tr><th>Niche</th><th>Typical RPM, US audience</th></tr></thead><tbody id="ye-table"></tbody></table></div>
+</section>
+<section class="copy" id="faq">
+  <h2>Questions</h2>
+  <details><summary>How much does YouTube pay per 1,000 views?</summary><p>Usually between $1 and $15 for long videos, depending on niche and audience country. Finance and tech channels with US viewers earn the most; music and entertainment channels with worldwide viewers earn the least.</p></details>
+  <details><summary>How much do Shorts pay?</summary><p>Far less than long videos: typically a few cents to around ten cents per 1,000 views, because Shorts revenue is shared across many creators and music licences.</p></details>
+  <details><summary>How many views do I need to earn ₹10,000 a month?</summary><p>Type your niche and region above and change the views until the monthly figure reaches ₹10,000. For an Indian audience in an average niche it's often a few hundred thousand views a month; for a US finance audience it can be far fewer.</p></details>
+  <details><summary>When can I start earning?</summary><p>Ad income requires the YouTube Partner Program, which currently needs 1,000 subscribers plus either 4,000 public watch hours in a year or 10 million Shorts views in 90 days.</p></details>
+  <details><summary>Is this tool connected to my channel?</summary><p>No. It's a calculator that runs in your browser. For your real numbers, open YouTube Studio, then Analytics, then Revenue.</p></details>
+</section>
+<script>
+(() => {
+  const $ = id => document.getElementById(id);
+  // typical RPM ranges in USD for a US audience (creator's share)
+  const RPM = { finance: [10, 22], tech: [6, 14], education: [5, 11], health: [4, 9], travel: [3, 7], gaming: [2, 5], entertainment: [1.5, 4], music: [0.8, 2.5] };
+  const NAMES = { finance: 'Finance, business', tech: 'Tech, software, AI', education: 'Education', health: 'Health, fitness', travel: 'Travel, lifestyle', gaming: 'Gaming', entertainment: 'Entertainment, vlogs', music: 'Music' };
+  const SHORTS = [0.04, 0.12];
+  let type = 'long';
+  $('ye-table').innerHTML = Object.entries(RPM).map(([k, [a, b]]) => `<tr><td>${NAMES[k]}</td><td class="t">$${a} – $${b}</td></tr>`).join('');
+  const fmt = (v, cur, rate) => { const x = cur === 'INR' ? v * rate : v; return new Intl.NumberFormat(cur === 'INR' ? 'en-IN' : 'en-US', { style: 'currency', currency: cur, maximumFractionDigits: x < 100 ? 2 : 0 }).format(x); };
+  try { const s = JSON.parse(localStorage.getItem('ye-v1') || 'null'); if (s) { ['ye-views', 'ye-niche', 'ye-geo', 'ye-cur', 'ye-rate'].forEach(k => { if (s[k] != null) $(k).value = s[k]; }); if (s.type) type = s.type; } } catch (e) {}
+  function calc() {
+    document.querySelectorAll('#ye-type button').forEach(b => b.setAttribute('aria-pressed', b.dataset.t === type));
+    const views = Math.max(0, +$('ye-views').value || 0), geo = +$('ye-geo').value, cur = $('ye-cur').value, rate = Math.max(1, +$('ye-rate').value || 88);
+    $('ye-rate-wrap').hidden = cur !== 'INR'; $('ye-niche').disabled = type === 'shorts';
+    const base = type === 'shorts' ? SHORTS : RPM[$('ye-niche').value];
+    const lo = base[0] * geo, hi = base[1] * geo;
+    const day = [views / 1000 * lo, views / 1000 * hi];
+    const r = (a, b) => `${fmt(a, cur, rate)} – ${fmt(b, cur, rate)}`;
+    $('ye-month').textContent = r(day[0] * 30, day[1] * 30);
+    $('ye-stats').innerHTML = [['Per day', r(day[0], day[1])], ['Per year', r(day[0] * 365, day[1] * 365)], ['Views per month', Math.round(views * 30).toLocaleString('en-IN')]]
+      .map(([k, v]) => `<div class="stat"><span>${k}</span><b style="font-size:16px">${v}</b></div>`).join('');
+    $('ye-rpm').textContent = `Using an RPM of ${fmt(lo, cur, rate)} – ${fmt(hi, cur, rate)} per 1,000 views.`;
+    try { const s = { type }; ['ye-views', 'ye-niche', 'ye-geo', 'ye-cur', 'ye-rate'].forEach(k => s[k] = $(k).value); localStorage.setItem('ye-v1', JSON.stringify(s)); } catch (e) {}
+  }
+  document.querySelectorAll('#ye-type button').forEach(b => b.addEventListener('click', () => { type = b.dataset.t; calc(); }));
+  ['ye-views', 'ye-niche', 'ye-geo', 'ye-cur', 'ye-rate'].forEach(id => $(id).addEventListener('input', calc));
+  calc();
+})();
+</script>
