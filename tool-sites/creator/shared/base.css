@@ -83,8 +83,8 @@ svg.i { width: 20px; height: 20px; flex: none; stroke: currentColor; fill: none;
 .content { display: grid; gap: 26px; min-width: 0 }
 .rail { display: grid; gap: 18px; position: sticky; top: 84px }
 .card { background: var(--surface); border: 1px solid var(--line); border-radius: var(--radius); padding: 18px; box-shadow: var(--shadow) }
-.card h3 { margin: 0 0 12px; display: flex; align-items: center; gap: 10px; font: 600 16px var(--body) }
-.card h3 svg { color: var(--green-2) }
+.card h3, .card .card-h { margin: 0 0 12px; display: flex; align-items: center; gap: 10px; font: 600 16px var(--body) }
+.card h3 svg, .card .card-h svg { color: var(--green-2) }
 .stats-list { display: grid }
 .stats-list div { display: grid; grid-template-columns: 36px 1fr; gap: 12px; align-items: center; padding: 10px 0; border-top: 1px solid var(--line) }
 .stats-list div:first-child { border-top: 0 }

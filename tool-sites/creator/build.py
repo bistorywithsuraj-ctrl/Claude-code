@@ -171,8 +171,8 @@ def rail(kind='rect'):
                     [('grid', f'{len(TOOLS)}+', 'Useful tools'), ('heart', '100%', 'Free to use'), ('zap', 'Instant', 'Results'), ('key', 'No signup', 'Required')])
     checks = ''.join(f'<li>{ic("check")}{c}</li>' for c in ['Simple and fast', 'No account needed', 'Works on every device', 'Nothing gets uploaded'])
     return (f'<aside class="rail" aria-label="Sidebar">{ad(kind)}'
-            f'<div class="card"><h3>{ic("chart")}Quick stats</h3><div class="stats-list">{stats}</div></div>'
-            f'<div class="card"><h3>{ic("heart")}Why creators use it</h3><ul class="checks">{checks}</ul></div>'
+            f'<div class="card"><h2 class="card-h">{ic("chart")}Quick stats</h2><div class="stats-list">{stats}</div></div>'
+            f'<div class="card"><h2 class="card-h">{ic("heart")}Why creators use it</h2><ul class="checks">{checks}</ul></div>'
             '<div class="card"><p class="quote" style="margin:0">“Good tools don\'t just save time. They give you back your creative energy.”<cite>— Creator Bench</cite></p></div></aside>')
 
 def head(title, desc, path, extra=''):
