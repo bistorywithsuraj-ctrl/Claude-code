@@ -20,7 +20,7 @@ EMAIL = os.environ.get('CONTACT_EMAIL', 'hello@example.com')
 AUTHOR = os.environ.get('AUTHOR_NAME', 'Suraj Shukla')
 AUTHOR_URL = os.environ.get('AUTHOR_URL', 'https://bistorywithsuraj.com')
 AUTHOR_SHORT = AUTHOR_URL.replace('https://', '')
-PLACEHOLDERS = PREVIEW and not CLIENT
+PLACEHOLDERS = not CLIENT  # show ad placeholders until AdSense is connected
 TODAY = datetime.date.today()
 CUR = ' aria-current="page"'
 BASE_CSS = (HERE / 'shared' / 'base.css').read_text()
