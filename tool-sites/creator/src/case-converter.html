@@ -29,18 +29,19 @@ desc: Convert text to UPPERCASE, lowercase, Title Case, Sentence case, camelCase
   <h2>Questions</h2>
   <details><summary>What's the difference between Title Case and Capitalize Each Word?</summary><p>Title Case keeps small words like "a", "of" and "the" lowercase unless they start the title. Capitalize Each Word capitalises every word.</p></details>
   <details><summary>Should YouTube titles use Title Case?</summary><p>Many creators use Title Case because it looks tidy in the feed. Avoid writing the whole title in capitals: it reads as shouting and can look spammy.</p></details>
-  <details><summary>Does it keep acronyms like F1 or NASA?</summary><p>Title Case and Sentence case keep words that are already all capitals, such as NASA, as they are. Use lowercase first if you want them changed too.</p></details>
+  <details><summary>Does it keep acronyms like F1 or NASA?</summary><p>Title Case and Sentence case keep words that are already all capitals, such as NASA, as they are. If your whole text is in capitals, every word is converted normally. Use lowercase first if you want acronyms changed too.</p></details>
 </section>
 <script>
 (() => {
   const $ = id => document.getElementById(id);
   const SMALL = new Set('a an and as at but by for from in into nor of on or per the to vs via with'.split(' '));
   const words = s => s.replace(/([a-z])([A-Z])/g, '$1 $2').split(/[^\p{L}\p{N}]+/u).filter(Boolean);
-  const keepAcr = w => w.length > 1 && w === w.toUpperCase() && /\p{L}/u.test(w);
+  let shouting = false;   // text typed entirely in capitals: treat words normally instead of as acronyms
+  const keepAcr = w => !shouting && w.length > 1 && w === w.toUpperCase() && /\p{L}/u.test(w);
   const cap = w => keepAcr(w) ? w : w.charAt(0).toUpperCase() + w.slice(1).toLowerCase();
   const C = {
-    'Title Case': s => s.replace(/[\p{L}\p{N}'’]+/gu, (w, i) => { const lw = w.toLowerCase(); return i > 0 && SMALL.has(lw) ? lw : cap(w); }),
-    'Sentence case': s => s.replace(/[\p{L}\p{N}'’]+/gu, w => keepAcr(w) ? w : w.toLowerCase()).replace(/(^\s*|[.!?]\s+)(\p{L})/gu, (m, a, b) => a + b.toUpperCase()),
+    'Title Case': s => (shouting = !/\p{Ll}/u.test(s), s).replace(/[\p{L}\p{N}'’]+/gu, (w, i) => { const lw = w.toLowerCase(); return i > 0 && SMALL.has(lw) ? lw : cap(w); }),
+    'Sentence case': s => (shouting = !/\p{Ll}/u.test(s), s).replace(/[\p{L}\p{N}'’]+/gu, w => keepAcr(w) ? w : w.toLowerCase()).replace(/(^\s*|[.!?]\s+)(\p{L})/gu, (m, a, b) => a + b.toUpperCase()),
     'UPPERCASE': s => s.toUpperCase(),
     'lowercase': s => s.toLowerCase(),
     'Capitalize Each Word': s => s.replace(/[\p{L}\p{N}'’]+/gu, w => w.charAt(0).toUpperCase() + w.slice(1).toLowerCase()),
