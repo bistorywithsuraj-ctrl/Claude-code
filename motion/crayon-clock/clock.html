@@ -1,0 +1,101 @@
+<!doctype html><html><head><meta charset="utf-8">
+<style>@font-face{font-family:IS;src:url(fonts/instrument-serif-latin-400-normal.woff2)}html,body{margin:0;background:#000}canvas{display:block;width:100vw;height:auto}</style></head><body>
+<canvas id="c" width="1920" height="1080"></canvas>
+<script>
+// Crayon / oil-pastel clock. Lines "boil" at 12 fps like stop-motion; motion runs at 30 fps.
+const W = 1920, H = 1080, CX = W / 2, CY = H / 2, DURATION = 12;
+const cv = document.getElementById('c'), ctx = cv.getContext('2d');
+const clamp = (x, a = 0, b = 1) => Math.min(b, Math.max(a, x)), inv = (a, b, x) => clamp((x - a) / (b - a)), lerp = (a, b, p) => a + (b - a) * p;
+const eOut = p => 1 - Math.pow(1 - p, 3), eIO = p => p < .5 ? 4 * p * p * p : 1 - Math.pow(-2 * p + 2, 3) / 2;
+const back = p => { const c1 = 1.6, c3 = c1 + 1; return 1 + c3 * Math.pow(p - 1, 3) + c1 * Math.pow(p - 1, 2); };
+function mulberry(a) { return () => { a |= 0; a = a + 0x6D2B79F5 | 0; let t = Math.imul(a ^ a >>> 15, 1 | a); t = t + Math.imul(t ^ t >>> 7, 61 | t) ^ t; return ((t ^ t >>> 14) >>> 0) / 4294967296; }; }
+// wax gaps: a speckle mask used to knock holes in every crayon layer
+const holes = Array.from({ length: 3 }, (_, k) => { const g = document.createElement('canvas'); g.width = g.height = 512; const x = g.getContext('2d'); const r = mulberry(77 + k);
+  for (let i = 0; i < 9000; i++) { x.fillStyle = `rgba(0,0,0,${.15 + r() * .55})`; const w = .6 + r() * 2.4; x.fillRect(r() * 512, r() * 512, w * (1 + r() * 2.5), w * .7); } return g; });
+const paper = (() => { const g = document.createElement('canvas'); g.width = g.height = 512; const x = g.getContext('2d'), d = x.createImageData(512, 512), r = mulberry(5);
+  for (let i = 0; i < d.data.length; i += 4) { const v = 128 + (r() - .5) * 90; d.data[i] = d.data[i + 1] = d.data[i + 2] = v; d.data[i + 3] = 255; } x.putImageData(d, 0, 0); return g; })();
+const layer = document.createElement('canvas'); layer.width = W; layer.height = H; const L = layer.getContext('2d');
+function waxify(g, boilK) { g.save(); g.globalCompositeOperation = 'destination-out'; g.fillStyle = g.createPattern(holes[boilK % 3], 'repeat'); g.translate((boilK * 37) % 97, (boilK * 53) % 89); g.fillRect(-100, -100, W + 200, H + 200); g.restore(); }
+// a crayon stroke: several jittered passes along a polyline
+function crayon(g, pts, col, w, rnd, passes = 3, alpha = .55) {
+  g.strokeStyle = col; g.lineCap = 'round'; g.lineJoin = 'round';
+  for (let p = 0; p < passes; p++) { g.globalAlpha = alpha * (.6 + rnd() * .5); g.lineWidth = w * (.55 + rnd() * .7); g.beginPath();
+    const ox = (rnd() - .5) * w * .8, oy = (rnd() - .5) * w * .8;
+    pts.forEach(([x, y], i) => { const jx = x + ox + (rnd() - .5) * w * .5, jy = y + oy + (rnd() - .5) * w * .5; i ? g.lineTo(jx, jy) : g.moveTo(jx, jy); }); g.stroke(); }
+  g.globalAlpha = 1;
+}
+function arc(cx, cy, r, a0, a1, n) { const out = []; for (let i = 0; i <= n; i++) { const a = lerp(a0, a1, i / n); out.push([cx + Math.cos(a) * r, cy + Math.sin(a) * r]); } return out; }
+// ---------- background swirl ----------
+const BLUES = ['#2341FF', '#3A5BFF', '#6F86FF', '#A9B8FF', '#0C1DB8', '#08128A', '#1B33F0'];
+const STROKES = (() => { const r = mulberry(11), out = []; for (let i = 0; i < 1500; i++) { const rad = 40 + Math.pow(r(), .8) * 1250; out.push({ rad, a: r() * Math.PI * 2, len: .25 + r() * .9, col: r() < .06 ? '#E8EDFF' : BLUES[Math.floor(r() * BLUES.length)], w: 3 + r() * 9, wob: r() * 9, delay: r() }); } return out; })();
+let spinAngle = 0;
+function swirlAngle(t) { // integrated rotation: slow drift, accelerating during "time flies", then easing back
+  const base = t * .08, fast = 9 * eIO(inv(5.6, 10.0, t)) - 9 * eIO(inv(10.0, 11.2, t)) * 0; return base + fast; }
+function background(t, bk) {
+  ctx.fillStyle = '#1C36F2'; ctx.fillRect(0, 0, W, H);
+  L.clearRect(0, 0, W, H); const r = mulberry(1000 + bk), draw = eOut(inv(0, 2.2, t)), sa = swirlAngle(t), zoom = 1 + .9 * eIO(inv(7.5, 10.0, t)) * (1 - eIO(inv(10.0, 11.0, t)));
+  L.save(); L.translate(CX, CY); L.scale(zoom, zoom);
+  for (const s of STROKES) { if (s.delay > draw * 1.15) continue; const spin = sa * (1.6 - Math.min(1.2, s.rad / 900)), a0 = s.a + spin, n = Math.max(4, Math.round(s.len * s.rad / 40));
+    const pts = []; for (let i = 0; i <= n; i++) { const a = a0 + s.len * i / n, rr = s.rad + Math.sin(i * .9 + s.wob) * 6; pts.push([Math.cos(a) * rr, Math.sin(a) * rr]); }
+    crayon(L, pts, s.col, s.w, r, 2, .5); }
+  L.restore(); waxify(L, bk); ctx.drawImage(layer, 0, 0);
+}
+// ---------- clock ----------
+const R = 400;
+function clock(t, bk) {
+  const r = mulberry(5000 + bk), zoom = 1 + 1.1 * eIO(inv(7.5, 10.0, t)) * (1 - eIO(inv(10.0, 11.0, t))), appear = back(inv(1.8, 2.6, t));
+  if (appear <= 0) return; const fill = eOut(inv(2.2, 3.6, t));
+  ctx.save(); ctx.translate(CX, CY); ctx.scale(zoom * appear, zoom * appear);
+  ctx.fillStyle = 'rgba(4,10,70,.5)'; ctx.beginPath(); ctx.arc(16, 26, R + 52, 0, 7); ctx.fill();
+  ctx.fillStyle = '#0B1890'; ctx.beginPath(); ctx.arc(0, 0, R + 50, 0, 7); ctx.fill();
+  ctx.globalAlpha = fill; const fg = ctx.createRadialGradient(-R * .25, -R * .3, R * .1, 0, 0, R); fg.addColorStop(0, '#F6ECD3'); fg.addColorStop(.75, '#ECDFC0'); fg.addColorStop(1, '#C9BFA8');
+  ctx.fillStyle = fg; ctx.beginPath(); ctx.arc(0, 0, R, 0, 7); ctx.fill(); ctx.restore(); ctx.globalAlpha = 1;
+  L.clearRect(0, 0, W, H); L.save(); L.translate(CX, CY); L.scale(zoom * appear, zoom * appear);
+  for (let i = 0; i < 30; i++) { const rr = R + 6 + r() * 44, a0 = r() * 7; crayon(L, arc(0, 0, rr, a0, a0 + 1.5 + r() * 3, 40), ['#3F5FFF', '#6E87FF', '#2338E0', '#9CAEFF'][i % 4], 4 + r() * 6, r, 2, .7); }
+  // face
+  L.save(); L.beginPath(); L.arc(0, 0, R, 0, 7); L.clip();
+  const hatch = Math.floor(260 * fill); for (let i = 0; i < hatch; i++) { const y = -R + (i / 260) * R * 2 + (r() - .5) * 8, x0 = -R - 20, x1 = R + 20, k = .35;
+    crayon(L, [[x0, y + x0 * k], [x1, y + x1 * k]], ['#FBF3DF', '#E2D1AC', '#FFF8EA', '#E7D8B8'][i % 4], 6 + r() * 6, r, 1, .35); }
+  // inner shading ring
+  const gr = L.createRadialGradient(0, 0, R * .55, 0, 0, R); gr.addColorStop(0, 'rgba(0,0,0,0)'); gr.addColorStop(1, `rgba(60,70,160,${.28 * fill})`); L.fillStyle = gr; L.fillRect(-R, -R, R * 2, R * 2);
+  L.restore();
+  // rim outline (black wobbly pencil)
+  if (t > 2.0) { const p = eOut(inv(2.0, 2.9, t)); crayon(L, arc(0, 0, R + 2, -Math.PI / 2, -Math.PI / 2 + p * Math.PI * 2, 120), '#111522', 4, r, 2, .9); crayon(L, arc(0, 0, R + 52, -Math.PI / 2, -Math.PI / 2 + p * Math.PI * 2, 140), '#070C3A', 5, r, 2, .8); }
+  // numbers, hand-lettered one by one
+  L.textAlign = 'center'; L.textBaseline = 'middle';
+  for (let n = 1; n <= 12; n++) { const tn = 3.9 + (n - 1) * .11, p = inv(tn, tn + .25, t); if (p <= 0) continue; const a = n / 12 * Math.PI * 2 - Math.PI / 2, x = Math.cos(a) * R * .8, y = Math.sin(a) * R * .8, s = back(p);
+    L.save(); L.translate(x, y); L.scale(s, s); L.rotate((r() - .5) * .08); L.font = `400 ${n >= 10 ? 92 : 100}px IS, Georgia, serif`; L.lineWidth = 2.5; L.strokeStyle = '#16181F';
+    for (let k = 0; k < 3; k++) { L.globalAlpha = .6 + r() * .35; L.fillStyle = '#16181F'; const jx = (r() - .5) * 3, jy = (r() - .5) * 3; L.fillText(String(n), jx, jy); L.strokeText(String(n), jx, jy); } L.restore(); }
+  L.globalAlpha = 1;
+  // hands
+  const hp = inv(5.2, 5.6, t); if (hp > 0) {
+    const tm = clockTime(t), hA = (tm / 12) * Math.PI * 2 - Math.PI / 2, mA = (tm % 1) * Math.PI * 2 - Math.PI / 2;
+    const hand = (a, len, w) => { L.save(); L.rotate(a); L.globalAlpha = hp; L.fillStyle = '#111522'; L.beginPath(); L.moveTo(-len * .12, -w * .6); L.lineTo(len * .78, -w * .45); L.lineTo(len, 0); L.lineTo(len * .78, w * .45); L.lineTo(-len * .12, w * .6); L.closePath(); L.fill();
+      L.beginPath(); L.moveTo(len * .82, 0); L.lineTo(len * .72, -w * 1.5); L.moveTo(len * .82, 0); L.lineTo(len * .72, w * 1.5); L.strokeStyle = '#111522'; L.lineWidth = 6; L.lineCap = 'round'; L.stroke(); L.restore(); };
+    hand(hA, R * .52, 22); hand(mA, R * .76, 15);
+    L.globalAlpha = hp; L.fillStyle = '#111522'; L.beginPath(); L.arc(0, 0, 22, 0, 7); L.fill(); L.fillStyle = '#6B6F80'; L.beginPath(); L.arc(0, 0, 8, 0, 7); L.fill(); L.globalAlpha = 1;
+    // motion streaks while spinning fast
+    const sp = inv(7.0, 8.2, t) * (1 - inv(9.6, 10.2, t)); if (sp > 0) for (let k = 1; k <= 5; k++) { L.save(); L.rotate(mA - k * .09); L.globalAlpha = sp * (.22 - k * .035); L.fillStyle = '#111522'; L.fillRect(0, -4, R * .7, 8); L.restore(); }
+  }
+  L.restore(); waxify(L, bk + 7); ctx.drawImage(layer, 0, 0);
+}
+// clock time in hours (12:00 = 0). Ticks normally, accelerates, then settles at 10:10.
+const TICK0 = 5.6;
+function clockTime(t) {
+  const start = 0, tick = Math.floor(Math.max(0, Math.min(t, 7.0) - TICK0) / .5) * (1 / 60) * 5; // big ticks: 5 min per tick
+  if (t < 7.0) return start + tick;
+  const base = start + Math.floor((7.0 - TICK0) / .5) * 5 / 60, target = 10 + 10 / 60 + 24; // two full days of spinning, landing on 10:10
+  const p = inv(7.0, 11.2, t); const s = p < .75 ? Math.pow(p / .75, 2.2) * .96 : .96 + .04 * eOut((p - .75) / .25);
+  return lerp(base, target, s);
+}
+function vignette() { const g = ctx.createRadialGradient(CX, CY, H * .3, CX, CY, W * .62); g.addColorStop(0, 'rgba(0,0,0,0)'); g.addColorStop(1, 'rgba(0,0,30,.45)'); ctx.fillStyle = g; ctx.fillRect(0, 0, W, H);
+  ctx.save(); ctx.globalAlpha = .12; ctx.globalCompositeOperation = 'overlay'; ctx.fillStyle = ctx.createPattern(paper, 'repeat'); ctx.fillRect(0, 0, W, H); ctx.restore(); }
+window.render = function (t) {
+  const bk = Math.floor(t * 12);   // boil frame
+  ctx.globalAlpha = 1; ctx.setTransform(1, 0, 0, 1, 0, 0);
+  background(t, bk); clock(t, bk); vignette();
+  const fi = 1 - inv(0, .25, t), fo = inv(DURATION - .25, DURATION, t), a = Math.max(fi, fo); if (a > 0) { ctx.fillStyle = `rgba(0,0,0,${a})`; ctx.fillRect(0, 0, W, H); }
+};
+window.DURATION = DURATION;
+window.ready = document.fonts.load('400 40px IS');
+</script></body></html>
