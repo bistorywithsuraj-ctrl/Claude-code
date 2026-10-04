@@ -1,0 +1,17 @@
+0:00 Intro
+0:18 What is Creator Bench
+0:31 Map Animator
+1:17 Script Timer
+1:29 Title Preview
+1:41 Safe Zones
+1:50 Frame Extractor
+2:01 Earnings Calculator
+2:09 Image Resizer
+2:22 Caption Formatter
+2:32 YouTube Chapters
+2:43 Text to SRT
+2:53 Word Counter
+3:00 Case Converter
+3:07 QR Code
+3:18 JPG to PDF
+3:27 Outro
