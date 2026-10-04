@@ -1,0 +1,180 @@
+<!doctype html><html><head><meta charset="utf-8">
+<style>
+@font-face{font-family:IT;src:url(fonts/inter-tight-latin-500-normal.woff2);font-weight:500}
+@font-face{font-family:IT;src:url(fonts/inter-tight-latin-700-normal.woff2);font-weight:700}
+@font-face{font-family:IT;src:url(fonts/inter-tight-latin-800-normal.woff2);font-weight:800}
+@font-face{font-family:IT;src:url(fonts/inter-tight-latin-900-normal.woff2);font-weight:900}
+@font-face{font-family:IS;src:url(fonts/instrument-serif-latin-400-italic.woff2);font-style:italic}
+@font-face{font-family:NR;src:url(fonts/newsreader-latin-600-normal.woff2);font-weight:600}
+@font-face{font-family:JB;src:url(fonts/jetbrains-mono-latin-700-normal.woff2);font-weight:700}
+html,body{margin:0;background:#000}canvas{display:block;height:100vh;width:auto}
+</style></head><body>
+<canvas id="c" width="1080" height="1920"></canvas>
+<script>
+const W = 1080, H = 1920, cv = document.getElementById('c'), ctx = cv.getContext('2d');
+const PAPER = '#E8E3D6', INK = '#141414', MAG = '#E5157A', GREEN = '#1F4D3A', LIME = '#DCEF80', CARD = '#161616';
+const clamp = (x, a = 0, b = 1) => Math.min(b, Math.max(a, x)), inv = (a, b, x) => clamp((x - a) / (b - a)), lerp = (a, b, p) => a + (b - a) * p;
+const eOut = p => 1 - Math.pow(1 - p, 3), eIO = p => p < .5 ? 4 * p * p * p : 1 - Math.pow(-2 * p + 2, 3) / 2;
+const back = p => { const c1 = 1.9, c3 = c1 + 1; return 1 + c3 * Math.pow(p - 1, 3) + c1 * Math.pow(p - 1, 2); };
+const rnd = s => { const x = Math.sin(s * 127.1 + 311.7) * 43758.5453; return x - Math.floor(x); };
+let TL, EV;
+// ---------- image cache ----------
+const cache = new Map();
+function img(src) { if (!cache.has(src)) { cache.set(src, new Promise(r => { const i = new Image(); i.onload = () => r(i); i.onerror = () => r(null); i.src = src; })); if (cache.size > 120) cache.delete(cache.keys().next().value); } return cache.get(src); }
+const fr = (scene, f) => `live/${scene}/${String(f).padStart(3, '0')}.jpg`;
+// ---------- grain ----------
+const grains = Array.from({ length: 4 }, (_, k) => { const g = document.createElement('canvas'); g.width = g.height = 512; const x = g.getContext('2d'), d = x.createImageData(512, 512);
+  for (let i = 0; i < d.data.length; i += 4) { const v = rnd(i * .37 + k * 999) * 255; d.data[i] = d.data[i + 1] = d.data[i + 2] = v; d.data[i + 3] = 255; } x.putImageData(d, 0, 0); return g; });
+function finish(t) {
+  ctx.save(); ctx.globalAlpha = .09; ctx.globalCompositeOperation = 'overlay'; ctx.fillStyle = ctx.createPattern(grains[Math.floor(t * 12) % 4], 'repeat'); ctx.fillRect(0, 0, W, H); ctx.restore();
+  // film dust specks
+  ctx.save(); ctx.fillStyle = 'rgba(20,20,20,.55)'; const k = Math.floor(t * 8);
+  for (let i = 0; i < 14; i++) { const s = k * 31 + i; if (rnd(s) > .55) continue; ctx.globalAlpha = .25 + rnd(s + 4) * .5; ctx.beginPath(); ctx.arc(rnd(s + 1) * W, rnd(s + 2) * H, 1 + rnd(s + 3) * 3, 0, 7); ctx.fill(); }
+  ctx.restore();
+  const g = ctx.createRadialGradient(W / 2, H / 2, H * .3, W / 2, H / 2, H * .75); g.addColorStop(0, 'rgba(0,0,0,0)'); g.addColorStop(1, 'rgba(40,30,10,.22)'); ctx.fillStyle = g; ctx.fillRect(0, 0, W, H);
+}
+// ---------- text helpers ----------
+function font(w, size, fam = 'IT') { return fam === 'IS' ? `italic 400 ${size}px IS` : fam === 'NR' ? `600 ${size}px NR` : fam === 'JB' ? `700 ${size}px JB` : `${w} ${size}px IT`; }
+function txt(s, x, y, size, o = {}) {
+  ctx.save(); ctx.font = font(o.w || 800, size, o.f); ctx.textAlign = o.align || 'center'; ctx.textBaseline = 'alphabetic'; ctx.fillStyle = o.c || INK; ctx.globalAlpha = o.a ?? 1;
+  if (o.ls) ctx.letterSpacing = o.ls + 'px'; const b = o.boil ? boil(o.boil) : [0, 0]; ctx.fillText(s, x + b[0], y + b[1]); const w = ctx.measureText(s).width; ctx.restore(); return w; }
+function boil(t) { const k = Math.floor(t * 10); return [(rnd(k) - .5) * 3, (rnd(k + 9) - .5) * 3]; }
+function measure(s, size, o = {}) { ctx.save(); ctx.font = font(o.w || 800, size, o.f); if (o.ls) ctx.letterSpacing = o.ls + 'px'; const w = ctx.measureText(s).width; ctx.restore(); return w; }
+function pop(s, x, y, size, t, t0, o = {}) { // scale-pop in
+  const p = inv(t0, t0 + .28, t); if (p <= 0) return; const sc = back(p); ctx.save(); ctx.translate(x, y); ctx.scale(sc, sc); txt(s, 0, 0, size, { ...o, a: (o.a ?? 1) * clamp(p * 3) }); ctx.restore(); }
+function stagger(s, x, y, size, t, t0, o = {}) { // per-letter rise
+  const w = measure(s, size, o); let cx = x - (o.align === 'left' ? 0 : w / 2);
+  for (let i = 0; i < s.length; i++) { const ch = s[i], cw = measure(ch, size, o), p = eOut(inv(t0 + i * .018, t0 + i * .018 + .3, t)); if (p > 0) txt(ch, cx + cw / 2, y + (1 - p) * size * .5, size, { ...o, a: (o.a ?? 1) * p }); cx += cw; } }
+function scribble(x0, x1, y, amp, t, t0, dur, o = {}) { // magenta marker zig-zag
+  const p = inv(t0, t0 + dur, t); if (p <= 0) return; const n = o.n || 9; ctx.save(); ctx.strokeStyle = o.c || MAG; ctx.lineWidth = o.lw || 22; ctx.lineCap = 'round'; ctx.lineJoin = 'round'; ctx.globalAlpha = o.a ?? .92;
+  ctx.beginPath(); const steps = 120;
+  for (let i = 0; i <= steps * p; i++) { const u = i / steps, xx = lerp(x0, x1, u), yy = y + Math.sin(u * Math.PI * n) * amp + (rnd(i * .3) - .5) * 4; i ? ctx.lineTo(xx, yy) : ctx.moveTo(xx, yy); }
+  ctx.stroke(); ctx.restore(); }
+function underline(x0, x1, y, t, t0, dur, c = MAG, lw = 14) { const p = eOut(inv(t0, t0 + dur, t)); if (p <= 0) return; ctx.save(); ctx.strokeStyle = c; ctx.lineWidth = lw; ctx.lineCap = 'round';
+  ctx.beginPath(); for (let i = 0; i <= 40 * p; i++) { const u = i / 40, xx = lerp(x0, x1, u), yy = y + Math.sin(u * 5) * 6 - u * 8; i ? ctx.lineTo(xx, yy) : ctx.moveTo(xx, yy); } ctx.stroke(); ctx.restore(); }
+function rr(x, y, w, h, r) { ctx.beginPath(); ctx.roundRect(x, y, w, h, r); }
+function pill(x, y, w, h, fill) { rr(x - w / 2, y - h / 2, w, h, h / 2); ctx.fillStyle = fill; ctx.fill(); }
+function leaf(x, y, s, col) { ctx.save(); ctx.translate(x - 12 * s, y - 12 * s); ctx.scale(s, s); ctx.strokeStyle = col; ctx.lineWidth = 2.2; ctx.lineCap = 'round'; ctx.lineJoin = 'round';
+  ctx.beginPath(); ctx.moveTo(5, 19); ctx.bezierCurveTo(5, 11, 11, 5, 20, 5); ctx.bezierCurveTo(20, 14, 14, 20, 6, 20); ctx.stroke(); ctx.beginPath(); ctx.moveTo(5, 19); ctx.lineTo(12, 12); ctx.stroke(); ctx.restore(); }
+function shake(t, t0, dur, amp) { const p = inv(t0, t0 + dur, t); if (p <= 0 || p >= 1) return [0, 0]; const k = Math.floor(t * 40); return [(rnd(k) - .5) * amp * (1 - p), (rnd(k + 3) - .5) * amp * (1 - p)]; }
+// ---------- scenes ----------
+function hook(t) {
+  const [a, b] = TL.hook; if (t > b + .3) return; const out = inv(b - .05, b + .25, t);
+  ctx.save(); ctx.translate(0, -out * 300); ctx.globalAlpha = 1 - out;
+  stagger('Making ONE video', W / 2, 820, 96, t, .05, { w: 800, ls: -2, boil: t });
+  pop('takes', W / 2, 1000, 120, t, .45, { w: 800, ls: -3 });
+  const fw = measure('forever.', 250, { f: 'IS' }); pop('forever.', W / 2, 1230, 250, t, .7, { f: 'IS', c: INK, boil: t });
+  underline(W / 2 - fw / 2, W / 2 + fw / 2, 1280, t, 1.0, .35);
+  ctx.restore();
+}
+function chores(t) {
+  const [a, b] = TL.chores; if (t < a - .1 || t > b + .35) return;
+  const sh = shake(t, 4.25, .5, 26); const out = inv(b, b + .3, t);
+  ctx.save(); ctx.translate(sh[0], sh[1] - out * 260); ctx.globalAlpha = 1 - out;
+  stagger('Just the boring parts:', W / 2, 330, 58, t, a, { w: 700, c: '#555' });
+  let total = 0;
+  TL.choreList.forEach(([name, dur, mins], i) => { const t0 = TL.choreStart + i * TL.chorePace, p = inv(t0, t0 + .3, t); if (p <= 0) return; total += mins;
+    const y = 420 + i * 132, x = W / 2 + (1 - back(p)) * 700; ctx.save(); ctx.globalAlpha = clamp(p * 3);
+    rr(x - 450, y, 900, 108, 30); ctx.fillStyle = CARD; ctx.fill();
+    txt(name, x - 410, y + 70, 46, { w: 700, c: '#FFFFFF', align: 'left' }); const dw = measure(dur, 40, { f: 'JB' });
+    rr(x + 410 - dw - 40, y + 24, dw + 40, 60, 30); ctx.fillStyle = MAG; ctx.fill(); txt(dur, x + 410 - dw / 2 - 20, y + 68, 40, { f: 'JB', c: '#FFFFFF' }); ctx.restore(); });
+  // the running total
+  const h = Math.floor(total / 60), m = total % 60, lbl = total ? `${h}h ${String(m).padStart(2, '0')}m` : '0h 00m';
+  txt('TOTAL', W / 2, 1560, 40, { w: 800, c: '#777', ls: 8 });
+  const k = TL.choreList.findIndex((_, i) => t < TL.choreStart + i * TL.chorePace) ; const bump = 1 + .08 * Math.max(0, 1 - ((t - TL.choreStart) % TL.chorePace) / .15);
+  ctx.save(); ctx.translate(W / 2, 1740); ctx.scale(bump, bump); txt(lbl, 0, 0, 190, { w: 900, c: MAG, ls: -6, boil: t }); ctx.restore();
+  txt('per video. every week.', W / 2, 1830, 44, { f: 'IS', c: '#555', a: inv(4.3, 4.5, t) });
+  // marker scribbles everywhere
+  for (let i = 0; i < 4; i++) scribble(80, 1000, 520 + i * 270, 80, t, 4.42 + i * .07, .22, { n: 7 + i, lw: 34 });
+  ctx.restore();
+  if (t > 4.42 && t < 4.5) { ctx.fillStyle = 'rgba(229,21,122,.25)'; ctx.fillRect(0, 0, W, H); }
+}
+function turn(t) {
+  const [a, b] = TL.turn; if (t < a || t > b + .05) return;
+  stagger('What if it took', W / 2, 860, 92, t, a + .02, { w: 800, ls: -2 });
+  const p = inv(a + .3, a + .55, t); if (p > 0) { ctx.save(); ctx.translate(W / 2, 1090); const s = back(p) * (1 + .05 * Math.sin(t * 30) * inv(b - .25, b, t)); ctx.scale(s, s); txt('seconds?', 0, 0, 260, { f: 'IS', c: MAG, boil: t }); ctx.restore(); }
+}
+function intro(t) {
+  const [a, b] = TL.intro; if (t < a || t > b + .35) return; const out = inv(b - .05, b + .3, t);
+  ctx.save(); ctx.translate(0, -out * 400); ctx.globalAlpha = 1 - out;
+  // lime burst
+  const bp = eOut(inv(a, a + .6, t)); ctx.save(); ctx.globalAlpha = (1 - bp) * .9; ctx.fillStyle = LIME; ctx.beginPath(); ctx.arc(W / 2, 760, bp * 1100, 0, 7); ctx.fill(); ctx.restore();
+  const lp = inv(a + .05, a + .45, t); if (lp > 0) { const s = back(lp); ctx.save(); ctx.translate(W / 2, 700); ctx.scale(s, s); ctx.rotate((1 - lp) * -.5); rr(-120, -120, 240, 240, 64); ctx.fillStyle = GREEN; ctx.fill(); leaf(0, 0, 7, LIME); ctx.restore(); }
+  pop('Creator Bench', W / 2, 1000, 132, t, a + .3, { f: 'NR', c: INK });
+  stagger('14 free tools. One site.', W / 2, 1120, 60, t, a + .55, { w: 700, c: '#3a3a3a' });
+  const pp = inv(a + .8, a + 1.1, t); if (pp > 0) { ctx.save(); ctx.translate(W / 2, 1280); const s = back(pp); ctx.scale(s, s); const tw = measure('creatorbenchtool.com', 54, { w: 700 }); pill(0, 0, tw + 100, 110, GREEN); txt('creatorbenchtool.com', 0, 19, 54, { w: 700, c: '#FFFFFF' }); ctx.restore(); }
+  ctx.restore();
+}
+// card + header shared by all live scenes
+function header(t, t0, idx, name, sub) {
+  const p = inv(t0, t0 + .25, t); const chip = `${String(idx).padStart(2, '0')} / 14`;
+  ctx.save(); ctx.globalAlpha = clamp(p * 2); rr(W / 2 - 110, 150, 220, 70, 35); ctx.fillStyle = INK; ctx.fill(); txt(chip, W / 2, 198, 36, { f: 'JB', c: '#FFFFFF' }); ctx.restore();
+  stagger(name, W / 2, 330, name.length > 15 ? 92 : 104, t, t0 + .03, { w: 900, ls: -3 });
+  stagger(sub, W / 2, 420, 64, t, t0 + .12, { f: 'IS', c: MAG });
+}
+function card(x, y, w, h) { ctx.save(); ctx.shadowColor = 'rgba(0,0,0,.35)'; ctx.shadowBlur = 60; ctx.shadowOffsetY = 30; rr(x, y, w, h, 56); ctx.fillStyle = CARD; ctx.fill(); ctx.restore(); }
+function tap(x, y, t, t0) { const p = inv(t0, t0 + .45, t); if (p <= 0 || p >= 1) return; ctx.save();
+  ctx.globalAlpha = 1 - p; ctx.strokeStyle = MAG; ctx.lineWidth = 8; ctx.beginPath(); ctx.arc(x, y, 30 + p * 70, 0, 7); ctx.stroke();
+  ctx.globalAlpha = clamp((1 - p) * 2) * .9; ctx.fillStyle = 'rgba(255,255,255,.9)'; ctx.beginPath(); ctx.arc(x, y, 34 * (1 - p * .3), 0, 7); ctx.fill(); ctx.strokeStyle = INK; ctx.lineWidth = 4; ctx.stroke(); ctx.restore(); }
+async function liveScene(t, scene, t0, t1, idx, name, sub, nFrames) {
+  if (t < t0 - .2 || t > t1 + .2) return;
+  const inP = back(inv(t0, t0 + .3, t)), outP = eIO(inv(t1 - .12, t1 + .18, t));
+  const f = clamp(Math.floor((t - t0) * 30), 0, nFrames - 1);
+  ctx.save(); ctx.translate(0, (1 - inP) * 900 - outP * 1300); ctx.globalAlpha = 1 - outP * .6;
+  header(t, t0, idx, name, sub);
+  const cx = 60, cy = 480, cw = 960, ch = 1320; card(cx, cy, cw, ch);
+  const im = await img(fr(scene, f)); const ix = cx + 20, iy = cy + 20, iw = 920, ih = 1280;
+  ctx.save(); rr(ix, iy, iw, ih, 40); ctx.clip(); ctx.fillStyle = '#F3F2EA'; ctx.fillRect(ix, iy, iw, ih); if (im) ctx.drawImage(im, ix, iy, iw, iw * im.height / im.width);
+  const z = 1; ctx.restore();
+  (EV[scene] || []).forEach(e => { if (e[1] === 'tap') tap(ix + e[2] * iw, iy + e[3] * iw * 582 / 430, t, t0 + e[0] / 30); });
+  ctx.restore();
+}
+const TOGGLES = [['Globe intro', 0], ['Satellite', 50], ['Highlight', 100], ['Title', 138]];
+async function mapRender(t) {
+  const [t0, t1] = TL.mapRender; if (t < t0 - .2 || t > t1 + .2) return;
+  const inP = back(inv(t0, t0 + .3, t)), outP = eIO(inv(t1 - .12, t1 + .18, t)), f = clamp(Math.floor((t - t0) * 30), 0, 191);
+  ctx.save(); ctx.translate(0, (1 - inP) * 900 - outP * 1300);
+  header(t, TL.mapStops[0], 1, 'Map Animator', 'globe, satellite, route');
+  const cx = 60, cy = 480, cw = 960, ch = 1320; card(cx, cy, cw, ch);
+  const im = await img(fr('map-render', f)); ctx.save(); rr(cx + 20, cy + 20, 920, 920, 40); ctx.clip(); if (im) ctx.drawImage(im, cx + 20, cy + 20, 920, 920); ctx.restore();
+  TOGGLES.forEach(([lbl, on], i) => { const x = cx + 20 + (i % 2) * 470, y = cy + 960 + Math.floor(i / 2) * 175; rr(x, y, 450, 155, 34); ctx.fillStyle = '#222'; ctx.fill();
+    txt(lbl, x + 36, y + 95, 46, { w: 700, c: '#FFFFFF', align: 'left' });
+    const k = eOut(inv(on / 30, on / 30 + .18, t - t0)), sx = x + 300, sy = y + 46;
+    rr(sx, sy, 120, 64, 32); ctx.fillStyle = k > .5 ? MAG : '#555'; ctx.fill(); ctx.fillStyle = '#FFFFFF'; ctx.beginPath(); ctx.arc(sx + 32 + k * 56, sy + 32, 25 * (1 + Math.sin(k * Math.PI) * .2), 0, 7); ctx.fill();
+    if (on > 0) tap(sx + 60, sy + 32, t, t0 + on / 30 - .05); });
+  ctx.restore();
+}
+function more(t) {
+  const [a, b] = TL.more; if (t < a - .05 || t > b + .1) return;
+  const p = back(inv(a, a + .25, t)), out = inv(b - .08, b + .1, t);
+  ctx.save(); ctx.globalAlpha = 1 - out; ctx.translate(W / 2, 960); ctx.scale(p * (1 + out * .4), p * (1 + out * .4));
+  txt('+13', 0, 40, 420, { w: 900, ls: -16, c: INK, boil: t }); txt('more tools', 0, 200, 150, { f: 'IS', c: MAG }); ctx.restore();
+}
+function end(t) {
+  const [a, b] = TL.end; if (t < a) return;
+  stagger('All 14 tools.', W / 2, 700, 112, t, a + .05, { w: 900, ls: -3 });
+  const fp = inv(a + .35, a + .6, t); if (fp > 0) { ctx.save(); ctx.translate(W / 2, 960); const s = back(fp); ctx.scale(s, s); txt('free.', 0, 0, 300, { f: 'IS', c: MAG, boil: t }); ctx.restore(); }
+  const fw = measure('free.', 300, { f: 'IS' }); underline(W / 2 - fw / 2, W / 2 + fw / 2, 1010, t, a + .7, .3, INK, 12);
+  stagger('No sign-up. Nothing uploaded.', W / 2, 1120, 52, t, a + .9, { w: 700, c: '#444' });
+  const pp = inv(a + 1.3, a + 1.6, t); if (pp > 0) { const url = 'creatorbenchtool.com', n = Math.round(url.length * inv(a + 1.45, a + 2.1, t)), tw = measure(url, 60, { w: 800 });
+    ctx.save(); ctx.translate(W / 2, 1300); const s = back(pp); ctx.scale(s, s); pill(0, 0, tw + 130, 130, GREEN); txt(url.slice(0, n), -tw / 2, 21, 60, { w: 800, c: '#FFFFFF', align: 'left' });
+    if (Math.floor(t * 3) % 2 === 0 || n < url.length) { const cw = measure(url.slice(0, n), 60, { w: 800 }); ctx.fillStyle = LIME; ctx.fillRect(-tw / 2 + cw + 6, -30, 6, 62); } ctx.restore(); }
+  const lp = inv(a + 2.3, a + 2.6, t); if (lp > 0) { ctx.save(); ctx.globalAlpha = lp; txt('link in bio', W / 2, 1500 + Math.sin(t * 6) * 8, 56, { f: 'IS', c: INK }); ctx.restore();
+    ctx.save(); ctx.globalAlpha = lp; ctx.strokeStyle = MAG; ctx.lineWidth = 10; ctx.lineCap = 'round'; const y = 1560 + Math.sin(t * 6) * 10; ctx.beginPath(); ctx.moveTo(W / 2, y); ctx.lineTo(W / 2, y + 90); ctx.moveTo(W / 2 - 34, y + 56); ctx.lineTo(W / 2, y + 92); ctx.lineTo(W / 2 + 34, y + 56); ctx.stroke(); ctx.restore(); }
+}
+window.render = async function (t) {
+  ctx.setTransform(1, 0, 0, 1, 0, 0); ctx.globalAlpha = 1; ctx.fillStyle = PAPER; ctx.fillRect(0, 0, W, H);
+  hook(t); chores(t); turn(t); intro(t);
+  await liveScene(t, 'map-stops', TL.mapStops[0], TL.mapStops[1], 1, 'Map Animator', 'type the places', 42);
+  await mapRender(t); more(t);
+  for (let i = 0; i < TL.tools.length; i++) { const s = TL.tools[i], t0 = TL.toolsStart + i * TL.toolDur; const [n, sub] = TL.names[s]; await liveScene(t, s, t0, t0 + TL.toolDur, i + 2, n, sub, 42); }
+  end(t);
+  // cut flashes: chromatic punch on every live cut
+  const cuts = [TL.drop, TL.mapStops[0], TL.mapRender[0], TL.more[0], ...TL.tools.map((_, i) => TL.toolsStart + i * TL.toolDur), TL.end[0]];
+  const c = cuts.find(c => t >= c && t < c + 2 / 30); if (c !== undefined) { ctx.save(); ctx.globalCompositeOperation = 'screen'; ctx.globalAlpha = .35; ctx.drawImage(cv, 10, 0); ctx.globalCompositeOperation = 'multiply'; ctx.drawImage(cv, -10, 0); ctx.restore(); }
+  finish(t);
+  const fo = inv(TL.duration - .35, TL.duration, t); if (fo > 0) { ctx.fillStyle = `rgba(232,227,214,${fo})`; ctx.fillRect(0, 0, W, H); }
+};
+window.ready = (async () => { TL = await (await fetch('timeline.json')).json(); EV = await (await fetch('live/events.json')).json(); window.DURATION = TL.duration;
+  await Promise.all(['800 40px IT', '900 40px IT', '700 40px IT', 'italic 400 40px IS', '600 40px NR', '700 40px JB'].map(f => document.fonts.load(f))); })();
+</script></body></html>

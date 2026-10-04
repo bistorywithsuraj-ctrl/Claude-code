@@ -1,0 +1,152 @@
+{
+ "hook": [
+  0,
+  1.6
+ ],
+ "chores": [
+  1.6,
+  4.8
+ ],
+ "turn": [
+  4.8,
+  5.6
+ ],
+ "intro": [
+  5.6,
+  7.466666666666666
+ ],
+ "mapStops": [
+  7.466666666666666,
+  8.866666666666665
+ ],
+ "mapRender": [
+  8.866666666666665,
+  15.399999999999999
+ ],
+ "more": [
+  15.399999999999999,
+  16.333333333333332
+ ],
+ "toolsStart": 16.333333333333332,
+ "toolDur": 1.4,
+ "tools": [
+  "script-timer",
+  "title-preview",
+  "safe-zones",
+  "frame-extractor",
+  "youtube-earnings",
+  "image-resizer",
+  "caption-formatter",
+  "youtube-chapters",
+  "srt-subtitles",
+  "word-counter",
+  "case-converter",
+  "qr-code",
+  "pdf-tools"
+ ],
+ "names": {
+  "script-timer": [
+   "Script Timer",
+   "know your video length"
+  ],
+  "title-preview": [
+   "Title Preview",
+   "see where titles cut off"
+  ],
+  "safe-zones": [
+   "Safe Zones",
+   "nothing hidden behind buttons"
+  ],
+  "frame-extractor": [
+   "Frame Extractor",
+   "every frame, one click"
+  ],
+  "youtube-earnings": [
+   "Earnings Calculator",
+   "what your views are worth"
+  ],
+  "image-resizer": [
+   "Image Resizer",
+   "every size, every platform"
+  ],
+  "caption-formatter": [
+   "Caption Formatter",
+   "line breaks that actually stick"
+  ],
+  "youtube-chapters": [
+   "YouTube Chapters",
+   "timestamps YouTube accepts"
+  ],
+  "srt-subtitles": [
+   "Text to SRT",
+   "script to subtitles, instantly"
+  ],
+  "word-counter": [
+   "Word Counter",
+   "every platform limit, live"
+  ],
+  "case-converter": [
+   "Case Converter",
+   "Title Case to snake_case"
+  ],
+  "qr-code": [
+   "QR Code",
+   "never expires, no sign-up"
+  ],
+  "pdf-tools": [
+   "JPG to PDF",
+   "images to PDF, nothing uploaded"
+  ]
+ },
+ "end": [
+  34.53333333333333,
+  38.53333333333333
+ ],
+ "duration": 38.533,
+ "beat": 0.4666666666666666,
+ "drop": 5.6,
+ "chorePace": 0.36,
+ "choreStart": 1.78,
+ "choreList": [
+  [
+   "Map animation",
+   "3 hrs",
+   180
+  ],
+  [
+   "Subtitles (SRT)",
+   "1 hr",
+   60
+  ],
+  [
+   "Script timing",
+   "30 min",
+   30
+  ],
+  [
+   "Thumbnail sizes",
+   "20 min",
+   20
+  ],
+  [
+   "Grabbing frames",
+   "20 min",
+   20
+  ],
+  [
+   "Chapters",
+   "15 min",
+   15
+  ],
+  [
+   "Captions",
+   "15 min",
+   15
+  ],
+  [
+   "QR codes & PDFs",
+   "10 min",
+   10
+  ]
+ ]
+}
