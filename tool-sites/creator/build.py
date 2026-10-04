@@ -14,9 +14,9 @@ PREVIEW = os.environ.get('PREVIEW', '0') == '1'
 DIST = HERE / ('preview_dist' if PREVIEW else 'dist')
 NAME = os.environ.get('SITE_NAME', 'Creator Bench')
 TAGLINE = 'Tools for better uploads'
-SITE_URL = os.environ.get('SITE_URL', 'https://example.com').rstrip('/')
+SITE_URL = os.environ.get('SITE_URL', 'https://creatorbenchtool.com').rstrip('/')
 CLIENT = os.environ.get('ADSENSE_CLIENT', '').strip()
-EMAIL = os.environ.get('CONTACT_EMAIL', 'hello@example.com')
+EMAIL = os.environ.get('CONTACT_EMAIL', 'hello@creatorbenchtool.com')
 AUTHOR = os.environ.get('AUTHOR_NAME', 'Suraj Shukla')
 AUTHOR_URL = os.environ.get('AUTHOR_URL', 'https://bistorywithsuraj.com')
 AUTHOR_SHORT = AUTHOR_URL.replace('https://', '')
@@ -179,6 +179,7 @@ def rail(kind='rect'):
 def head(title, desc, path, extra=''):
     ads = (f'<script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client={CLIENT}" crossorigin="anonymous"></script>' if CLIENT else '')
     robots = '<meta name="robots" content="noindex">' if path == '/404' else ''
+    slug = path.strip('/'); img = f'{SITE_URL}/og/{slug}.png?v=2' if slug in {t['slug'] for t in TOOLS} else f'{SITE_URL}/og.png?v=2'
     return f'''<meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>{html.escape(title)}</title>
@@ -186,8 +187,8 @@ def head(title, desc, path, extra=''):
 <link rel="canonical" href="{SITE_URL}{path}">
 <meta property="og:title" content="{html.escape(title)}"><meta property="og:description" content="{html.escape(desc)}">
 <meta property="og:type" content="website"><meta property="og:url" content="{SITE_URL}{path}">
-<meta property="og:image" content="{SITE_URL}/og.png"><meta property="og:image:width" content="1200"><meta property="og:image:height" content="630">
-<meta name="twitter:card" content="summary_large_image"><meta name="twitter:image" content="{SITE_URL}/og.png">
+<meta property="og:image" content="{img}"><meta property="og:image:width" content="1200"><meta property="og:image:height" content="630">
+<meta name="twitter:card" content="summary_large_image"><meta name="twitter:image" content="{img}">
 <meta name="theme-color" content="#1F4D3A">
 <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='16' fill='%231F4D3A'/%3E%3Cpath d='M18 46c0-16 12-28 30-28 0 18-12 30-28 30M18 46l14-14' stroke='%23DCEF80' stroke-width='5' fill='none' stroke-linecap='round'/%3E%3C/svg%3E">
 <script>try{{const t=localStorage.getItem('cb-theme');if(t)document.documentElement.dataset.theme=t}}catch(e){{}}</script>
