@@ -288,7 +288,7 @@ details p { margin: 10px 0 0 }
           let device = 'wasm'; if (data.gpu) try { if (navigator.gpu && await navigator.gpu.requestAdapter()) device = 'webgpu'; } catch (e) {}
           const files = {};
           const load = d => KokoroTTS.from_pretrained('onnx-community/Kokoro-82M-v1.0-ONNX', { dtype: d === 'webgpu' ? 'fp32' : 'q8', device: d,
-            progress_callback: p => { if (p.status === 'progress' && p.total) { files[p.file] = [p.loaded, p.total]; const v = Object.values(files); self.postMessage({ type: 'load', p: v.reduce((a, x) => a + x[0], 0) / v.reduce((a, x) => a + x[1], 0) }); } } });
+            progress_callback: p => { if (p.status === 'progress' && p.total) { files[p.file] = [p.loaded, p.total]; const v = Object.values(files); const tot = v.reduce((a, x) => a + x[1], 0); self.postMessage({ type: 'load', p: v.reduce((a, x) => a + x[0], 0) / tot, t: tot }); } } });
           try { tts = await load(device); } catch (e) { if (device === 'wasm') throw e; tts = await load('wasm'); }
         }
         self.postMessage({ type: 'ready' });
@@ -314,7 +314,7 @@ details p { margin: 10px 0 0 }
     const stall = () => { try { worker.terminate(); } catch (e) {} worker = null; $('av-go').disabled = false; $('av-status').textContent = MOBILE ? 'Your phone stopped responding while preparing the voice. Close other apps and tabs, then try a shorter script, or use a computer for long scripts.' : 'The voice stopped responding. Reload the page and try again with a shorter script.'; };
     watch(150000, stall);
     worker.onmessage = ({ data }) => { beat();
-      if (data.type === 'load') { $('av-status').textContent = data.p > .995 ? 'Preparing the voice (first time can take up to a minute on phones)…' : `Downloading the voice model (one time only)… ${Math.round(data.p * 100)}%`; $('av-bar').style.width = data.p * 40 + '%'; }
+      if (data.type === 'load') { $('av-status').textContent = data.p > .995 && data.t > 5e6 ? 'Preparing the voice (first time can take up to a minute on phones)…' : `Downloading the voice model (one time only)… ${Math.round(data.p * 100)}%`; $('av-bar').style.width = data.p * 40 + '%'; }
       if (data.type === 'prepare') { $('av-status').textContent = 'Preparing the voice (first time can take up to a minute on phones)…'; $('av-bar').style.width = '42%'; }
       if (data.type === 'ready') { $('av-status').textContent = 'Speaking…'; $('av-bar').style.width = '45%'; }
       if (data.type === 'progress') { $('av-status').textContent = `Speaking… ${Math.round(data.p * 100)}%`; $('av-bar').style.width = 40 + data.p * 60 + '%'; }

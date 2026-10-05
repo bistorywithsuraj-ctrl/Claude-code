@@ -117,7 +117,7 @@ desc: Free AI auto captions for Reels, Shorts and TikTok. Transcribe your video 
           if (data.gpu) try { if (self.navigator && navigator.gpu && await navigator.gpu.requestAdapter()) device = 'webgpu'; } catch (e) {}
           const files = {};
           asr = await pipeline('automatic-speech-recognition', data.model, { device, dtype: device === 'webgpu' ? { encoder_model: 'fp32', decoder_model_merged: 'q4' } : 'q8',
-            progress_callback: p => { if (p.status === 'progress' && p.total) { files[p.file] = [p.loaded, p.total]; const v = Object.values(files); self.postMessage({ type: 'load', p: v.reduce((a, x) => a + x[0], 0) / v.reduce((a, x) => a + x[1], 0) }); } } }).catch(async e => {
+            progress_callback: p => { if (p.status === 'progress' && p.total) { files[p.file] = [p.loaded, p.total]; const v = Object.values(files); const tot = v.reduce((a, x) => a + x[1], 0); self.postMessage({ type: 'load', p: v.reduce((a, x) => a + x[0], 0) / tot, t: tot }); } } }).catch(async e => {
               if (device !== 'webgpu') throw e; return pipeline('automatic-speech-recognition', data.model, { device: 'wasm', dtype: 'q8' }); });
           cur = data.model;
         }
@@ -228,7 +228,7 @@ desc: Free AI auto captions for Reels, Shorts and TikTok. Transcribe your video 
       const w = getWorker();
       watch(120000 + audio.length / 16000 * 4000, () => { try { w.terminate(); } catch (e) {} worker = null; $('ac-go').disabled = false; $('ac-status').textContent = MOBILE ? 'Your phone stopped responding. Try the Fast model, a shorter clip, or a computer.' : 'Captioning stopped responding. Reload the page and try the Fast model.'; });
       w.onmessage = ({ data }) => { beat();
-        if (data.type === 'load') { $('ac-status').textContent = data.p > .995 ? 'Preparing the AI model…' : `Downloading the AI model (one time only)… ${Math.round(data.p * 100)}%`; $('ac-bar').style.width = data.p * 60 + '%'; }
+        if (data.type === 'load') { $('ac-status').textContent = data.p > .995 && data.t > 5e6 ? 'Preparing the AI model…' : `Downloading the AI model (one time only)… ${Math.round(data.p * 100)}%`; $('ac-bar').style.width = data.p * 60 + '%'; }
         if (data.type === 'run') { $('ac-status').textContent = 'Listening and writing captions…'; $('ac-bar').style.width = '75%'; }
         if (data.type === 'done') { watch(0); words = data.chunks.map(c => ({ t: c.text.trim(), s: c.timestamp[0], e: c.timestamp[1] ?? c.timestamp[0] + .3 })).filter(w => w.t);
           $('ac-bar').style.width = '100%'; $('ac-go').disabled = false;

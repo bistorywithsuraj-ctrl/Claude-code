@@ -292,7 +292,7 @@ details p { margin: 10px 0 0 }
     self.onmessage = async ({ data }) => {
       try {
         if (!cache[data.model]) { const files = {};
-          const progress_callback = p => { if (p.status === 'progress' && p.total) { files[p.file] = [p.loaded, p.total]; const v = Object.values(files); self.postMessage({ type: 'load', p: v.reduce((a, x) => a + x[0], 0) / v.reduce((a, x) => a + x[1], 0) }); } };
+          const progress_callback = p => { if (p.status === 'progress' && p.total) { files[p.file] = [p.loaded, p.total]; const v = Object.values(files); const tot = v.reduce((a, x) => a + x[1], 0); self.postMessage({ type: 'load', p: v.reduce((a, x) => a + x[0], 0) / tot, t: tot }); } };
           let device = 'wasm'; if (data.gpu) try { if (navigator.gpu && await navigator.gpu.requestAdapter()) device = 'webgpu'; } catch (e) {}
           const model = await AutoModel.from_pretrained(data.model, { dtype: 'fp32', device, progress_callback }).catch(() => AutoModel.from_pretrained(data.model, { dtype: 'fp32', device: 'wasm', progress_callback }));
           const processor = await AutoProcessor.from_pretrained(data.model, { progress_callback });
@@ -317,7 +317,7 @@ details p { margin: 10px 0 0 }
     worker.onerror = e => { e.preventDefault && e.preventDefault(); worker = null; $('br-status').textContent = "The AI model couldn't load. Check your connection and try again."; $('br-go').disabled = false; };
     watch(150000, () => { try { worker.terminate(); } catch (e) {} worker = null; $('br-go').disabled = false; $('br-status').textContent = MOBILE ? 'Your phone stopped responding. Switch to Fast quality or use a smaller photo.' : 'The AI stopped responding. Reload the page and try Fast quality.'; });
     worker.onmessage = ({ data }) => { beat();
-      if (data.type === 'load') { $('br-status').textContent = data.p > .995 ? 'Preparing the AI model…' : `Downloading the AI model (one time only)… ${Math.round(data.p * 100)}%`; $('br-bar').style.width = data.p * 70 + '%'; }
+      if (data.type === 'load') { $('br-status').textContent = data.p > .995 && data.t > 5e6 ? 'Preparing the AI model…' : `Downloading the AI model (one time only)… ${Math.round(data.p * 100)}%`; $('br-bar').style.width = data.p * 70 + '%'; }
       if (data.type === 'run') { $('br-status').textContent = 'Cutting out…'; $('br-bar').style.width = '80%'; }
       if (data.type === 'done') { watch(0); const o = document.createElement('canvas'); o.width = w; o.height = h; const og = o.getContext('2d'); og.drawImage(c, 0, 0); const id = og.getImageData(0, 0, w, h);
         for (let i = 0; i < w * h; i++) id.data[i * 4 + 3] = data.mask[i]; og.putImageData(id, 0, 0); cut = o; render();
