@@ -381,9 +381,9 @@ desc: Make an animated route map video for travel vlogs, history and explainer v
     const finish = msg => { $('ma-msg').textContent = msg; $('ma-rec').disabled = false; $('ma-play').disabled = false; setRatio(); refresh(); };
     $('ma-rec').disabled = true; $('ma-play').disabled = true;
     if (window.CBEncode && CBEncode.supported()) {   // frame-by-frame: no dropped frames at any resolution
-      cv.width = w; cv.height = h; ctx = cv.getContext('2d'); const T = total();
+      cv.width = w; cv.height = h; ctx = cv.getContext('2d'); const T = total(), END_HOLD = 1;   // still last frame so apps don't clip the ending
       try {
-        const out = await CBEncode.render({ canvas: cv, width: w, height: h, fps: 30, duration: T, drawFrame: t => { draw(Math.min(t, T)); },
+        const out = await CBEncode.render({ canvas: cv, width: w, height: h, fps: 30, duration: T + END_HOLD, drawFrame: t => { draw(Math.min(t, T)); },
           onProgress: p => { $('ma-bar').style.width = (p * 100) + '%'; $('ma-msg').textContent = `Rendering ${w} × ${h}… ${Math.round(p * 100)}%`; } });
         save(out.blob, 'mp4'); finish(`Saved MP4 at ${w} × ${h} · ${(out.blob.size / 1e6).toFixed(1)} MB.`);
       } catch (e) { finish('Export failed: ' + (e.message || e) + ' Try a lower resolution.'); }
@@ -397,7 +397,7 @@ desc: Make an animated route map video for travel vlogs, history and explainer v
     rec.ondataavailable = e => e.data.size && chunks.push(e.data);
     rec.onstop = () => { const type = rec.mimeType || 'video/webm', ext = type.includes('mp4') ? 'mp4' : 'webm'; save(new Blob(chunks, { type }), ext); finish(`Saved ${ext.toUpperCase()} at ${fw} × ${fh}.`); };
     $('ma-msg').textContent = 'Recording… keep this tab open and visible.'; rec.start(250);
-    play(null, () => setTimeout(() => rec.stop(), 300));
+    play(null, () => { const T = total(), hold = setInterval(() => draw(T), 1000 / 30); setTimeout(() => { clearInterval(hold); rec.requestData(); rec.stop(); }, 1300); });
   };
   setRatio(); renderStops(); if ($('ma-style').value === 'satellite') loadSat();
   loadWorld().then(refresh).catch(() => { $('ma-msg').textContent = "The map couldn't load. Check your connection and refresh."; refresh(); });

@@ -463,10 +463,11 @@ details p { margin: 10px 0 0 }
       if (t < dur && playing) requestAnimationFrame(loop); else { playing = false; $('hm-play').textContent = 'Play'; onEnd && onEnd(); } }; requestAnimationFrame(loop); }
   $('hm-play').onclick = () => { if (playing) { playing = false; return; } play(); };
   const FONT_LOADS = () => Promise.all(FONTS.map(f => document.fonts.load(`${f[0]} 40px "${f[1]}"`)).concat(document.fonts.load('400 40px "UnifrakturMaguntia"'), ...BODY.map(f => document.fonts.load(`${f[0]} 40px "${f[1]}"`)), document.fonts.load('500 20px "IBM Plex Mono"')));
-  function slapTrack(sr) { const pcm = new Float32Array(Math.ceil((dur + .5) * sr)); if (!$('hm-sound').checked) return pcm;
+  function slapTrack(sr) { const pcm = new Float32Array(Math.ceil((dur + END_HOLD) * sr)); if (!$('hm-sound').checked) return pcm;
     seq.forEach((it, k) => { const s0 = Math.floor(it.t * sr), n = Math.floor(sr * .09), f = (1200 + ((k * 37) % 16) * 100) / sr; let lp = 0, hp = 0, prev = 0;
       for (let i = 0; i < n && s0 + i < pcm.length; i++) { const x = (Math.random() * 2 - 1) * Math.pow(1 - i / n, 3); lp += (x - lp) * Math.min(1, f * 6.3); hp = lp - prev; prev = lp; pcm[s0 + i] += hp * 1.6; } });
     return pcm; }
+  const END_HOLD = 1;   // seconds of still last frame, so players and apps don't clip the ending
   const saveBlob = (blob, ext) => { const a = document.createElement('a'); a.href = URL.createObjectURL(blob); a.download = `headline-match-cut-${ratio.replace(':', 'x')}-${$('hm-res').value}p.${ext}`; a.click(); };
   $('hm-export').onclick = async () => {
     await FONT_LOADS(); $('hm-export').disabled = true; $('hm-play').disabled = true;
@@ -475,7 +476,7 @@ details p { margin: 10px 0 0 }
       setSize(true); build(); const W = cv.width, H = cv.height;
       $('hm-msg').textContent = `Rendering ${W} × ${H}… 0%`;
       try {
-        const r = await CBEncode.render({ canvas: cv, width: W, height: H, fps: 30, duration: dur, drawFrame: t => { draw(Math.min(t, dur - .001)); }, audio: slapTrack(48000), sampleRate: 48000,
+        const r = await CBEncode.render({ canvas: cv, width: W, height: H, fps: 30, duration: dur + END_HOLD, drawFrame: t => { draw(Math.min(t, dur - .001)); }, audio: slapTrack(48000), sampleRate: 48000,
           onProgress: p => { $('hm-bar').style.width = (p * 100) + '%'; $('hm-msg').textContent = `Rendering ${W} × ${H}… ${Math.round(p * 100)}%`; } });
         saveBlob(r.blob, 'mp4'); done(`Saved MP4 at ${W} × ${H}${r.audio ? '' : ' (this browser saved it without sound)'} · ${(r.blob.size / 1e6).toFixed(1)} MB.`);
       } catch (e) { done('Export failed: ' + (e.message || e) + ' Try a lower resolution.'); }
@@ -489,7 +490,7 @@ details p { margin: 10px 0 0 }
     const mime = ['video/mp4;codecs=avc1,mp4a.40.2', 'video/mp4', 'video/webm;codecs=vp9,opus', 'video/webm'].find(m => MediaRecorder.isTypeSupported(m));
     const rec = new MediaRecorder(stream, mime ? { mimeType: mime, videoBitsPerSecond: 12e6 } : {}), chunks = []; rec.ondataavailable = e => e.data.size && chunks.push(e.data);
     rec.onstop = () => { const type = rec.mimeType || 'video/webm', ext = type.includes('mp4') ? 'mp4' : 'webm'; saveBlob(new Blob(chunks, { type }), ext); dst = null; done(`Saved ${ext.toUpperCase()} at ${cv.width} × ${cv.height}.`); };
-    $('hm-msg').textContent = 'Recording… keep this tab open.'; rec.start(250); play(() => setTimeout(() => rec.stop(), 250));
+    $('hm-msg').textContent = 'Recording… keep this tab open.'; rec.start(250); play(() => { const hold = setInterval(() => draw(dur - .001), 1000 / 30); setTimeout(() => { clearInterval(hold); rec.requestData(); rec.stop(); }, END_HOLD * 1000 + 300); });
   };
   const seg = (id, fn) => $(id).addEventListener('click', e => { const b = e.target.closest('button'); if (!b) return; $(id).querySelectorAll('button').forEach(x => x.setAttribute('aria-pressed', x === b)); fn(b); refresh(); });
   seg('hm-ratio', b => { ratio = b.dataset.r; setSize(false); }); seg('hm-look', b => { look = b.dataset.l; cache.clear(); }); seg('hm-mark', b => { mark = b.dataset.m; cache.clear(); });
