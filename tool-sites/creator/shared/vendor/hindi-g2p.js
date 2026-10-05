@@ -148,7 +148,7 @@
     deleteSchwas(u);
     let out = '';
     u.forEach((x, i) => { let v = x.v; const fin = i === u.length - 1, prev = u[i - 1];
-      if (!x.c && prev && prev.v && /(i|ee|aa|a|o|oo|u)$/.test(prev.v) && /^(e|ee)$/.test(v)) v = 'y' + v;   // लिखिए likhiye, जाए jaaye
+      if (!x.c && prev && prev.v && /(i|ee|aa|a|o|oo|u)$/.test(prev.v)) { if (v === 'e') v = 'ye'; else if (v === 'ee' || v === 'i') v = 'i'; }   // लिखिए likhiye, जाए jaaye, कोई koi
       if (fin && v === 'aa') v = 'a'; if (fin && v === 'ee') v = 'i';   // karna, hindi
       out += x.c + v + (x.nas ? 'n' : '') + (x.h ? 'h' : ''); });
     return out.replace(/chchh?/g, 'cch');   // अच्छा accha, बच्चा baccha
