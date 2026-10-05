@@ -4,7 +4,7 @@ title: Newspaper Headline Match Cut Generator: viral text effect
 name: Headline Match Cut Generator
 desc: Type a word or sentence and get the viral newspaper headline match cut: rapid cuts through different front pages with your word locked in place. Export MP4 for Reels and Shorts.
 -->
-<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Abril+Fatface&family=Anton&family=Archivo+Black&family=Bebas+Neue&family=Libre+Baskerville:wght@700&family=Old+Standard+TT:wght@700&family=Oswald:wght@700&family=Playfair+Display:wght@900&family=UnifrakturMaguntia&display=swap">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Abril+Fatface&family=Anton&family=Archivo+Black&family=Bebas+Neue&family=Libre+Baskerville:wght@700&family=Old+Standard+TT:wght@700&family=Oswald:wght@700&family=Playfair+Display:wght@900&family=UnifrakturMaguntia&family=EB+Garamond:wght@500&family=Lora:wght@500&family=Crimson+Pro:wght@500&family=PT+Serif&family=Source+Serif+4:wght@400&family=Merriweather&family=IBM+Plex+Mono:wght@500&display=swap">
 <style>
 .hm-stage { background: #111; border-radius: 12px; overflow: hidden; display: grid; place-items: center; padding: 10px }
 .hm-stage canvas { display: block; max-width: 100%; max-height: 70vh; height: auto; border-radius: 6px }
@@ -15,7 +15,7 @@ desc: Type a word or sentence and get the viral newspaper headline match cut: ra
 </style>
 <div>
   <h1>Headline <em>match cut</em></h1>
-  <p class="lede">Type a word or a sentence. Each word flashes across a stack of different newspaper front pages while staying locked in place: the viral match cut edit, ready in seconds for Reels, Shorts and TikTok.</p>
+  <p class="lede">Type a word or a sentence. Each word flashes across a stack of different news articles and front pages while staying locked in place: the viral match cut edit, ready in seconds for Reels, Shorts and TikTok.</p>
 </div>
 <div class="ad-slot" data-slot="top"></div>
 <div class="panel">
@@ -30,11 +30,17 @@ desc: Type a word or sentence and get the viral newspaper headline match cut: ra
     <h2>Your words</h2>
     <label>Word or sentence <input id="hm-text" value="ChatGPT is everywhere"></label>
     <p class="hint">One word gives a long burst of front pages. A sentence plays word by word.</p>
-    <label>Newspaper name <span class="hint">optional, otherwise a different made-up paper on every page</span><input id="hm-mast" placeholder="The Morning Bench"></label>
+    <label>Newspaper name <span class="hint">front page look; optional</span><input id="hm-mast" placeholder="The Morning Bench"></label>
+    <div class="row">
+      <label style="flex:1">Your name or handle <span class="hint">optional</span><input id="hm-handle" placeholder="creatorbench"></label>
+      <label style="flex:1">Tag line <input id="hm-tag" value="IN THE NEWS"></label>
+    </div>
     <label style="display:flex;gap:10px;align-items:center;font-weight:500"><input id="hm-final" type="checkbox" checked style="width:auto"> End on a front page with the whole sentence</label>
   </div>
   <div class="panel">
     <h2>Style</h2>
+    <label>Look</label>
+    <div class="hm-seg" id="hm-look" role="group" aria-label="Look"><button type="button" data-l="article" aria-pressed="true">Article close-up</button><button type="button" data-l="front" aria-pressed="false">Front page</button></div>
     <label>Format</label>
     <div class="hm-seg" id="hm-ratio" role="group" aria-label="Format"><button type="button" data-r="9:16" aria-pressed="true">9:16 · Reels</button><button type="button" data-r="16:9" aria-pressed="false">16:9 · YouTube</button><button type="button" data-r="1:1" aria-pressed="false">1:1 · Feed</button></div>
     <label>Word mark</label>
@@ -67,7 +73,7 @@ desc: Type a word or sentence and get the viral newspaper headline match cut: ra
   const MASTS = ['The Morning Bench', 'Evening Gazette', 'The Daily Ledger', 'World Courier', 'The Sunday Review', 'Metro Express', 'The Herald Post', 'Daily Observer', 'The City Bulletin', 'National Tribune', 'The Weekly Record', 'Global Dispatch'];
   const KICK = ['BREAKING', 'EXCLUSIVE', 'SPECIAL REPORT', 'LATE EDITION', 'WORLD NEWS', 'TECHNOLOGY', 'FRONT PAGE'];
   const FILL = ['experts', 'world', 'react', 'after', 'new', 'report', 'says', 'today', 'shocks', 'millions', 'future', 'changes', 'city', 'market', 'leaders', 'warn', 'record', 'rise', 'debate', 'over', 'the', 'and', 'of', 'in', 'public', 'growing', 'study', 'finds', 'young', 'people', 'online', 'billion'];
-  let ratio = '9:16', mark = 'hl', seq = [], dur = 0, playing = false, t0 = 0, cache = new Map();
+  let look = 'article', ratio = '9:16', mark = 'hl', seq = [], dur = 0, playing = false, t0 = 0, cache = new Map();
   const rng = s => () => (s = (s * 16807) % 2147483647) / 2147483647;
   const words = () => $('hm-text').value.trim().split(/\s+/).filter(Boolean).slice(0, 12);
   function size() { return ratio === '9:16' ? [1080, 1920] : ratio === '16:9' ? [1920, 1080] : [1080, 1080]; }
@@ -84,8 +90,92 @@ desc: Type a word or sentence and get the viral newspaper headline match cut: ra
   function photo(c, x, y, w, h, r) { c.save(); c.beginPath(); c.rect(x, y, w, h); c.clip(); const base = 90 + r() * 80; c.fillStyle = `rgb(${base},${base},${base})`; c.fillRect(x, y, w, h);
     for (let i = 0; i < 5; i++) { const gg = 40 + r() * 140; c.fillStyle = `rgb(${gg},${gg},${gg})`; c.beginPath(); c.ellipse(x + r() * w, y + r() * h, w * (.15 + r() * .35), h * (.15 + r() * .35), r() * 3, 0, 7); c.fill(); }
     c.fillStyle = 'rgba(0,0,0,.25)'; for (let yy = y; yy < y + h; yy += 6) for (let xx = x + (yy / 6 % 2) * 3; xx < x + w; xx += 6) { c.beginPath(); c.arc(xx, yy, 1.2 + r() * .8, 0, 7); c.fill(); } c.restore(); }
+  // ---------- article close-up look (a camera pointed at a printed or online article) ----------
+  const BODY = [['400', 'Libre Baskerville'], ['500', 'EB Garamond'], ['400', 'PT Serif'], ['400', 'Source Serif 4'], ['400', 'Merriweather'], ['500', 'Crimson Pro'], ['500', 'Lora']];
+  const BANK = ['The meeting was rescheduled again.', 'Nobody wrote it down.', 'Officials say they are reviewing it slowly.', 'The report is forty pages long and solves nothing.', 'An expert was consulted.', 'The expert was also confused.', 'Neighbours describe it as quiet, which is what they always say.',
+    'A statement was promised and then delayed.', 'The app was updated. It is worse now.', 'Witnesses disagree on basically everything.', 'Funding has been allocated.', 'Its current location is unknown.', 'Several people checked their phones.', 'Three people clapped.', 'The committee met for six hours.',
+    'A spokesperson declined to comment, twice.', 'It was always like this, sources say.', 'Nobody noticed until now.', 'The permit, it turns out, was never filed.', 'Critics called it predictable.', 'Supporters called it historic.', 'The vote was postponed until further notice.',
+    'Experts expect more of the same.', 'A second survey reached the opposite conclusion.', 'The press conference started late and ended early.', 'Residents were not consulted.', 'The trend is expected to continue.', 'An audit was mentioned briefly and then never mentioned again.',
+    'The company said it takes the matter seriously.', 'Analysts were cautiously optimistic, as usual.', 'Local cafes reported a sudden rise in visitors.', 'Questions remain.'];
+  const QUOTES = ['nobody saw it coming, except everyone', 'was mentioned twice in the meeting and then never again', 'is now apparently in every conversation', 'changed everything, according to people who said that last time too',
+    'has been described by experts as mostly fine', 'was trending before anyone could explain it', 'left several people deeply confused', 'is the reason the meeting ran three hours over', 'is somehow the answer to every question this year', 'will be discussed again next week, probably'];
+  const EDITORS = ['Deputy Investigations Editor', 'Technology Correspondent', 'Senior Features Writer', 'Night Desk', 'Culture Editor', 'Our Correspondent'];
+  function wrapPara(x, text, w) { const out = []; let line = ''; for (const wd of text.split(' ')) { const t = line ? line + ' ' + wd : wd; if (x.measureText(t).width > w && line) { out.push(line); line = wd; } else line = t; } if (line) out.push(line); return out; }
+  function articlePage(item, W, H) {
+    const r = rng(item.seed * 7919 + 104729), S = Math.min(W, H) / 1080, land = W > H, A = document.createElement('canvas'); A.width = W; A.height = H; const x = A.getContext('2d');
+    const paper = ['#EEEDE9', '#F2F1EC', '#E9E7E1', '#F4F2EB', '#ECEAE4'][Math.floor(r() * 5)], ink = ['#1b1b1b', '#222', '#1d1f24'][Math.floor(r() * 3)];
+    x.fillStyle = paper; x.fillRect(0, 0, W, H);
+    const bf = BODY[Math.floor(r() * BODY.length)], qf = BODY[Math.floor(r() * BODY.length)], wide = r() < .5, bs = (wide ? (land ? 20 : 23) : (land ? 30 : 34)) * S, lh = bs * 1.6, qs = (land ? 78 : 88) * S, qBold = r() < .5;
+    const shot = item.final ? 'first' : (r() < .34 ? 'inline' : r() < .5 ? 'mid' : 'first');
+    if (shot === 'inline') return inlineShot(item, W, H, r, paper, ink, bf);
+    const ax = W * (land ? .3 : .34), ay = H * (land ? .44 : .46), cx0 = shot === 'mid' ? W * .2 : ax - qs * .28, colW = land ? W * .62 : W * .78;
+    const para = () => { let t = ''; while (t.length < 900) t += BANK[Math.floor(r() * BANK.length)] + ' '; return t; };
+    x.fillStyle = ink; x.textBaseline = 'alphabetic'; x.textAlign = 'left'; x.font = `${bf[0]} ${bs}px "${bf[1]}"`;
+    // body above the quote, filling upward
+    let lines = wrapPara(x, para() + para(), colW), y = ay - qs * 1.55; for (let i = lines.length - 1; i >= 0 && y > -lh; i--, y -= lh) x.fillText(lines[i], cx0, y);
+    // the pull quote: the word sits at exactly (ax, ay) on every page
+    const ws = item.final ? item.word.split(' ') : [item.word], rest = item.final ? [] : QUOTES[Math.floor(r() * QUOTES.length)].split(' ');
+    x.font = `${qBold ? '700' : qf[0]} ${qs}px "${qBold ? 'Libre Baskerville' : qf[1]}"`; const qlh = qs * 1.18, qW = W - ax + qs * .3;
+    let qStart = cx0, firstEnd = 0;
+    if (shot === 'mid') { const pre = ['Her', 'The', 'His', 'Why', 'Local', 'Our', 'That', 'Every'][Math.floor(r() * 8)], pw = x.measureText(pre + ' ').width;
+      x.fillText('“' + pre, ax - pw - x.measureText('“').width, ay); qStart = ax - pw; }
+    else x.fillText('“', ax - x.measureText('“').width, ay);
+    let qx = ax, qy = ay; const sp = x.measureText(' ').width;
+    const all = ws.map(w => [w, 1]).concat(rest.map(w => [w, 0]));
+    all.forEach(([w, hot], i) => { const t = (i === all.length - 1 ? w + '”' : w), tw = x.measureText(w).width, tt = x.measureText(t).width;
+      if (qx > ax && qx + tt > ax + qW * (land ? .82 : .98)) { if (!firstEnd) firstEnd = qx; qx = qStart; qy += qlh; }
+      if (hot && mark === 'hl') { x.save(); x.fillStyle = 'rgba(255,236,80,.88)'; x.beginPath(); const hx = qx - qs * .05, hy = qy - qs * .74; x.moveTo(hx, hy + 2 * S); x.lineTo(hx + tw + qs * .1, hy); x.lineTo(hx + tw + qs * .09, hy + qs * .92); x.lineTo(hx + 1, hy + qs * .94); x.closePath(); x.fill(); x.restore(); }
+      x.fillStyle = hot && mark === 'red' ? '#C8102E' : ink; x.fillText(t, qx, qy);
+      if (hot && mark === 'circle') { x.save(); x.strokeStyle = '#D0181F'; x.lineWidth = 6 * S; x.globalAlpha = .9; x.beginPath(); x.ellipse(qx + tw / 2, qy - qs * .3, tw / 2 + qs * .25, qs * .62, -.05, .2, Math.PI * 2 + .05); x.stroke(); x.restore(); }
+      qx += tt + sp; });
+    if (shot === 'mid') { x.fillStyle = ink; x.fillRect((firstEnd || qx) + qs * .15, ay - qs * .82, W, Math.max(1.5, 2 * S)); }
+    // byline + body below
+    x.fillStyle = ink; x.globalAlpha = .75; x.font = `italic ${bf[0]} ${bs * .72}px "${bf[1]}"`; x.fillText(`— By The ${EDITORS[Math.floor(r() * EDITORS.length)]}`, cx0, qy + qs * 1.25); x.globalAlpha = 1;
+    x.font = `${bf[0]} ${bs}px "${bf[1]}"`; lines = wrapPara(x, para() + para() + para(), colW); y = qy + qs * 1.25 + lh * 1.6; for (const l of lines) { if (y > H + lh) break; x.fillText(l, cx0, y); y += lh; }
+    // camera: depth of field (sharp band around the quote), light falloff, vignette, grain
+    const out = document.createElement('canvas'); out.width = W; out.height = H; const o = out.getContext('2d');
+    o.filter = `blur(${(land ? 4 : 5) * S}px)`; o.drawImage(A, 0, 0); o.filter = 'none';
+    const sharp = document.createElement('canvas'); sharp.width = W; sharp.height = H; const sg = sharp.getContext('2d'); sg.drawImage(A, 0, 0); sg.globalCompositeOperation = 'destination-in';
+    const top = ay - H * .3, bot = qy + H * .3, gm = sg.createLinearGradient(0, top, 0, bot), qa = (ay - qs * 2 - top) / (bot - top), qb = (qy + qs * 2.2 - top) / (bot - top);
+    gm.addColorStop(0, 'rgba(0,0,0,0)'); gm.addColorStop(Math.max(.01, qa), 'rgba(0,0,0,1)'); gm.addColorStop(Math.min(.99, qb), 'rgba(0,0,0,1)'); gm.addColorStop(1, 'rgba(0,0,0,0)'); sg.fillStyle = gm; sg.fillRect(0, 0, W, H); o.drawImage(sharp, 0, 0);
+    const lg = o.createRadialGradient(W * .15, H * .4, 0, W * .15, H * .4, W * 1.1); lg.addColorStop(0, 'rgba(255,255,255,.28)'); lg.addColorStop(1, 'rgba(255,255,255,0)'); o.fillStyle = lg; o.fillRect(0, 0, W, H);
+    const vg = o.createRadialGradient(W * .55, H * .48, Math.min(W, H) * .35, W * .55, H * .48, Math.max(W, H) * .78); vg.addColorStop(0, 'rgba(0,0,0,0)'); vg.addColorStop(1, 'rgba(0,0,0,.42)'); o.fillStyle = vg; o.fillRect(0, 0, W, H);
+    const id = o.getImageData(0, 0, W, H), d = id.data; for (let i = 0; i < d.length; i += 4) { const n = (Math.random() - .5) * 12; d[i] += n; d[i + 1] += n; d[i + 2] += n; } o.putImageData(id, 0, 0);
+    return out;
+  }
+  function inlineShot(item, W, H, r, paper, ink, bf) {
+    const S = Math.min(W, H) / 1080, land = W > H, A = document.createElement('canvas'); A.width = W; A.height = H; const x = A.getContext('2d');
+    x.fillStyle = paper; x.fillRect(0, 0, W, H); const fs = (land ? 74 : 84) * S, lh = fs * 1.45, ax = W * (land ? .3 : .34), ay = H * (land ? .44 : .46), right = W * (land ? .78 : .68);
+    x.font = `${bf[0]} ${fs}px "${bf[1]}"`; x.textBaseline = 'alphabetic'; x.textAlign = 'left'; x.fillStyle = ink;
+    const sentence = () => BANK[Math.floor(r() * BANK.length)];
+    function lineFrom(startX, y) { let t = ''; while (x.measureText(t).width < right - startX + W * .1) t += sentence() + ' '; let out = '';
+      for (const wd of t.split(' ')) { const tst = out ? out + ' ' + wd : wd; if (startX + x.measureText(tst).width > right) break; out = tst; } x.fillText(out, startX, y); }
+    for (let k = -9; k <= 9; k++) { if (!k) continue; lineFrom(-W * (.15 + r() * .35), ay + k * lh); }
+    const lead = ['which means', 'it turns out', 'experts blame', 'sources call it', 'nobody predicted', 'the report blames', 'according to', 'officials mentioned'][Math.floor(r() * 8)];
+    const tw = x.measureText(item.word).width; let pre = lead; while (x.measureText(pre + ' ').width < ax + W * .1) pre = sentence().replace(/\.$/, '').toLowerCase() + '. ' + pre;
+    x.fillText(pre + ' ', ax - x.measureText(pre + ' ').width, ay);
+    if (mark === 'hl') { x.save(); x.fillStyle = 'rgba(255,236,80,.88)'; x.fillRect(ax - fs * .06, ay - fs * .78, tw + fs * .12, fs * 1.0); x.restore(); }
+    x.fillStyle = mark === 'red' ? '#C8102E' : ink; x.fillText(item.word, ax, ay);
+    if (mark === 'circle') { x.save(); x.strokeStyle = '#D0181F'; x.lineWidth = 6 * S; x.beginPath(); x.ellipse(ax + tw / 2, ay - fs * .3, tw / 2 + fs * .25, fs * .62, -.05, .2, Math.PI * 2 + .05); x.stroke(); x.restore(); }
+    const out = document.createElement('canvas'); out.width = W; out.height = H; const o = out.getContext('2d'); o.filter = `blur(${(land ? 5 : 7) * S}px)`; o.drawImage(A, 0, 0); o.filter = 'none';
+    const sh = document.createElement('canvas'); sh.width = W; sh.height = H; const sg = sh.getContext('2d'); sg.drawImage(A, 0, 0); sg.globalCompositeOperation = 'destination-in';
+    const gm = sg.createLinearGradient(0, ay - lh * 5, 0, ay + lh * 5); gm.addColorStop(0, 'rgba(0,0,0,0)'); gm.addColorStop(.32, 'rgba(0,0,0,1)'); gm.addColorStop(.62, 'rgba(0,0,0,1)'); gm.addColorStop(1, 'rgba(0,0,0,0)'); sg.fillStyle = gm; sg.fillRect(0, 0, W, H); o.drawImage(sh, 0, 0);
+    const lg = o.createRadialGradient(W * .2, H * .45, 0, W * .2, H * .45, W * 1.1); lg.addColorStop(0, 'rgba(255,255,255,.22)'); lg.addColorStop(1, 'rgba(255,255,255,0)'); o.fillStyle = lg; o.fillRect(0, 0, W, H);
+    const vg = o.createRadialGradient(W * .5, H * .48, Math.min(W, H) * .3, W * .5, H * .48, Math.max(W, H) * .75); vg.addColorStop(0, 'rgba(0,0,0,0)'); vg.addColorStop(1, 'rgba(0,0,0,.45)'); o.fillStyle = vg; o.fillRect(0, 0, W, H);
+    const id = o.getImageData(0, 0, W, H), d = id.data; for (let i = 0; i < d.length; i += 4) { const n = (Math.random() - .5) * 12; d[i] += n; d[i + 1] += n; d[i + 2] += n; } o.putImageData(id, 0, 0);
+    return out;
+  }
+  function overlay(W, H) { const S = Math.min(W, H) / 1080, hand = $('hm-handle').value.trim(), tag = $('hm-tag').value.trim(), now = new Date(), when = now.toLocaleString('en-US', { month: 'short' }).toUpperCase() + ' ' + now.getFullYear();
+    const x0 = W * .045, y0 = H * (W > H ? .09 : .12);
+    g.save(); g.shadowColor = 'rgba(0,0,0,.45)'; g.shadowBlur = 10 * S; g.fillStyle = '#FFFFFF'; g.textAlign = 'left'; g.textBaseline = 'alphabetic';
+    let y = y0; if (hand) { g.font = `italic 600 ${64 * S}px "Playfair Display", Georgia, serif`; g.fillText(hand, x0, y + 50 * S); y += 92 * S; }
+    if (tag) { g.font = `500 ${24 * S}px "IBM Plex Mono", monospace`; g.letterSpacing = `${4 * S}px`; g.fillStyle = '#E2453B'; g.beginPath(); g.arc(x0 + 6 * S, y + 22 * S, 6 * S, 0, 7); g.fill(); g.fillStyle = 'rgba(255,255,255,.92)'; g.fillText(`${tag} · ${when}`, x0 + 24 * S, y + 30 * S); }
+    g.restore();
+    g.save(); g.strokeStyle = 'rgba(255,255,255,.75)'; g.lineWidth = 2.5 * S; const L = 70 * S, m = W * .02, t1 = H * .1, t2 = H * .62;
+    [[m, t1, 1, 1], [W - m, t1, -1, 1], [m, t2, 1, -1], [W - m, t2, -1, -1]].forEach(([bx, by, sx, sy]) => { g.beginPath(); g.moveTo(bx, by + sy * L); g.lineTo(bx, by); g.lineTo(bx + sx * L, by); g.stroke(); }); g.restore(); }
   function page(item, W, H) {
-    const key = item.seed + '|' + W + 'x' + H + '|' + item.word + '|' + $('hm-mast').value + '|' + $('hm-paper').value + '|' + mark; if (cache.has(key)) return cache.get(key);
+    const key = item.seed + '|' + W + 'x' + H + '|' + item.word + '|' + $('hm-mast').value + '|' + $('hm-paper').value + '|' + mark + '|' + look; if (cache.has(key)) return cache.get(key);
+    if (look === 'article') { const c = articlePage(item, W, H); cache.set(key, c); if (cache.size > 80) cache.delete(cache.keys().next().value); return c; }
     const r = rng(item.seed * 9301 + 49297), c = document.createElement('canvas'); c.width = W; c.height = H; const x = c.getContext('2d');
     const ink = r() < .8 ? '#151515' : '#1d2433', paper = paperColor(r), S = Math.min(W, H) / 1080, M = 46 * S;
     x.fillStyle = paper; x.fillRect(0, 0, W, H);
@@ -133,6 +223,7 @@ desc: Type a word or sentence and get the viral newspaper headline match cut: ra
   function draw(t) { const W = cv.width, H = cv.height; let i = seq.findIndex(s => t >= s.t && t < s.t + s.d); if (i < 0) i = seq.length - 1; const it = seq[i]; if (!it) return;
     const p = page(it, W, H), k = (t - it.t), z = 1.04 + Math.min(.03, k * .05) - (k < .03 ? .02 : 0), jx = (Math.sin(it.seed) * 6), jy = (Math.cos(it.seed) * 6);
     g.fillStyle = '#111'; g.fillRect(0, 0, W, H); g.save(); g.translate(W / 2 + jx * (W / 1080), H / 2 + jy * (W / 1080)); g.rotate(Math.sin(it.seed * 3) * .006); g.scale(z, z); g.drawImage(p, -W / 2, -H / 2); g.restore();
+    if (look === 'article') overlay(W, H);
     if (k < 1 / 30) { g.fillStyle = 'rgba(255,255,255,.12)'; g.fillRect(0, 0, W, H); } return i; }
   function setSize(full) { const [w, h] = size(), s = full ? 1 : .5; cv.width = w * s; cv.height = h * s; g = cv.getContext('2d'); cache.clear(); }
   let ac = null, dst = null;
@@ -146,7 +237,7 @@ desc: Type a word or sentence and get the viral newspaper headline match cut: ra
   $('hm-play').onclick = () => { if (playing) { playing = false; return; } play(); };
   $('hm-export').onclick = async () => {
     if (!cv.captureStream || !window.MediaRecorder) { $('hm-msg').textContent = "This browser can't record video. Try Chrome, Edge or Safari on a computer."; return; }
-    await Promise.all(FONTS.map(f => document.fonts.load(`${f[0]} 40px "${f[1]}"`)).concat(document.fonts.load('400 40px "UnifrakturMaguntia"')));
+    await Promise.all(FONTS.map(f => document.fonts.load(`${f[0]} 40px "${f[1]}"`)).concat(document.fonts.load('400 40px "UnifrakturMaguntia"'), ...BODY.map(f => document.fonts.load(`${f[0]} 40px "${f[1]}"`)), document.fonts.load('500 20px "IBM Plex Mono"')));
     setSize(true); build(); for (const s of seq) page(s, cv.width, cv.height);   // render pages up front so frames are smooth
     if (!ac) try { ac = new AudioContext(); } catch (e) {} const stream = cv.captureStream(30); if (ac) { await ac.resume(); dst = ac.createMediaStreamDestination(); dst.stream.getAudioTracks().forEach(t => stream.addTrack(t)); }
     const mime = ['video/mp4;codecs=avc1,mp4a.40.2', 'video/mp4', 'video/webm;codecs=vp9,opus', 'video/webm'].find(m => MediaRecorder.isTypeSupported(m));
@@ -156,12 +247,12 @@ desc: Type a word or sentence and get the viral newspaper headline match cut: ra
     $('hm-export').disabled = true; $('hm-msg').textContent = 'Recording… keep this tab open.'; rec.start(250); play(() => setTimeout(() => rec.stop(), 250));
   };
   const seg = (id, fn) => $(id).addEventListener('click', e => { const b = e.target.closest('button'); if (!b) return; $(id).querySelectorAll('button').forEach(x => x.setAttribute('aria-pressed', x === b)); fn(b); refresh(); });
-  seg('hm-ratio', b => { ratio = b.dataset.r; setSize(false); }); seg('hm-mark', b => { mark = b.dataset.m; cache.clear(); });
-  function refresh() { if (playing) return; build(); draw(seq.length ? seq[Math.min(seq.length - 1, 2)].t : 0); try { localStorage.setItem('hm-v1', JSON.stringify({ text: $('hm-text').value, mast: $('hm-mast').value, ratio, mark })); } catch (e) {} }
-  ['hm-text', 'hm-mast', 'hm-speed', 'hm-pages', 'hm-paper', 'hm-final'].forEach(id => $(id).addEventListener('input', refresh));
-  try { const s = JSON.parse(localStorage.getItem('hm-v1') || 'null'); if (s) { $('hm-text').value = s.text; $('hm-mast').value = s.mast; ratio = s.ratio; mark = s.mark;
+  seg('hm-ratio', b => { ratio = b.dataset.r; setSize(false); }); seg('hm-look', b => { look = b.dataset.l; cache.clear(); }); seg('hm-mark', b => { mark = b.dataset.m; cache.clear(); });
+  function refresh() { if (playing) return; build(); draw(seq.length ? seq[Math.min(seq.length - 1, 2)].t : 0); try { localStorage.setItem('hm-v1', JSON.stringify({ text: $('hm-text').value, mast: $('hm-mast').value, handle: $('hm-handle').value, tag: $('hm-tag').value, ratio, mark, look })); } catch (e) {} }
+  ['hm-text', 'hm-mast', 'hm-handle', 'hm-tag', 'hm-speed', 'hm-pages', 'hm-paper', 'hm-final'].forEach(id => $(id).addEventListener('input', refresh));
+  try { const s = JSON.parse(localStorage.getItem('hm-v1') || 'null'); if (s) { $('hm-text').value = s.text; $('hm-mast').value = s.mast; ratio = s.ratio; mark = s.mark; look = s.look || 'article'; if (s.handle != null) $('hm-handle').value = s.handle; if (s.tag != null) $('hm-tag').value = s.tag; $('hm-look').querySelectorAll('button').forEach(x => x.setAttribute('aria-pressed', x.dataset.l === look));
     $('hm-ratio').querySelectorAll('button').forEach(x => x.setAttribute('aria-pressed', x.dataset.r === ratio)); $('hm-mark').querySelectorAll('button').forEach(x => x.setAttribute('aria-pressed', x.dataset.m === mark)); } } catch (e) {}
   setSize(false); refresh();
-  Promise.all(FONTS.map(f => document.fonts.load(`${f[0]} 40px "${f[1]}"`)).concat(document.fonts.load('400 40px "UnifrakturMaguntia"'))).then(() => { cache.clear(); refresh(); }).catch(() => {});
+  Promise.all(FONTS.map(f => document.fonts.load(`${f[0]} 40px "${f[1]}"`)).concat(document.fonts.load('400 40px "UnifrakturMaguntia"'), ...BODY.map(f => document.fonts.load(`${f[0]} 40px "${f[1]}"`)), document.fonts.load('500 20px "IBM Plex Mono"'))).then(() => { cache.clear(); refresh(); }).catch(() => {});
 })();
 </script>
