@@ -269,6 +269,7 @@ details p { margin: 10px 0 0 }
     <div class="row">
       <label style="flex:1">Map style <select id="ma-style"><option value="paper">Explainer paper</option><option value="light">Clean light</option><option value="dark">Night</option><option value="vintage">Vintage atlas</option><option value="blueprint">Blueprint</option><option value="mono">Newspaper mono</option><option value="ocean">Ocean blue</option><option value="sunset">Sunset</option><option value="forest">Forest</option><option value="satellite">Satellite</option></select></label>
       <label style="flex:1">Format <select id="ma-ratio"><option value="16:9">16:9 · YouTube</option><option value="9:16">9:16 · Reels, Shorts</option><option value="1:1">1:1 · Feed</option></select></label>
+      <label style="flex:1">Resolution <select id="ma-res"><option value="720">720p · HD</option><option value="1080" selected>1080p · Full HD</option><option value="1440">1440p · 2K</option><option value="2160">2160p · 4K</option></select></label>
     </div>
     <div class="row">
       <label style="flex:1">Camera <select id="ma-cam"><option value="follow">Follow the route</option><option value="whole">Show whole route</option></select></label>
@@ -286,7 +287,7 @@ details p { margin: 10px 0 0 }
 <section class="copy" id="how">
   <h2>How it works</h2>
   <p>The map is drawn on your device from open country outlines, so nothing is uploaded and there's no watermark. Flights curve along the shortest path over the globe, the way real planes fly; cars, trains and ships travel in straight lines on the map. The camera eases from one leg to the next, and every country you pass through can be highlighted. Turn on the globe intro to open with a spinning Earth that zooms into your first stop, and pick the Satellite style for real NASA imagery.</p>
-  <p>Exporting records the animation in real time, so a 20-second animation takes 20 seconds to export. Keep this tab open and visible while it records. Chrome and Edge save WebM or MP4; Safari saves MP4.</p>
+  <p>Export in 720p, 1080p, 2K or 4K. Every frame is rendered one by one into an MP4, so nothing is dropped even at 4K; higher resolutions simply take longer. Keep this tab open while it renders.</p>
 </section>
 <section class="copy" id="faq">
   <h2>Questions</h2>
@@ -296,6 +297,8 @@ details p { margin: 10px 0 0 }
   <details><summary>Can I use it for history videos?</summary><p>Yes. Add the places in order, turn on country highlights and set a title such as "Napoleon's march, 1812" for a classic explainer look.</p></details>
 </section>
 <script src="vendor/topojson-client.min.js"></script>
+<script src="vendor/mp4-muxer.js"></script>
+<script src="vendor/cb-encode.js"></script>
 <script>
 (() => {
   const $ = id => document.getElementById(id);
@@ -343,8 +346,8 @@ details p { margin: 10px 0 0 }
     return SAT.loading; }
   // ---------- state ----------
   let stops = [{ name: 'Mumbai', mode: 'plane' }, { name: 'Dubai', mode: 'plane' }, { name: 'Paris', mode: 'plane' }, { name: 'Monza', mode: 'train' }];
-  try { const s = JSON.parse(localStorage.getItem('ma-v1') || 'null'); if (s && s.stops) { stops = s.stops; ['ma-title', 'ma-style', 'ma-ratio', 'ma-cam', 'ma-leg', 'ma-color', 'ma-hi'].forEach(k => { if (s[k] != null) $(k).value = s[k]; }); $('ma-hl').checked = s.hl !== false; $('ma-globe').checked = !!s.globe; } } catch (e) {}
-  const save = () => { try { const s = { stops, hl: $('ma-hl').checked, globe: $('ma-globe').checked }; ['ma-title', 'ma-style', 'ma-ratio', 'ma-cam', 'ma-leg', 'ma-color', 'ma-hi'].forEach(k => s[k] = $(k).value); localStorage.setItem('ma-v1', JSON.stringify(s)); } catch (e) {} };
+  try { const s = JSON.parse(localStorage.getItem('ma-v1') || 'null'); if (s && s.stops) { stops = s.stops; ['ma-title', 'ma-style', 'ma-ratio', 'ma-res', 'ma-cam', 'ma-leg', 'ma-color', 'ma-hi'].forEach(k => { if (s[k] != null) $(k).value = s[k]; }); $('ma-hl').checked = s.hl !== false; $('ma-globe').checked = !!s.globe; } } catch (e) {}
+  const save = () => { try { const s = { stops, hl: $('ma-hl').checked, globe: $('ma-globe').checked }; ['ma-title', 'ma-style', 'ma-ratio', 'ma-res', 'ma-cam', 'ma-leg', 'ma-color', 'ma-hi'].forEach(k => s[k] = $(k).value); localStorage.setItem('ma-v1', JSON.stringify(s)); } catch (e) {} };
   // ---------- projection (Mercator in degree units) ----------
   const R2D = 180 / Math.PI, D2R = Math.PI / 180;
   const my = lat => R2D * Math.log(Math.tan(Math.PI / 4 + Math.max(-85, Math.min(85, lat)) * D2R / 2));
@@ -596,16 +599,27 @@ details p { margin: 10px 0 0 }
   $('ma-rec').onclick = async () => {
     if ($('ma-style').value === 'satellite' && !SAT.img) { $('ma-msg').textContent = 'Loading satellite imagery…'; await loadSat(); if (!SAT.img) return; }
     if (!route || route.legs.length < 1) { $('ma-msg').textContent = 'Add at least two stops first.'; return; }
-    if (!cv.captureStream || !window.MediaRecorder) { $('ma-msg').textContent = "This browser can't record video. Try Chrome, Edge or Safari on a computer."; return; }
-    const types = ['video/mp4;codecs=avc1', 'video/mp4', 'video/webm;codecs=vp9', 'video/webm;codecs=vp8', 'video/webm'];
-    const mime = types.find(m => MediaRecorder.isTypeSupported(m)) || '';
-    const r = $('ma-ratio').value, [w, h] = r === '9:16' ? [1080, 1920] : r === '1:1' ? [1080, 1080] : [1920, 1080]; cv.width = w; cv.height = h; ctx = cv.getContext('2d');
+    const r = $('ma-ratio').value, res = +$('ma-res').value, L = Math.round(res * 16 / 9 / 2) * 2, [w, h] = r === '9:16' ? [res, L] : r === '1:1' ? [res, res] : [L, res];
+    const save = (blob, ext) => { const a = document.createElement('a'); a.href = URL.createObjectURL(blob); a.download = `map-route-${r.replace(':', 'x')}-${res}p.${ext}`; a.click(); };
+    const finish = msg => { $('ma-msg').textContent = msg; $('ma-rec').disabled = false; $('ma-play').disabled = false; setRatio(); refresh(); };
+    $('ma-rec').disabled = true; $('ma-play').disabled = true;
+    if (window.CBEncode && CBEncode.supported()) {   // frame-by-frame: no dropped frames at any resolution
+      cv.width = w; cv.height = h; ctx = cv.getContext('2d'); const T = total();
+      try {
+        const out = await CBEncode.render({ canvas: cv, width: w, height: h, fps: 30, duration: T, drawFrame: t => { draw(Math.min(t, T)); },
+          onProgress: p => { $('ma-bar').style.width = (p * 100) + '%'; $('ma-msg').textContent = `Rendering ${w} × ${h}… ${Math.round(p * 100)}%`; } });
+        save(out.blob, 'mp4'); finish(`Saved MP4 at ${w} × ${h} · ${(out.blob.size / 1e6).toFixed(1)} MB.`);
+      } catch (e) { finish('Export failed: ' + (e.message || e) + ' Try a lower resolution.'); }
+      return;
+    }
+    if (!cv.captureStream || !window.MediaRecorder) { finish("This browser can't export video. Try Chrome, Edge or Safari on a computer."); return; }
+    const fw = Math.min(w, r === '16:9' ? 1920 : 1080), fh = Math.round(fw * h / w / 2) * 2;   // real-time fallback, capped at 1080p
+    const types = ['video/mp4;codecs=avc1', 'video/mp4', 'video/webm;codecs=vp9', 'video/webm;codecs=vp8', 'video/webm'], mime = types.find(m => MediaRecorder.isTypeSupported(m)) || '';
+    cv.width = fw; cv.height = fh; ctx = cv.getContext('2d');
     const rec = new MediaRecorder(cv.captureStream(30), mime ? { mimeType: mime, videoBitsPerSecond: 8e6 } : {}); const chunks = [];
     rec.ondataavailable = e => e.data.size && chunks.push(e.data);
-    rec.onstop = () => { const type = rec.mimeType || 'video/webm', ext = type.includes('mp4') ? 'mp4' : 'webm'; const a = document.createElement('a');
-      a.href = URL.createObjectURL(new Blob(chunks, { type })); a.download = `map-route-${r.replace(':', 'x')}.${ext}`; a.click();
-      $('ma-msg').textContent = `Saved ${ext.toUpperCase()} at ${w} × ${h}.`; $('ma-rec').disabled = false; setRatio(); refresh(); };
-    $('ma-rec').disabled = true; $('ma-msg').textContent = 'Recording… keep this tab open and visible.'; rec.start(250);
+    rec.onstop = () => { const type = rec.mimeType || 'video/webm', ext = type.includes('mp4') ? 'mp4' : 'webm'; save(new Blob(chunks, { type }), ext); finish(`Saved ${ext.toUpperCase()} at ${fw} × ${fh}.`); };
+    $('ma-msg').textContent = 'Recording… keep this tab open and visible.'; rec.start(250);
     play(null, () => setTimeout(() => rec.stop(), 300));
   };
   setRatio(); renderStops(); if ($('ma-style').value === 'satellite') loadSat();
