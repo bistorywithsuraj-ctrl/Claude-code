@@ -321,7 +321,11 @@ details p { margin: 10px 0 0 }
 (() => {
   const $ = id => document.getElementById(id);
   const video = $('ac-video'), ov = $('ac-overlay'), octx = ov.getContext('2d');
+  const UA = navigator.userAgent, MOBILE = /iPhone|iPad|iPod|Android|Mobile/i.test(UA) || (navigator.maxTouchPoints > 1 && /Macintosh/.test(UA)), SAFARI = /Safari/.test(UA) && !/Chrome|Chromium|CriOS|Edg|Android/.test(UA), GPU_OK = !MOBILE && !SAFARI;
   let file = null, words = [], cues = [], style = 'pop', worker = null, url = null;
+  let dog = null, lastBeat = 0; const beat = () => { lastBeat = Date.now(); };
+  function watch(limitMs, onStall) { clearInterval(dog); if (!limitMs) return; beat(); dog = setInterval(() => { if (Date.now() - lastBeat > limitMs) { clearInterval(dog); onStall(); } }, 3000); }
+
   const fmt = (s, sep = ',') => { const h = Math.floor(s / 3600), m = Math.floor(s % 3600 / 60), x = Math.floor(s % 60), ms = Math.round((s % 1) * 1000); return `${String(h).padStart(2, '0')}:${String(m).padStart(2, '0')}:${String(x).padStart(2, '0')}${sep}${String(ms).padStart(3, '0')}`; };
   const short = s => `${Math.floor(s / 60)}:${(s % 60).toFixed(1).padStart(4, '0')}`;
   // ---------- worker (keeps the page responsive while the model runs) ----------
@@ -333,7 +337,7 @@ details p { margin: 10px 0 0 }
       try {
         if (!asr || cur !== data.model) {
           let device = 'wasm';
-          try { if (self.navigator && navigator.gpu && await navigator.gpu.requestAdapter()) device = 'webgpu'; } catch (e) {}
+          if (data.gpu) try { if (self.navigator && navigator.gpu && await navigator.gpu.requestAdapter()) device = 'webgpu'; } catch (e) {}
           const files = {};
           asr = await pipeline('automatic-speech-recognition', data.model, { device, dtype: device === 'webgpu' ? { encoder_model: 'fp32', decoder_model_merged: 'q4' } : 'q8',
             progress_callback: p => { if (p.status === 'progress' && p.total) { files[p.file] = [p.loaded, p.total]; const v = Object.values(files); self.postMessage({ type: 'load', p: v.reduce((a, x) => a + x[0], 0) / v.reduce((a, x) => a + x[1], 0) }); } } }).catch(async e => {
@@ -445,17 +449,18 @@ details p { margin: 10px 0 0 }
       $('ac-status').textContent = 'Reading the audio…'; const audio = await audioOf(file);
       if (audio.length / 16000 > 600) $('ac-status').textContent = 'Long video: this can take a few minutes on a laptop.';
       const w = getWorker();
-      w.onmessage = ({ data }) => {
-        if (data.type === 'load') { $('ac-status').textContent = `Downloading the AI model (one time only)… ${Math.round(data.p * 100)}%`; $('ac-bar').style.width = data.p * 60 + '%'; }
+      watch(120000 + audio.length / 16000 * 4000, () => { try { w.terminate(); } catch (e) {} worker = null; $('ac-go').disabled = false; $('ac-status').textContent = MOBILE ? 'Your phone stopped responding. Try the Fast model, a shorter clip, or a computer.' : 'Captioning stopped responding. Reload the page and try the Fast model.'; });
+      w.onmessage = ({ data }) => { beat();
+        if (data.type === 'load') { $('ac-status').textContent = data.p > .995 ? 'Preparing the AI model…' : `Downloading the AI model (one time only)… ${Math.round(data.p * 100)}%`; $('ac-bar').style.width = data.p * 60 + '%'; }
         if (data.type === 'run') { $('ac-status').textContent = 'Listening and writing captions…'; $('ac-bar').style.width = '75%'; }
-        if (data.type === 'done') { words = data.chunks.map(c => ({ t: c.text.trim(), s: c.timestamp[0], e: c.timestamp[1] ?? c.timestamp[0] + .3 })).filter(w => w.t);
+        if (data.type === 'done') { watch(0); words = data.chunks.map(c => ({ t: c.text.trim(), s: c.timestamp[0], e: c.timestamp[1] ?? c.timestamp[0] + .3 })).filter(w => w.t);
           $('ac-bar').style.width = '100%'; $('ac-go').disabled = false;
           $('ac-status').textContent = words.length ? `Done: ${words.length} words. Press play to preview.` : "No speech found. Try the Accurate model or check the video's sound."; if (words.length) regroup(); }
-        if (data.type === 'error') { $('ac-status').textContent = 'Something went wrong: ' + data.message + '. Try the Fast model or a shorter clip.'; $('ac-go').disabled = false; }
+        if (data.type === 'error') { watch(0); $('ac-status').textContent = 'Something went wrong: ' + data.message + '. Try the Fast model or a shorter clip.'; $('ac-go').disabled = false; }
       };
       w.onerror = e => { e.preventDefault && e.preventDefault(); worker = null; $('ac-status').textContent = "The AI model couldn't load. Check your connection and try again."; $('ac-go').disabled = false; };
       $('ac-status').textContent = 'Loading the AI model…';
-      w.postMessage({ model: $('ac-model').value, lang: $('ac-lang').value, audio }, [audio.buffer]);
+      w.postMessage({ model: $('ac-model').value, lang: $('ac-lang').value, audio, gpu: GPU_OK }, [audio.buffer]);
     } catch (e) { $('ac-status').textContent = "This browser couldn't read the file's audio. Try an MP4 or MOV, or another browser."; $('ac-go').disabled = false; }
   };
   $('ac-styles').addEventListener('click', e => { const b = e.target.closest('button'); if (!b) return; style = b.dataset.s; document.querySelectorAll('#ac-styles button').forEach(x => x.setAttribute('aria-pressed', x === b)); });

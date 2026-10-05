@@ -279,6 +279,11 @@ details p { margin: 10px 0 0 }
 <script>
 (() => {
   const $ = id => document.getElementById(id); let file = null, worker = null;
+  const UA = navigator.userAgent, MOBILE = /iPhone|iPad|iPod|Android|Mobile/i.test(UA) || (navigator.maxTouchPoints > 1 && /Macintosh/.test(UA)), SAFARI = /Safari/.test(UA) && !/Chrome|Chromium|CriOS|Edg|Android/.test(UA), GPU_OK = !MOBILE && !SAFARI;
+  let dog = null, lastBeat = 0; const beat = () => { lastBeat = Date.now(); };
+  function watch(limitMs, onStall) { clearInterval(dog); if (!limitMs) return; beat(); dog = setInterval(() => { if (Date.now() - lastBeat > limitMs) { clearInterval(dog); onStall(); } }, 3000); }
+  if (MOBILE) { $('ad-deep').checked = false; $('ad-deep').parentElement.lastChild.textContent = ' Also run the AI detector model (about 210 MB; best on Wi-Fi or a computer)'; }
+
   const MODEL = 'https://huggingface.co/pranjal-pravesh/haywoodsloan-ai-image-detector/resolve/main/model_int8.onnx';
   const AI_TOOLS = ['Midjourney', 'DALL-E', 'DALL·E', 'ChatGPT', 'OpenAI', 'Adobe Firefly', 'Firefly', 'Stable Diffusion', 'StableDiffusion', 'DreamStudio', 'NovelAI', 'Leonardo.Ai', 'Ideogram', 'Imagen', 'Gemini', 'Bing Image Creator', 'Microsoft Designer', 'Flux', 'ComfyUI', 'Automatic1111', 'InvokeAI', 'Fooocus', 'Craiyon', 'Runway', 'Meta AI', 'Grok', 'Canva AI'];
   const CAMS = ['Apple', 'iPhone', 'Canon', 'NIKON', 'Nikon', 'SONY', 'Sony', 'FUJIFILM', 'samsung', 'SAMSUNG', 'Google Pixel', 'OnePlus', 'Xiaomi', 'HUAWEI', 'OLYMPUS', 'Panasonic', 'LEICA', 'GoPro', 'DJI', 'motorola', 'vivo', 'OPPO', 'realme'];
@@ -343,11 +348,12 @@ details p { margin: 10px 0 0 }
     const im = $('ad-img'); if (!im.complete) await new Promise(r => im.onload = r); const px = pixels(im);
     if (!worker) worker = new Worker(URL.createObjectURL(new Blob([WORKER], { type: 'text/javascript' })), { type: 'module' });
     worker.onerror = e => { e.preventDefault && e.preventDefault(); worker = null; $('ad-status').textContent = "The detector model couldn't load. The file check above still applies."; $('ad-go').disabled = false; };
-    worker.onmessage = ({ data }) => {
+    watch(180000, () => { try { worker.terminate(); } catch (e) {} worker = null; $('ad-go').disabled = false; $('ad-status').textContent = 'The detector model stopped responding' + (MOBILE ? ' (phones can run out of memory). The file check above still applies; try a computer for the model check.' : '. The file check above still applies.'); });
+    worker.onmessage = ({ data }) => { beat();
       if (data.type === 'load') { $('ad-status').textContent = `Downloading the detector model (one time only)… ${Math.round(data.p * 100)}%`; $('ad-bar').style.width = 5 + data.p * 80 + '%'; }
       if (data.type === 'run') { $('ad-status').textContent = 'Analysing the image…'; $('ad-bar').style.width = '90%'; }
-      if (data.type === 'done') { show(meta, data.ai); $('ad-status').textContent = 'Done.'; $('ad-bar').style.width = '100%'; $('ad-go').disabled = false; window.__adLogits = data.logits; }
-      if (data.type === 'error') { $('ad-status').textContent = 'The detector model failed: ' + data.message + '. The file check above still applies.'; $('ad-go').disabled = false; }
+      if (data.type === 'done') { watch(0); show(meta, data.ai); $('ad-status').textContent = 'Done.'; $('ad-bar').style.width = '100%'; $('ad-go').disabled = false; window.__adLogits = data.logits; }
+      if (data.type === 'error') { watch(0); $('ad-status').textContent = 'The detector model failed: ' + data.message + '. The file check above still applies.'; $('ad-go').disabled = false; }
     };
     worker.postMessage({ url: MODEL, px }, [px.buffer]);
   };

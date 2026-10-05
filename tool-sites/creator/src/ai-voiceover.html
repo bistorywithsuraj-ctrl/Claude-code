@@ -47,7 +47,11 @@ desc: Free AI text to speech with natural voices for YouTube, Reels and Shorts. 
   const $ = id => document.getElementById(id);
   const VOICES = [['af_heart', 'Heart', 'US female · warm'], ['af_bella', 'Bella', 'US female · bright'], ['af_nicole', 'Nicole', 'US female · soft'], ['am_michael', 'Michael', 'US male · calm'],
     ['am_fenrir', 'Fenrir', 'US male · deep'], ['am_puck', 'Puck', 'US male · lively'], ['bf_emma', 'Emma', 'UK female · clear'], ['bf_isabella', 'Isabella', 'UK female · warm'], ['bm_george', 'George', 'UK male · narrator'], ['bm_fable', 'Fable', 'UK male · storyteller']];
+  const UA = navigator.userAgent, MOBILE = /iPhone|iPad|iPod|Android|Mobile/i.test(UA) || (navigator.maxTouchPoints > 1 && /Macintosh/.test(UA)), SAFARI = /Safari/.test(UA) && !/Chrome|Chromium|CriOS|Edg|Android/.test(UA), GPU_OK = !MOBILE && !SAFARI;
   let voice = 'am_michael', worker = null, out = null;
+  let dog = null, lastBeat = 0; const beat = () => { lastBeat = Date.now(); };
+  function watch(limitMs, onStall) { clearInterval(dog); if (!limitMs) return; beat(); dog = setInterval(() => { if (Date.now() - lastBeat > limitMs) { clearInterval(dog); onStall(); } }, 3000); }
+
   $('av-voices').innerHTML = VOICES.map(([id, n, d]) => `<button type="button" data-v="${id}" aria-pressed="${id === voice}"><b>${n}</b><small>${d}</small></button>`).join('');
   $('av-voices').onclick = e => { const b = e.target.closest('button'); if (!b) return; voice = b.dataset.v; document.querySelectorAll('#av-voices button').forEach(x => x.setAttribute('aria-pressed', x === b)); };
   const count = () => { const w = $('av-text').value.trim().split(/\s+/).filter(Boolean).length; $('av-count').textContent = `${w} words · about ${Math.max(1, Math.round(w / 2.5))} seconds of audio`; };
@@ -58,12 +62,13 @@ desc: Free AI text to speech with natural voices for YouTube, Reels and Shorts. 
     self.onmessage = async ({ data }) => {
       try {
         if (!tts) {
-          let device = 'wasm'; try { if (navigator.gpu && await navigator.gpu.requestAdapter()) device = 'webgpu'; } catch (e) {}
+          let device = 'wasm'; if (data.gpu) try { if (navigator.gpu && await navigator.gpu.requestAdapter()) device = 'webgpu'; } catch (e) {}
           const files = {};
           const load = d => KokoroTTS.from_pretrained('onnx-community/Kokoro-82M-v1.0-ONNX', { dtype: d === 'webgpu' ? 'fp32' : 'q8', device: d,
             progress_callback: p => { if (p.status === 'progress' && p.total) { files[p.file] = [p.loaded, p.total]; const v = Object.values(files); self.postMessage({ type: 'load', p: v.reduce((a, x) => a + x[0], 0) / v.reduce((a, x) => a + x[1], 0) }); } } });
           try { tts = await load(device); } catch (e) { if (device === 'wasm') throw e; tts = await load('wasm'); }
         }
+        self.postMessage({ type: 'ready' });
         const parts = data.text.replace(/\\s+/g, ' ').match(/[^.!?]+[.!?]*["')\\]]*\\s*/g) || [data.text];
         const chunks = []; let sr = 24000;
         for (let i = 0; i < parts.length; i++) { const t = parts[i].trim(); if (!t) continue;
@@ -83,14 +88,18 @@ desc: Free AI text to speech with natural voices for YouTube, Reels and Shorts. 
     $('av-go').disabled = true; $('av-dl').disabled = true; $('av-bar').style.width = '0%'; $('av-status').textContent = 'Loading the voice model…';
     if (!worker) worker = new Worker(URL.createObjectURL(new Blob([WORKER], { type: 'text/javascript' })), { type: 'module' });
     worker.onerror = e => { e.preventDefault && e.preventDefault(); worker = null; $('av-status').textContent = "The voice model couldn't load. Check your connection and try again."; $('av-go').disabled = false; };
-    worker.onmessage = ({ data }) => {
-      if (data.type === 'load') { $('av-status').textContent = `Downloading the voice model (one time only)… ${Math.round(data.p * 100)}%`; $('av-bar').style.width = data.p * 40 + '%'; }
+    const stall = () => { try { worker.terminate(); } catch (e) {} worker = null; $('av-go').disabled = false; $('av-status').textContent = MOBILE ? 'Your phone stopped responding while preparing the voice. Close other apps and tabs, then try a shorter script, or use a computer for long scripts.' : 'The voice stopped responding. Reload the page and try again with a shorter script.'; };
+    watch(150000, stall);
+    worker.onmessage = ({ data }) => { beat();
+      if (data.type === 'load') { $('av-status').textContent = data.p > .995 ? 'Preparing the voice (first time can take up to a minute on phones)…' : `Downloading the voice model (one time only)… ${Math.round(data.p * 100)}%`; $('av-bar').style.width = data.p * 40 + '%'; }
+      if (data.type === 'prepare') { $('av-status').textContent = 'Preparing the voice (first time can take up to a minute on phones)…'; $('av-bar').style.width = '42%'; }
+      if (data.type === 'ready') { $('av-status').textContent = 'Speaking…'; $('av-bar').style.width = '45%'; }
       if (data.type === 'progress') { $('av-status').textContent = `Speaking… ${Math.round(data.p * 100)}%`; $('av-bar').style.width = 40 + data.p * 60 + '%'; }
       if (data.type === 'done') { out = { f: data.audio, sr: data.sr }; const blob = wav(out.f, out.sr); $('av-audio').src = URL.createObjectURL(blob); $('av-audio').hidden = false;
-        $('av-status').textContent = `Done: ${(out.f.length / out.sr).toFixed(1)} seconds. Play it, then download.`; $('av-go').disabled = false; $('av-dl').disabled = false; $('av-bar').style.width = '100%'; }
-      if (data.type === 'error') { $('av-status').textContent = 'Something went wrong: ' + data.message; $('av-go').disabled = false; }
+        watch(0); $('av-status').textContent = `Done: ${(out.f.length / out.sr).toFixed(1)} seconds. Play it, then download.`; $('av-go').disabled = false; $('av-dl').disabled = false; $('av-bar').style.width = '100%'; }
+      if (data.type === 'error') { watch(0); $('av-status').textContent = 'Something went wrong: ' + data.message; $('av-go').disabled = false; }
     };
-    worker.postMessage({ text, voice, speed: +$('av-speed').value });
+    worker.postMessage({ text, voice, speed: +$('av-speed').value, gpu: GPU_OK });
   };
   $('av-dl').onclick = () => { if (!out) return; const fmt = $('av-fmt').value, blob = fmt === 'mp3' ? mp3(out.f, out.sr) : wav(out.f, out.sr), a = document.createElement('a'); a.href = URL.createObjectURL(blob); a.download = `voiceover-${voice}.${fmt}`; a.click(); };
 })();
