@@ -52,6 +52,7 @@ desc: Add big, bold text to your YouTube thumbnail in seconds. Pick a template, 
   <details><summary>What size is a YouTube thumbnail?</summary><p>1280 × 720 pixels (16:9), under 2 MB. This tool always exports at exactly that size; choose JPG if the PNG is over 2 MB.</p></details>
   <details><summary>How much text should a thumbnail have?</summary><p>Three to five big words. Thumbnails are seen small on phones, so short, high-contrast text with one highlighted word reads best.</p></details>
 </section>
+<script src="vendor/cb-deva.js"></script>
 <script>
 (() => {
   const $ = id => document.getElementById(id), cv = $('tt-c'), g = cv.getContext('2d'), W = 1280, H = 720;
@@ -91,6 +92,7 @@ desc: Add big, bold text to your YouTube thumbnail in seconds. Pick a template, 
   cv.addEventListener('pointerup', () => { drag = null; cv.style.cursor = 'grab'; });
   $('tt-tpl').onclick = e => { const b = e.target.closest('button'); if (!b) return; tpl = b.dataset.t; document.querySelectorAll('#tt-tpl button').forEach(x => x.setAttribute('aria-pressed', x === b)); draw(); };
   ['tt-l1', 'tt-l2', 'tt-hw', 'tt-size', 'tt-hc', 'tt-dark'].forEach(id => $(id).addEventListener('input', draw));
+  window.addEventListener('cb-deva-fonts', draw);
   $('tt-file').onchange = e => { const f = e.target.files[0]; if (!f) return; const im = new Image(); im.onload = () => { bg = im; draw(); }; im.src = URL.createObjectURL(f); };
   const save = (type, ext) => { const a = document.createElement('a'); a.href = cv.toDataURL(type, .9); a.download = `thumbnail.${ext}`; a.click(); };
   $('tt-png').onclick = () => save('image/png', 'png'); $('tt-jpg').onclick = () => save('image/jpeg', 'jpg');

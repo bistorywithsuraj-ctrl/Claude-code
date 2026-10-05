@@ -2,9 +2,9 @@
 slug: auto-captions
 title: Auto Captions: free AI captions for Reels, Shorts and TikTok
 name: Auto Captions Generator
-desc: Free AI auto captions for Reels, Shorts and TikTok. Transcribe your video in the browser, style animated word-by-word captions, and export SRT or a captioned video. No upload.
+desc: Free AI auto captions for Reels, Shorts and TikTok in English, Hindi or Hinglish. Transcribe your video in the browser, style animated word-by-word captions, and export SRT or a captioned video. No upload.
 -->
-<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Anton&family=Bangers&family=Montserrat:wght@800;900&display=swap">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Anton&family=Bangers&family=Montserrat:wght@800;900&family=Baloo+2:wght@700;800&family=Hind:wght@500;600&display=swap">
 <style>
 .ac-stage { position: relative; background: #111; border-radius: 12px; overflow: hidden; display: grid; place-items: center; min-height: 240px }
 .ac-stage video { display: block; max-width: 100%; max-height: 70vh }
@@ -39,8 +39,9 @@ desc: Free AI auto captions for Reels, Shorts and TikTok. Transcribe your video 
   <h2>Your video</h2>
   <label>Video or audio file <input id="ac-file" type="file" accept="video/*,audio/*"></label>
   <div class="row">
-    <label style="flex:1">Speed <select id="ac-model"><option value="onnx-community/whisper-tiny.en_timestamped">Fast · English (40 MB)</option><option value="onnx-community/whisper-base_timestamped">Accurate · 99 languages (80 MB)</option></select></label>
-    <label style="flex:1">Language <select id="ac-lang" disabled><option value="">Detect automatically</option><option value="english">English</option><option value="hindi">Hindi</option><option value="spanish">Spanish</option><option value="portuguese">Portuguese</option><option value="french">French</option><option value="german">German</option><option value="arabic">Arabic</option><option value="indonesian">Indonesian</option><option value="japanese">Japanese</option><option value="korean">Korean</option></select></label>
+    <label style="flex:1">Speed <select id="ac-model"><option value="onnx-community/whisper-tiny.en_timestamped">Fast · English (40 MB)</option><option value="onnx-community/whisper-base_timestamped">Accurate · 99 languages (80 MB)</option><option value="onnx-community/whisper-small_timestamped">Best · Hindi &amp; Hinglish (250 MB)</option></select></label>
+    <label style="flex:1">Language <select id="ac-lang" disabled><option value="">Detect automatically</option><option value="english">English</option><option value="hindi">Hindi / Hinglish</option><option value="spanish">Spanish</option><option value="portuguese">Portuguese</option><option value="french">French</option><option value="german">German</option><option value="arabic">Arabic</option><option value="indonesian">Indonesian</option><option value="japanese">Japanese</option><option value="korean">Korean</option></select></label>
+    <label style="flex:1">Hindi captions in <select id="ac-script" disabled><option value="">As spoken</option><option value="roman">Hinglish · English letters</option><option value="deva">हिंदी · Devanagari</option></select></label>
   </div>
   <div class="row"><button type="button" class="btn" id="ac-go" disabled>Generate captions</button><span class="hint" id="ac-status">Choose a file to start. The AI model downloads once, then works offline.</span></div>
   <div class="ac-bar" aria-hidden="true"><i id="ac-bar"></i></div>
@@ -90,16 +91,17 @@ desc: Free AI auto captions for Reels, Shorts and TikTok. Transcribe your video 
 <section class="copy" id="faq">
   <h2>Questions</h2>
   <details><summary>Are these auto captions really free?</summary><p>Yes. There is no sign-up, no watermark and no limit on video length. Because the AI runs on your own device, there is no server cost to pass on.</p></details>
-  <details><summary>Does it work for Hindi and Hinglish?</summary><p>Choose "Accurate · 99 languages" and pick Hindi, or leave it on automatic detection. Hinglish speech is usually written in Latin or Devanagari script depending on what the model hears; you can edit any line afterwards.</p></details>
+  <details><summary>Does it work for Hindi and Hinglish?</summary><p>Yes. Choose "Best · Hindi &amp; Hinglish", set Language to Hindi, then pick whether captions should be written in Hinglish (English letters, like "aap kaise ho") or हिंदी (Devanagari). You can switch between them after the captions are made. You can also edit any line by hand.</p></details>
   <details><summary>How do I add the captions to Instagram or YouTube?</summary><p>For Reels and TikTok, export the captioned video and upload it. For YouTube, download the SRT file and add it under Subtitles in YouTube Studio, or upload the captioned video.</p></details>
   <details><summary>Why is the first run slow?</summary><p>The AI model has to download once. After that it loads from your browser's cache in a few seconds. A phone works, but a computer is much faster.</p></details>
 </section>
+<script src="vendor/hindi-g2p.js"></script>
 <script>
 (() => {
   const $ = id => document.getElementById(id);
   const video = $('ac-video'), ov = $('ac-overlay'), octx = ov.getContext('2d');
   const UA = navigator.userAgent, MOBILE = /iPhone|iPad|iPod|Android|Mobile/i.test(UA) || (navigator.maxTouchPoints > 1 && /Macintosh/.test(UA)), SAFARI = /Safari/.test(UA) && !/Chrome|Chromium|CriOS|Edg|Android/.test(UA), GPU_OK = !MOBILE && !SAFARI;
-  let file = null, words = [], cues = [], style = 'pop', worker = null, url = null;
+  let file = null, words = [], rawWords = [], cues = [], style = 'pop', worker = null, url = null;
   let dog = null, lastBeat = 0; const beat = () => { lastBeat = Date.now(); };
   function watch(limitMs, onStall) { clearInterval(dog); if (!limitMs) return; beat(); dog = setInterval(() => { if (Date.now() - lastBeat > limitMs) { clearInterval(dog); onStall(); } }, 3000); }
 
@@ -114,9 +116,9 @@ desc: Free AI auto captions for Reels, Shorts and TikTok. Transcribe your video 
       try {
         if (!asr || cur !== data.model) {
           let device = 'wasm';
-          if (data.gpu) try { if (self.navigator && navigator.gpu && await navigator.gpu.requestAdapter()) device = 'webgpu'; } catch (e) {}
+          let f16 = false; if (data.gpu) try { const ad = self.navigator && navigator.gpu && await navigator.gpu.requestAdapter(); if (ad) { device = 'webgpu'; f16 = ad.features.has('shader-f16'); } } catch (e) {}
           const files = {};
-          asr = await pipeline('automatic-speech-recognition', data.model, { device, dtype: device === 'webgpu' ? { encoder_model: 'fp32', decoder_model_merged: 'q4' } : 'q8',
+          asr = await pipeline('automatic-speech-recognition', data.model, { device, dtype: device === 'webgpu' ? { encoder_model: data.model.includes('small') && f16 ? 'fp16' : 'fp32', decoder_model_merged: 'q4' } : 'q8',
             progress_callback: p => { if (p.status === 'progress' && p.total) { files[p.file] = [p.loaded, p.total]; const v = Object.values(files); const tot = v.reduce((a, x) => a + x[1], 0); self.postMessage({ type: 'load', p: v.reduce((a, x) => a + x[0], 0) / tot, t: tot }); } } }).catch(async e => {
               if (device !== 'webgpu') throw e; return pipeline('automatic-speech-recognition', data.model, { device: 'wasm', dtype: 'q8' }); });
           cur = data.model;
@@ -164,16 +166,16 @@ desc: Free AI auto captions for Reels, Shorts and TikTok. Transcribe your video 
   // ---------- drawing (shared by preview and export) ----------
   // style table: font (relative to S), case, outline width, and how the spoken word is marked
   const ST = {
-    pop:   { f: S => `400 ${S * 1.15}px Anton, Impact, sans-serif`, up: 1, stroke: .16, pop: 1, mark: 'color' },
-    kara:  { f: S => `900 ${S}px Montserrat, "Arial Black", sans-serif`, stroke: .16, mark: 'said' },
-    sub:   { f: S => `600 ${S * .62}px Geist, system-ui, sans-serif`, lh: .85, band: 1 },
-    min:   { f: S => `500 ${S * .7}px Geist, system-ui, sans-serif`, lh: .85, low: 1, shadow: 1 },
-    box:   { f: S => `900 ${S * .9}px Montserrat, "Arial Black", sans-serif`, shadow: 1, mark: 'box', pop: 1 },
-    horm:  { f: S => `400 ${S * 1.2}px Anton, Impact, sans-serif`, up: 1, stroke: .15, mark: 'grow', alt: 1 },
-    neon:  { f: S => `900 ${S * .95}px Montserrat, "Arial Black", sans-serif`, neon: 1, mark: 'glow' },
-    type:  { f: S => `800 ${S * .85}px Montserrat, "Arial Black", sans-serif`, shadow: 1, mark: 'type' },
-    comic: { f: S => `400 ${S * 1.2}px Bangers, Impact, sans-serif`, up: 1, stroke: .14, mark: 'comic', pop: 1 },
-    out:   { f: S => `400 ${S * 1.2}px Anton, Impact, sans-serif`, up: 1, mark: 'fill' },
+    pop:   { f: S => `400 ${S * 1.15}px Anton, Impact, "Baloo 2", Hind, sans-serif`, up: 1, stroke: .16, pop: 1, mark: 'color' },
+    kara:  { f: S => `900 ${S}px Montserrat, "Arial Black", "Baloo 2", Hind, sans-serif`, stroke: .16, mark: 'said' },
+    sub:   { f: S => `600 ${S * .62}px Geist, "Baloo 2", Hind, system-ui, sans-serif`, lh: .85, band: 1 },
+    min:   { f: S => `500 ${S * .7}px Geist, "Baloo 2", Hind, system-ui, sans-serif`, lh: .85, low: 1, shadow: 1 },
+    box:   { f: S => `900 ${S * .9}px Montserrat, "Arial Black", "Baloo 2", Hind, sans-serif`, shadow: 1, mark: 'box', pop: 1 },
+    horm:  { f: S => `400 ${S * 1.2}px Anton, Impact, "Baloo 2", Hind, sans-serif`, up: 1, stroke: .15, mark: 'grow', alt: 1 },
+    neon:  { f: S => `900 ${S * .95}px Montserrat, "Arial Black", "Baloo 2", Hind, sans-serif`, neon: 1, mark: 'glow' },
+    type:  { f: S => `800 ${S * .85}px Montserrat, "Arial Black", "Baloo 2", Hind, sans-serif`, shadow: 1, mark: 'type' },
+    comic: { f: S => `400 ${S * 1.2}px Bangers, Impact, "Baloo 2", Hind, sans-serif`, up: 1, stroke: .14, mark: 'comic', pop: 1 },
+    out:   { f: S => `400 ${S * 1.2}px Anton, Impact, "Baloo 2", Hind, sans-serif`, up: 1, mark: 'fill' },
   };
   function drawCaption(g, W, H, t) {
     const c = cues.find(c => t >= c.s - .02 && t <= c.e + .15); if (!c) return;
@@ -215,9 +217,16 @@ desc: Free AI auto captions for Reels, Shorts and TikTok. Transcribe your video 
     requestAnimationFrame(loop); })();
   window.addEventListener('resize', () => video.videoWidth && fitOverlay());
   // ---------- file + run ----------
-  $('ac-model').onchange = () => { $('ac-lang').disabled = $('ac-model').value.includes('.en'); };
+  const multi = () => !$('ac-model').value.includes('.en');
+  $('ac-model').onchange = () => { $('ac-lang').disabled = !multi(); $('ac-script').disabled = !multi(); };
+  $('ac-lang').onchange = () => { if ($('ac-lang').value === 'hindi' && $('ac-model').value.includes('base')) $('ac-status').textContent = 'Tip: "Best · Hindi & Hinglish" is much more accurate for Hindi speech.'; };
+  // Hindi script conversion runs on the words, so switching needs no re-transcription
+  function applyScript() { const sc = $('ac-script').value, G = window.HindiG2P;
+    words = rawWords.map(w => { let t = w.t; if (G && sc === 'roman' && /[\u0900-\u097F]/.test(t)) t = G.toRoman(t); else if (G && sc === 'deva' && /^[A-Za-z']+[,.!?]?$/.test(t) && G.isHindiRoman(t.replace(/[^A-Za-z']/g, ''))) t = G.toDevanagari(t.replace(/[^A-Za-z']/g, '')) + t.replace(/[A-Za-z']/g, ''); return { ...w, t }; });
+    if (words.some(w => /[\u0900-\u097F]/.test(w.t))) ['800 40px "Baloo 2"', '600 40px Hind'].forEach(f => document.fonts.load(f, 'हिंदी').catch(() => {})); }
+  $('ac-script').onchange = () => { if (rawWords.length) { applyScript(); regroup(); } };
   $('ac-file').onchange = e => { file = e.target.files[0]; if (!file) return; if (url) URL.revokeObjectURL(url); url = URL.createObjectURL(file);
-    video.src = url; video.hidden = false; ov.hidden = false; $('ac-empty').hidden = true; $('ac-go').disabled = false; words = []; cues = []; renderCues(); enable(false);
+    video.src = url; video.hidden = false; ov.hidden = false; $('ac-empty').hidden = true; $('ac-go').disabled = false; words = []; rawWords = []; cues = []; renderCues(); enable(false);
     $('ac-status').textContent = `${file.name} loaded. Press Generate captions.`; };
   video.addEventListener('loadedmetadata', fitOverlay);
   $('ac-go').onclick = async () => {
@@ -230,7 +239,7 @@ desc: Free AI auto captions for Reels, Shorts and TikTok. Transcribe your video 
       w.onmessage = ({ data }) => { beat();
         if (data.type === 'load') { $('ac-status').textContent = data.p > .995 && data.t > 5e6 ? 'Preparing the AI model…' : `Downloading the AI model (one time only)… ${Math.round(data.p * 100)}%`; $('ac-bar').style.width = data.p * 60 + '%'; }
         if (data.type === 'run') { $('ac-status').textContent = 'Listening and writing captions…'; $('ac-bar').style.width = '75%'; }
-        if (data.type === 'done') { watch(0); words = data.chunks.map(c => ({ t: c.text.trim(), s: c.timestamp[0], e: c.timestamp[1] ?? c.timestamp[0] + .3 })).filter(w => w.t);
+        if (data.type === 'done') { watch(0); rawWords = data.chunks.map(c => ({ t: c.text.trim(), s: c.timestamp[0], e: c.timestamp[1] ?? c.timestamp[0] + .3 })).filter(w => w.t); applyScript();
           $('ac-bar').style.width = '100%'; $('ac-go').disabled = false;
           $('ac-status').textContent = words.length ? `Done: ${words.length} words. Press play to preview.` : "No speech found. Try the Accurate model or check the video's sound."; if (words.length) regroup(); }
         if (data.type === 'error') { watch(0); $('ac-status').textContent = 'Something went wrong: ' + data.message + '. Try the Fast model or a shorter clip.'; $('ac-go').disabled = false; }

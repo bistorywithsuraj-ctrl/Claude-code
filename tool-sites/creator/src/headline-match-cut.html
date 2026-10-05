@@ -69,6 +69,7 @@ desc: Type a word or sentence and get the viral newspaper headline match cut: ra
 </section>
 <script src="vendor/mp4-muxer.js"></script>
 <script src="vendor/cb-encode.js"></script>
+<script src="vendor/cb-deva.js"></script>
 <script>
 (() => {
   const $ = id => document.getElementById(id), cv = $('hm-c'); let g = cv.getContext('2d');
@@ -104,6 +105,12 @@ desc: Type a word or sentence and get the viral newspaper headline match cut: ra
   const QUOTES = ['nobody saw it coming, except everyone', 'was mentioned twice in the meeting and then never again', 'is now apparently in every conversation', 'changed everything, according to people who said that last time too',
     'has been described by experts as mostly fine', 'was trending before anyone could explain it', 'left several people deeply confused', 'is the reason the meeting ran three hours over', 'is somehow the answer to every question this year', 'will be discussed again next week, probably'];
   const EDITORS = ['Deputy Investigations Editor', 'Technology Correspondent', 'Senior Features Writer', 'Night Desk', 'Culture Editor', 'Our Correspondent'];
+  // Hindi filler, used when the sentence is written in Devanagari
+  const BANK_HI = ['बैठक फिर से टाल दी गई।', 'किसी ने कुछ नहीं लिखा।', 'अधिकारियों का कहना है कि मामले की जाँच धीरे-धीरे हो रही है।', 'रिपोर्ट चालीस पन्नों की है और कुछ हल नहीं करती।', 'एक विशेषज्ञ से राय ली गई।', 'विशेषज्ञ भी उलझन में थे।',
+    'पड़ोसियों के मुताबिक़ इलाक़ा हमेशा की तरह शांत है।', 'प्रेस कॉन्फ़्रेंस देर से शुरू हुई और जल्दी ख़त्म हो गई।', 'कई लोगों ने अपने फ़ोन देखे।', 'ऐप अपडेट हो गया। अब हालत और ख़राब है।', 'सवाल अब भी बाक़ी हैं।', 'वोटिंग अगले आदेश तक टाल दी गई।', 'सबको लगा था कि यह जल्दी ख़त्म होगा।', 'चाय पर इसकी लंबी चर्चा हुई।'];
+  const QUOTES_HI = ['के बारे में अब हर कोई बात कर रहा है', 'का ज़िक्र मीटिंग में दो बार हुआ और फिर कभी नहीं', 'ने सब कुछ बदल दिया, ऐसा लोग कहते हैं', 'अब हर बातचीत में शामिल है', 'को किसी ने आते हुए नहीं देखा'];
+  const EDITORS_HI = ['संवाददाता', 'वरिष्ठ संपादक', 'रात्रि डेस्क', 'तकनीकी संवाददाता'];
+  const HI = () => window.CBDeva && CBDeva.has($('hm-text').value);
   function wrapPara(x, text, w) { const out = []; let line = ''; for (const wd of text.split(' ')) { const t = line ? line + ' ' + wd : wd; if (x.measureText(t).width > w && line) { out.push(line); line = wd; } else line = t; } if (line) out.push(line); return out; }
   function articlePage(item, W, H) {
     const r = rng(item.seed * 7919 + 104729), S = Math.min(W, H) / 1080, land = W > H, A = document.createElement('canvas'); A.width = W; A.height = H; const x = A.getContext('2d');
@@ -113,12 +120,12 @@ desc: Type a word or sentence and get the viral newspaper headline match cut: ra
     const shot = item.final ? 'first' : (r() < .34 ? 'inline' : r() < .5 ? 'mid' : 'first');
     if (shot === 'inline') return inlineShot(item, W, H, r, paper, ink, bf);
     const ax = W * (land ? .3 : .34), ay = H * (land ? .44 : .46), cx0 = shot === 'mid' ? W * .2 : ax - qs * .28, colW = land ? W * .62 : W * .78;
-    const para = () => { let t = ''; while (t.length < 900) t += BANK[Math.floor(r() * BANK.length)] + ' '; return t; };
+    const para = () => { let t = ''; const bank = HI() ? BANK_HI : BANK; while (t.length < 900) t += bank[Math.floor(r() * bank.length)] + ' '; return t; };
     x.fillStyle = ink; x.textBaseline = 'alphabetic'; x.textAlign = 'left'; x.font = `${bf[0]} ${bs}px "${bf[1]}"`;
     // body above the quote, filling upward
     let lines = wrapPara(x, para() + para(), colW), y = ay - qs * 1.55; for (let i = lines.length - 1; i >= 0 && y > -lh; i--, y -= lh) x.fillText(lines[i], cx0, y);
     // the pull quote: the word sits at exactly (ax, ay) on every page
-    const ws = item.final ? item.word.split(' ') : [item.word], rest = item.final ? [] : QUOTES[Math.floor(r() * QUOTES.length)].split(' ');
+    const ws = item.final ? item.word.split(' ') : [item.word], rest = item.final ? [] : (HI() ? QUOTES_HI : QUOTES)[Math.floor(r() * (HI() ? QUOTES_HI : QUOTES).length)].split(' ');
     x.font = `${qBold ? '700' : qf[0]} ${qs}px "${qBold ? 'Libre Baskerville' : qf[1]}"`; const qlh = qs * 1.18, qW = W - ax + qs * .3;
     let qStart = cx0, firstEnd = 0;
     if (shot === 'mid') { const pre = ['Her', 'The', 'His', 'Why', 'Local', 'Our', 'That', 'Every'][Math.floor(r() * 8)], pw = x.measureText(pre + ' ').width;
@@ -134,7 +141,7 @@ desc: Type a word or sentence and get the viral newspaper headline match cut: ra
       qx += tt + sp; });
     if (shot === 'mid') { x.fillStyle = ink; x.fillRect((firstEnd || qx) + qs * .15, ay - qs * .82, W, Math.max(1.5, 2 * S)); }
     // byline + body below
-    x.fillStyle = ink; x.globalAlpha = .75; x.font = `italic ${bf[0]} ${bs * .72}px "${bf[1]}"`; x.fillText(`— By The ${EDITORS[Math.floor(r() * EDITORS.length)]}`, cx0, qy + qs * 1.25); x.globalAlpha = 1;
+    x.fillStyle = ink; x.globalAlpha = .75; x.font = `italic ${bf[0]} ${bs * .72}px "${bf[1]}"`; x.fillText(HI() ? `— ${EDITORS_HI[Math.floor(r() * EDITORS_HI.length)]}` : `— By The ${EDITORS[Math.floor(r() * EDITORS.length)]}`, cx0, qy + qs * 1.25); x.globalAlpha = 1;
     x.font = `${bf[0]} ${bs}px "${bf[1]}"`; lines = wrapPara(x, para() + para() + para(), colW); y = qy + qs * 1.25 + lh * 1.6; for (const l of lines) { if (y > H + lh) break; x.fillText(l, cx0, y); y += lh; }
     // camera: depth of field (sharp band around the quote), light falloff, vignette, grain
     const out = document.createElement('canvas'); out.width = W; out.height = H; const o = out.getContext('2d');
@@ -151,11 +158,11 @@ desc: Type a word or sentence and get the viral newspaper headline match cut: ra
     const S = Math.min(W, H) / 1080, land = W > H, A = document.createElement('canvas'); A.width = W; A.height = H; const x = A.getContext('2d');
     x.fillStyle = paper; x.fillRect(0, 0, W, H); const fs = (land ? 74 : 84) * S, lh = fs * 1.45, ax = W * (land ? .3 : .34), ay = H * (land ? .44 : .46), right = W * (land ? .78 : .68);
     x.font = `${bf[0]} ${fs}px "${bf[1]}"`; x.textBaseline = 'alphabetic'; x.textAlign = 'left'; x.fillStyle = ink;
-    const sentence = () => BANK[Math.floor(r() * BANK.length)];
+    const sentence = () => { const b = HI() ? BANK_HI : BANK; return b[Math.floor(r() * b.length)]; };
     function lineFrom(startX, y) { let t = ''; while (x.measureText(t).width < right - startX + W * .1) t += sentence() + ' '; let out = '';
       for (const wd of t.split(' ')) { const tst = out ? out + ' ' + wd : wd; if (startX + x.measureText(tst).width > right) break; out = tst; } x.fillText(out, startX, y); }
     for (let k = -9; k <= 9; k++) { if (!k) continue; lineFrom(-W * (.15 + r() * .35), ay + k * lh); }
-    const lead = ['which means', 'it turns out', 'experts blame', 'sources call it', 'nobody predicted', 'the report blames', 'according to', 'officials mentioned'][Math.floor(r() * 8)];
+    const lead = (HI() ? ['यानी', 'असल में', 'जानकारों के मुताबिक़', 'सूत्रों के अनुसार', 'किसी ने नहीं सोचा था', 'रिपोर्ट कहती है', 'आख़िरकार', 'अधिकारियों ने बताया'] : ['which means', 'it turns out', 'experts blame', 'sources call it', 'nobody predicted', 'the report blames', 'according to', 'officials mentioned'])[Math.floor(r() * 8)];
     const tw = x.measureText(item.word).width; let pre = lead; while (x.measureText(pre + ' ').width < ax + W * .1) pre = sentence().replace(/\.$/, '').toLowerCase() + '. ' + pre;
     x.fillText(pre + ' ', ax - x.measureText(pre + ' ').width, ay);
     if (mark === 'hl') { x.save(); x.fillStyle = 'rgba(255,236,80,.88)'; x.fillRect(ax - fs * .06, ay - fs * .78, tw + fs * .12, fs * 1.0); x.restore(); }
@@ -239,7 +246,8 @@ desc: Type a word or sentence and get the viral newspaper headline match cut: ra
     const loop = now => { const t = (now - t0) / 1000; const i = draw(Math.min(t, dur - .001)); if (i !== last && ac) { slap(ac.currentTime); last = i; } $('hm-bar').style.width = Math.min(100, t / dur * 100) + '%';
       if (t < dur && playing) requestAnimationFrame(loop); else { playing = false; $('hm-play').textContent = 'Play'; onEnd && onEnd(); } }; requestAnimationFrame(loop); }
   $('hm-play').onclick = () => { if (playing) { playing = false; return; } play(); };
-  const FONT_LOADS = () => Promise.all(FONTS.map(f => document.fonts.load(`${f[0]} 40px "${f[1]}"`)).concat(document.fonts.load('400 40px "UnifrakturMaguntia"'), ...BODY.map(f => document.fonts.load(`${f[0]} 40px "${f[1]}"`)), document.fonts.load('500 20px "IBM Plex Mono"')));
+  window.addEventListener('cb-deva-fonts', () => { cache.clear(); refresh(); });
+  const FONT_LOADS = () => Promise.all([window.CBDeva ? CBDeva.ready() : 0].concat(FONTS.map(f => document.fonts.load(`${f[0]} 40px "${f[1]}"`)).concat(document.fonts.load('400 40px "UnifrakturMaguntia"'), ...BODY.map(f => document.fonts.load(`${f[0]} 40px "${f[1]}"`)), document.fonts.load('500 20px "IBM Plex Mono"'))));
   function slapTrack(sr) { const pcm = new Float32Array(Math.ceil((dur + END_HOLD) * sr)); if (!$('hm-sound').checked) return pcm;
     seq.forEach((it, k) => { const s0 = Math.floor(it.t * sr), n = Math.floor(sr * .09), f = (1200 + ((k * 37) % 16) * 100) / sr; let lp = 0, hp = 0, prev = 0;
       for (let i = 0; i < n && s0 + i < pcm.length; i++) { const x = (Math.random() * 2 - 1) * Math.pow(1 - i / n, 3); lp += (x - lp) * Math.min(1, f * 6.3); hp = lp - prev; prev = lp; pcm[s0 + i] += hp * 1.6; } });
