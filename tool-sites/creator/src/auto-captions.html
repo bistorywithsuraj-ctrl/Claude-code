@@ -39,8 +39,8 @@ desc: Free AI auto captions for Reels, Shorts and TikTok in English, Hindi or Hi
   <h2>Your video</h2>
   <label>Video or audio file <input id="ac-file" type="file" accept="video/*,audio/*"></label>
   <div class="row">
-    <label style="flex:1">Speed <select id="ac-model"><option value="onnx-community/whisper-tiny.en_timestamped">Fast · English (40 MB)</option><option value="onnx-community/whisper-base_timestamped">Accurate · 99 languages (80 MB)</option><option value="onnx-community/whisper-small_timestamped">Best · Hindi &amp; Hinglish (250 MB)</option></select></label>
-    <label style="flex:1">Language <select id="ac-lang" disabled><option value="">Detect automatically</option><option value="english">English</option><option value="hindi">Hindi / Hinglish</option><option value="spanish">Spanish</option><option value="portuguese">Portuguese</option><option value="french">French</option><option value="german">German</option><option value="arabic">Arabic</option><option value="indonesian">Indonesian</option><option value="japanese">Japanese</option><option value="korean">Korean</option></select></label>
+    <label style="flex:1">Speed <select id="ac-model"><option value="whistle" selected>Fastest · English + 6 languages (17 MB)</option><option value="onnx-community/whisper-tiny.en_timestamped">Fast · English (40 MB)</option><option value="onnx-community/whisper-base_timestamped">Accurate · 99 languages (80 MB)</option><option value="onnx-community/whisper-small_timestamped">Best · Hindi &amp; Hinglish (250 MB)</option></select></label>
+    <label style="flex:1">Language <select id="ac-lang"><option value="">Detect automatically</option><option value="english">English</option><option value="hindi">Hindi / Hinglish</option><option value="spanish">Spanish</option><option value="portuguese">Portuguese</option><option value="french">French</option><option value="german">German</option><option value="arabic">Arabic</option><option value="indonesian">Indonesian</option><option value="dutch">Dutch</option><option value="polish">Polish</option><option value="italian">Italian</option><option value="japanese">Japanese</option><option value="korean">Korean</option></select></label>
     <label style="flex:1">Hindi captions in <select id="ac-script" disabled><option value="">As spoken</option><option value="roman">Hinglish · English letters</option><option value="deva">हिंदी · Devanagari</option></select></label>
   </div>
   <div class="row"><button type="button" class="btn" id="ac-go" disabled>Generate captions</button><span class="hint" id="ac-status">Choose a file to start. The AI model downloads once, then works offline.</span></div>
@@ -91,6 +91,7 @@ desc: Free AI auto captions for Reels, Shorts and TikTok in English, Hindi or Hi
 <section class="copy" id="faq">
   <h2>Questions</h2>
   <details><summary>Are these auto captions really free?</summary><p>Yes. There is no sign-up, no watermark and no limit on video length. Because the AI runs on your own device, there is no server cost to pass on.</p></details>
+  <details><summary>Which model should I pick?</summary><p>"Fastest" uses Whistle, a 17 MB speech model by Cactus (Apache 2.0) that runs on any phone or laptop. It handles English, Spanish, French, German, Italian, Dutch and Polish with accurate word timing. For Hindi, Hinglish and other languages, pick "Best · Hindi &amp; Hinglish" or "Accurate · 99 languages", which use Whisper.</p></details>
   <details><summary>Does it work for Hindi and Hinglish?</summary><p>Yes. Choose "Best · Hindi &amp; Hinglish", set Language to Hindi, then pick whether captions should be written in Hinglish (English letters, like "aap kaise ho") or हिंदी (Devanagari). You can switch between them after the captions are made. You can also edit any line by hand.</p></details>
   <details><summary>How do I add the captions to Instagram or YouTube?</summary><p>For Reels and TikTok, export the captioned video and upload it. For YouTube, download the SRT file and add it under Subtitles in YouTube Studio, or upload the captioned video.</p></details>
   <details><summary>Why is the first run slow?</summary><p>The AI model has to download once. After that it loads from your browser's cache in a few seconds. A phone works, but a computer is much faster.</p></details>
@@ -132,7 +133,51 @@ desc: Free AI auto captions for Reels, Shorts and TikTok in English, Hindi or Hi
         self.postMessage({ type: 'done', chunks: out.chunks || [] });
       } catch (e) { self.postMessage({ type: 'error', message: String(e && e.message || e) }); }
     };`;
-  function getWorker() { if (!worker) worker = new Worker(URL.createObjectURL(new Blob([WORKER], { type: 'text/javascript' })), { type: 'module' }); return worker; }
+  // Whistle (Cactus, Apache-2.0): 17 MB speech model on a 0.9 MB WebAssembly engine, up to 30 s per pass
+  const WHISTLE = `
+    const MODEL = 'https://huggingface.co/Cactus-Compute/whistle/resolve/main/whistle.cact';
+    const LANG = { english: 'en', german: 'de', french: 'fr', spanish: 'es', italian: 'it', dutch: 'nl', polish: 'pl' };
+    let M = null;
+    async function fetchModel(onp) {
+      try { const c = await caches.open('cb-whistle-v1'), hit = await c.match(MODEL); if (hit) return new Uint8Array(await hit.arrayBuffer()); } catch (e) {}
+      const r = await fetch(MODEL); if (!r.ok) throw new Error('model download failed (' + r.status + ')');
+      const total = +r.headers.get('content-length') || 16919407, rd = r.body.getReader(), parts = []; let got = 0;
+      for (;;) { const { done, value } = await rd.read(); if (done) break; parts.push(value); got += value.length; onp(Math.min(1, got / total), total); }
+      const buf = new Uint8Array(got); let o = 0; for (const x of parts) { buf.set(x, o); o += x.length; }
+      try { const c = await caches.open('cb-whistle-v1'); await c.put(MODEL, new Response(buf.slice(0))); } catch (e) {}
+      return buf;
+    }
+    function split(a) {   // pieces of at most 28 s, cut at the quietest quarter second
+      const MAX = 28 * 16000, MIN = 18 * 16000, W = 4000, segs = []; let s = 0;
+      while (a.length - s > MAX) { let best = s + MAX, bv = Infinity;
+        for (let i = s + MIN; i < s + MAX - W; i += 800) { let e = 0; for (let j = i; j < i + W; j += 4) e += a[j] * a[j]; if (e < bv) { bv = e; best = i + W / 2; } }
+        segs.push([s, best]); s = best; }
+      segs.push([s, a.length]); return segs;
+    }
+    const cstr = t => { const b = new TextEncoder().encode(t + '\\0'), p = M._malloc(b.length); M.HEAPU8.set(b, p); return p; };
+    self.onmessage = async ({ data }) => {
+      try {
+        if (!M) { importScripts(data.base + 'vendor/needle.js'); const wasm = await (await fetch(data.base + 'vendor/needle.wasm')).arrayBuffer(); M = await createNeedle({ wasmBinary: wasm, locateFile: f => data.base + 'vendor/' + f });
+          const cact = await fetchModel((p, t) => self.postMessage({ type: 'load', p, t: 0 }));
+          const p = M._malloc(cact.length); M.HEAPU8.set(cact, p); const ok = M._needle_load(p, BigInt(cact.length)); M._free(p); if (ok < 0) throw new Error('the speech model could not start'); }
+        self.postMessage({ type: 'run' });
+        const a = data.audio, segs = split(a), CAP = 1 << 18, out = M._malloc(CAP), lang = LANG[data.lang] ? cstr(LANG[data.lang]) : 0, chunks = [];
+        for (let k = 0; k < segs.length; k++) {
+          const [s0, s1] = segs[k], n = s1 - s0, pp = M._malloc(n * 4); M.HEAPU8.set(new Uint8Array(a.buffer, a.byteOffset + s0 * 4, n * 4), pp);
+          M._needle_transcribe(pp, n, lang, 0, 1, out, CAP); M._free(pp);
+          const raw = M.HEAPU8.subarray(out, out + CAP), r = JSON.parse(new TextDecoder().decode(raw.subarray(0, raw.indexOf(0))));
+          (r.words || []).forEach(w => chunks.push({ text: ' ' + w.word, timestamp: [w.start + s0 / 16000, w.end + s0 / 16000] }));
+          self.postMessage({ type: 'prog', p: (k + 1) / segs.length });
+        }
+        M._free(out); if (lang) M._free(lang);
+        self.postMessage({ type: 'done', chunks });
+      } catch (e) { self.postMessage({ type: 'error', message: String(e && e.message || e) }); }
+    };`;
+  let workerKind = '';
+  function getWorker(kind) {
+    if (worker && workerKind !== kind) { try { worker.terminate(); } catch (e) {} worker = null; }
+    if (!worker) { workerKind = kind; worker = kind === 'whistle' ? new Worker(URL.createObjectURL(new Blob([WHISTLE], { type: 'text/javascript' }))) : new Worker(URL.createObjectURL(new Blob([WORKER], { type: 'text/javascript' })), { type: 'module' }); }
+    return worker; }
   async function audioOf(f) {
     const buf = await f.arrayBuffer(); const ac = new (window.AudioContext || window.webkitAudioContext)({ sampleRate: 16000 });
     const a = await ac.decodeAudioData(buf); const n = a.length, out = new Float32Array(n);
@@ -218,8 +263,11 @@ desc: Free AI auto captions for Reels, Shorts and TikTok in English, Hindi or Hi
   window.addEventListener('resize', () => video.videoWidth && fitOverlay());
   // ---------- file + run ----------
   const multi = () => !$('ac-model').value.includes('.en');
-  $('ac-model').onchange = () => { $('ac-lang').disabled = !multi(); $('ac-script').disabled = !multi(); };
-  $('ac-lang').onchange = () => { if ($('ac-lang').value === 'hindi' && $('ac-model').value.includes('base')) $('ac-status').textContent = 'Tip: "Best · Hindi & Hinglish" is much more accurate for Hindi speech.'; };
+  const WHISTLE_LANGS = ['', 'english', 'german', 'french', 'spanish', 'italian', 'dutch', 'polish'];
+  $('ac-model').onchange = () => { $('ac-lang').disabled = !multi(); $('ac-script').disabled = !multi() || $('ac-model').value === 'whistle'; };
+  $('ac-lang').onchange = () => { const l = $('ac-lang').value;
+    if ($('ac-model').value === 'whistle' && !WHISTLE_LANGS.includes(l)) { $('ac-model').value = l === 'hindi' ? 'onnx-community/whisper-small_timestamped' : 'onnx-community/whisper-base_timestamped'; $('ac-model').onchange(); $('ac-status').textContent = 'Switched to a Whisper model, which understands ' + $('ac-lang').selectedOptions[0].textContent + '.'; }
+    else if (l === 'hindi' && $('ac-model').value.includes('base')) $('ac-status').textContent = 'Tip: "Best · Hindi & Hinglish" is much more accurate for Hindi speech.'; };
   // Hindi script conversion runs on the words, so switching needs no re-transcription
   function applyScript() { const sc = $('ac-script').value, G = window.HindiG2P;
     words = rawWords.map(w => { let t = w.t; if (G && sc === 'roman' && /[\u0900-\u097F]/.test(t)) t = G.toRoman(t); else if (G && sc === 'deva' && /^[A-Za-z']+[,.!?]?$/.test(t) && G.isHindiRoman(t.replace(/[^A-Za-z']/g, ''))) t = G.toDevanagari(t.replace(/[^A-Za-z']/g, '')) + t.replace(/[A-Za-z']/g, ''); return { ...w, t }; });
@@ -234,11 +282,12 @@ desc: Free AI auto captions for Reels, Shorts and TikTok in English, Hindi or Hi
     try {
       $('ac-status').textContent = 'Reading the audio…'; const audio = await audioOf(file);
       if (audio.length / 16000 > 600) $('ac-status').textContent = 'Long video: this can take a few minutes on a laptop.';
-      const w = getWorker();
+      const w = getWorker($('ac-model').value === 'whistle' ? 'whistle' : 'whisper');
       watch(120000 + audio.length / 16000 * 4000, () => { try { w.terminate(); } catch (e) {} worker = null; $('ac-go').disabled = false; $('ac-status').textContent = MOBILE ? 'Your phone stopped responding. Try the Fast model, a shorter clip, or a computer.' : 'Captioning stopped responding. Reload the page and try the Fast model.'; });
       w.onmessage = ({ data }) => { beat();
         if (data.type === 'load') { $('ac-status').textContent = data.p > .995 && data.t > 5e6 ? 'Preparing the AI model…' : `Downloading the AI model (one time only)… ${Math.round(data.p * 100)}%`; $('ac-bar').style.width = data.p * 60 + '%'; }
-        if (data.type === 'run') { $('ac-status').textContent = 'Listening and writing captions…'; $('ac-bar').style.width = '75%'; }
+        if (data.type === 'run') { $('ac-status').textContent = 'Listening and writing captions…'; $('ac-bar').style.width = '65%'; }
+        if (data.type === 'prog') { $('ac-status').textContent = `Listening and writing captions… ${Math.round(data.p * 100)}%`; $('ac-bar').style.width = 65 + data.p * 35 + '%'; }
         if (data.type === 'done') { watch(0); rawWords = data.chunks.map(c => ({ t: c.text.trim(), s: c.timestamp[0], e: c.timestamp[1] ?? c.timestamp[0] + .3 })).filter(w => w.t); applyScript();
           $('ac-bar').style.width = '100%'; $('ac-go').disabled = false;
           $('ac-status').textContent = words.length ? `Done: ${words.length} words. Press play to preview.` : "No speech found. Try the Accurate model or check the video's sound."; if (words.length) regroup(); }
@@ -246,7 +295,7 @@ desc: Free AI auto captions for Reels, Shorts and TikTok in English, Hindi or Hi
       };
       w.onerror = e => { e.preventDefault && e.preventDefault(); worker = null; $('ac-status').textContent = "The AI model couldn't load. Check your connection and try again."; $('ac-go').disabled = false; };
       $('ac-status').textContent = 'Loading the AI model…';
-      w.postMessage({ model: $('ac-model').value, lang: $('ac-lang').value, audio, gpu: GPU_OK }, [audio.buffer]);
+      w.postMessage({ model: $('ac-model').value, lang: $('ac-lang').value, audio, gpu: GPU_OK, base: new URL('.', location.href).href }, [audio.buffer]);
     } catch (e) { $('ac-status').textContent = "This browser couldn't read the file's audio. Try an MP4 or MOV, or another browser."; $('ac-go').disabled = false; }
   };
   $('ac-styles').addEventListener('click', e => { const b = e.target.closest('button'); if (!b) return; style = b.dataset.s; document.querySelectorAll('#ac-styles button').forEach(x => x.setAttribute('aria-pressed', x === b)); });
