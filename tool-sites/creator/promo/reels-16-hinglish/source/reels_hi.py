@@ -68,4 +68,8 @@ R = [
       pain=[('Pop-up ads', 'uff'), ('Nakli download button', 'oops'), ('File unke server pe', 'risky')],
       vo=['Video से audio निकालने के लिए अभी भी अजीब converter sites use करते हो?', 'Pop-ups, नकली download buttons, और आपकी file किसी और के server पर।',
           'अपनी video डालो और जो हिस्सा चाहिए वो trim करो।', 'साफ MP3 या WAV download करो। Free, और पूरी तरह private।']),
+ dict(id='cartoon-characters', name='Cartoon Characters', sub='viral trend, 2 minute mein', hook=('Ye viral trend', 'bina After Effects?'),
+      pain=[('After Effects seekho', '2 hafte'), ('Character pack kharido', 'Rs 1,500'), ('Har frame animate karo', '5 ghante')],
+      vo=['ये viral cartoon trend बनाने के लिए After Effects की कोई ज़रूरत नहीं।', 'Software सीखो, character pack खरीदो, और हर frame animate करो। घंटों का काम।',
+          'Video डालो, character पर tap करो, और उसे जहाँ चाहो drag करो।', 'Dance, wave या jump चुनो। Colors अपने आप video से match हो जाते हैं।']),
 ]
