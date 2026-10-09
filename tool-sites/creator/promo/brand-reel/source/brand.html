@@ -1,0 +1,169 @@
+<!doctype html><html><head><meta charset="utf-8">
+<style>
+@font-face{font-family:IT;src:url(fonts/inter-tight-latin-500-normal.woff2);font-weight:500}
+@font-face{font-family:IT;src:url(fonts/inter-tight-latin-800-normal.woff2);font-weight:800}
+@font-face{font-family:IT;src:url(fonts/inter-tight-latin-900-normal.woff2);font-weight:900}
+@font-face{font-family:IS;src:url(fonts/instrument-serif-latin-400-italic.woff2);font-style:italic}
+@font-face{font-family:JB;src:url(fonts/jetbrains-mono-latin-700-normal.woff2);font-weight:700}
+@font-face{font-family:AN;src:url(fonts/anton-latin-400-normal.woff2)}
+@font-face{font-family:MK;src:url(fonts/mukta-800-deva.woff2);font-weight:800}
+html,body{margin:0;background:#000}canvas{display:block;height:100vh;width:auto}
+</style></head><body><canvas id="c" width="1080" height="1920"></canvas>
+<script>
+// Creator Bench brand reel, 60 s at 120 BPM (a beat every 0.5 s). Every scene is a pure function of time.
+const W = 1080, H = 1920, cv = document.getElementById('c'), x = cv.getContext('2d'), DUR = 60, BEAT = .5;
+const cl = (v, a = 0, b = 1) => Math.min(b, Math.max(a, v)), inv = (a, b, t) => cl((t - a) / (b - a)), lerp = (a, b, p) => a + (b - a) * p;
+const eOut = p => 1 - Math.pow(1 - p, 3), eIn = p => p * p * p, eIO = p => p < .5 ? 4 * p * p * p : 1 - Math.pow(-2 * p + 2, 3) / 2, eBack = p => { const c = 1.9; return 1 + (c + 1) * Math.pow(p - 1, 3) + c * Math.pow(p - 1, 2); };
+const rnd = s => { const v = Math.sin(s * 127.1 + 311.7) * 43758.5453; return v - Math.floor(v); };
+const C = { ink: '#0B0B0D', paper: '#F4F1EA', mag: '#E5157A', lime: '#DCEF80', green: '#1F4D3A', yel: '#FFE14D', blue: '#2F6BFF', orange: '#FF6A2A' };
+function bg(c) { x.fillStyle = c; x.fillRect(0, 0, W, H); }
+function T(s, X, Y, f, c, o = {}) { x.save(); x.font = f; x.fillStyle = c; x.textAlign = o.al || 'center'; x.textBaseline = 'middle'; x.globalAlpha *= o.a ?? 1; if (o.ls) x.letterSpacing = o.ls + 'px'; x.fillText(s, X, Y); x.restore(); }
+function rr(X, Y, w, h, r) { x.beginPath(); x.roundRect(X, Y, w, h, r); }
+function fitFont(s, f, max, size) { x.save(); let z = size; do { x.font = f.replace('#', z); z -= 6; } while (x.measureText(s).width > max && z > 40); x.restore(); return f.replace('#', z + 6); }
+function cam(s, rot = 0, dx = 0, dy = 0) { x.translate(W / 2 + dx, H / 2 + dy); x.rotate(rot); x.scale(s, s); x.translate(-W / 2, -H / 2); }
+function leaf(X, Y, s, col) { x.save(); x.translate(X - 12 * s, Y - 12 * s); x.scale(s, s); x.strokeStyle = col; x.lineWidth = 2.4; x.lineCap = 'round'; x.lineJoin = 'round';
+  x.beginPath(); x.moveTo(5, 19); x.bezierCurveTo(5, 11, 11, 5, 20, 5); x.bezierCurveTo(20, 14, 14, 20, 6, 20); x.stroke(); x.beginPath(); x.moveTo(5, 19); x.lineTo(12, 12); x.stroke(); x.restore(); }
+// ---------- scenes ----------
+function hook(t) {   // 0 – 1.0
+  bg(C.ink); x.save(); cam(1 + .15 * eIn(inv(.7, 1.0, t)));
+  const p = inv(0, .25, t), k = lerp(2.8, 1, eOut(p)); x.save(); x.translate(W / 2, 880); x.scale(k, k); T('28', 0, 0, '400 720px AN', '#fff', { a: cl(p * 3) }); x.restore();
+  const q = eOut(inv(.3, .55, t)); x.save(); x.beginPath(); x.rect(0, 1240, W, 160); x.clip(); T('FREE TOOLS', W / 2, 1320 + (1 - q) * 160, '900 128px IT', C.lime, { ls: -2 }); x.restore();
+  T('for creators', W / 2, 1450, 'italic 400 80px IS', '#fff', { a: eOut(inv(.55, .75, t)) }); x.restore();
+  if (t < .07) { x.fillStyle = `rgba(255,255,255,${1 - t / .07})`; x.fillRect(0, 0, W, H); } }
+function words(t) {   // 1.0 – 2.5: colour-shift cuts
+  const L = [['CAPTIONS', C.mag, '#fff'], ['VOICEOVER', C.lime, C.ink], ['4K EXPORT', C.blue, '#fff']], i = Math.min(2, Math.floor((t - 1) / BEAT)), lt = t - 1 - i * BEAT, [w, b, f] = L[i];
+  bg(b); const p = eBack(inv(0, .2, lt)); x.save(); cam(lerp(1.35, 1, cl(p)) + lt * .08, (i - 1) * .04 * (1 - cl(p)));
+  T(w, W / 2, 960, fitFont(w, '400 #px AN', 980, 260), f); T(`0${i + 1} / 28`, W / 2, 1180, '700 44px JB', f, { a: .7 }); x.restore();
+  const s = Math.floor(lt * 30); for (let k = 0; k < 6; k++) { x.fillStyle = f; x.globalAlpha = .9; x.fillRect(rnd(i * 50 + k) * W, 300 + rnd(i * 70 + k) * 1300, 12 + rnd(k + i) * 30, 4); } x.globalAlpha = 1; }
+function grid(t) {   // 2.5 – 4.5: shape play
+  bg(C.ink); const lt = t - 2.5, cols = 4, rows = 7, cw = 200, gap = 26, gw = cols * cw + (cols - 1) * gap, gh = rows * cw + (rows - 1) * gap, ox = (W - gw) / 2, oy = (H - gh) / 2;
+  const turn = eIO(inv(1.0, 1.5, lt)), dive = eIn(inv(1.45, 2.0, lt)), tx = ox + 2 * (cw + gap) + cw / 2, ty = oy + 3 * (cw + gap) + cw / 2;
+  x.save(); x.translate(lerp(W / 2, tx, dive * 0), 0); x.translate(W / 2, H / 2); x.rotate(turn * Math.PI / 4); x.scale(lerp(1, 1, 0) * (1 + dive * 14), 1 + dive * 14); x.translate(-(W / 2 + (tx - W / 2) * dive), -(H / 2 + (ty - H / 2) * dive));
+  const cols8 = [C.mag, C.lime, C.blue, C.yel, C.orange, '#fff', C.green];
+  for (let r = 0; r < rows; r++) for (let c = 0; c < cols; c++) { const n = r * cols + c, d = (r + c) * .045, p = eBack(inv(d, d + .35, lt)); if (p <= 0) continue; const X = ox + c * (cw + gap), Y = oy + r * (cw + gap) - (1 - cl(p)) * 400;
+    const hero = r === 3 && c === 2, col = hero ? C.lime : cols8[n % cols8.length]; x.save(); x.translate(X + cw / 2, Y + cw / 2); x.rotate((1 - cl(p)) * .6); const m = lerp(30, hero ? 30 : 100, inv(.4, .9, lt) * ((n % 3) / 2));
+    rr(-cw / 2, -cw / 2, cw, cw, m); x.fillStyle = col; x.fill(); x.fillStyle = 'rgba(0,0,0,.25)'; const g = n % 4; x.beginPath(); if (g === 0) x.arc(0, 0, 36, 0, 7); else if (g === 1) { x.moveTo(-36, 30); x.lineTo(0, -34); x.lineTo(36, 30); } else if (g === 2) x.rect(-32, -32, 64, 64); else { x.moveTo(-40, 0); x.lineTo(40, 0); x.moveTo(0, -40); x.lineTo(0, 40); x.lineWidth = 14; x.strokeStyle = 'rgba(0,0,0,.25)'; x.stroke(); } x.fill(); x.restore(); }
+  x.restore(); if (lt < 1.0) T('28 TOOLS', W / 2, 160, '900 70px IT', '#fff', { a: eOut(inv(.5, .8, lt)) * (1 - turn) }); }
+function nos(t) {   // 4.5 – 7.0: strike-through + NO stamps
+  const lt = t - 4.5; bg(C.paper); const L = ['UPLOAD', 'SIGN-UP', 'WATERMARK'], out = eIn(inv(2.1, 2.5, lt)); x.save(); cam(1, 0, 0, -out * 1400);
+  if (lt < .12) { x.fillStyle = C.lime; x.fillRect(0, 0, W, H * (1 - lt / .12)); }
+  L.forEach((w, i) => { const t0 = i * .75, p = eOut(inv(t0, t0 + .2, lt)), y = 640 + i * 330; if (p <= 0) return; const f = fitFont(w, '400 #px AN', 820, 210);
+    T(w, W / 2 + 80, y + (1 - p) * 60, f, C.ink, { a: p }); x.font = f; const tw = x.measureText(w).width;
+    const s = eOut(inv(t0 + .25, t0 + .4, lt)); if (s > 0) { x.strokeStyle = C.mag; x.lineWidth = 22; x.lineCap = 'round'; x.beginPath(); x.moveTo(W / 2 + 80 - tw / 2 - 20, y + 6); x.lineTo(W / 2 + 80 - tw / 2 - 20 + (tw + 40) * s, y - 4); x.stroke(); }
+    const n = inv(t0 + .35, t0 + .5, lt); if (n > 0) { x.save(); x.translate(W / 2 + 80 - tw / 2 - 120, y); x.rotate(-.16); const k = lerp(2.2, 1, eOut(n)); x.scale(k, k); rr(-95, -70, 190, 140, 24); x.fillStyle = C.mag; x.fill(); T('NO', 0, 6, '400 120px AN', '#fff'); x.restore(); } });
+  x.restore(); }
+function hindi(t) {   // 7.0 – 9.5: languages
+  const lt = t - 7; bg(C.green); x.save(); cam(1 + lt * .03);
+  const a = eBack(inv(0, .25, lt)); x.save(); x.translate(W / 2, 760); x.scale(cl(a, 0, 1.2), cl(a, 0, 1.2)); T('हिंदी', 0, 0, '800 330px MK', C.lime); x.restore();
+  const b = eOut(inv(.6, .85, lt)); T('Hinglish', W / 2 - (1 - b) * 300, 1060, 'italic 400 200px IS', '#fff', { a: b });
+  const c = eOut(inv(1.1, 1.35, lt)); T('ENGLISH', W / 2 + (1 - c) * 300, 1290, '900 130px IT', C.yel, { a: c, ls: 4 });
+  T('captions · voiceover · fonts', W / 2, 1480, '500 44px IT', '#cfe5d6', { a: eOut(inv(1.5, 1.8, lt)) }); x.restore();
+  const w = eIn(inv(2.05, 2.5, lt)); if (w > 0) { x.fillStyle = C.mag; x.beginPath(); x.arc(W / 2, H / 2, w * 1300, 0, 7); x.fill(); } }
+function phone(t) {   // 9.5 – 12.0: camera move around a phone
+  const lt = t - 9.5; bg(C.mag); const z = lerp(.78, 1.08, eIO(inv(0, 2.4, lt))), rot = lerp(-.12, .05, eIO(inv(0, 2.4, lt)));
+  const tools = ['Auto Captions', 'AI Voiceover', 'Cartoon Characters', 'Headline Match Cut', 'Map Animator', 'Remove Background', 'AI Image Check', 'Motion Prompts', 'Video Compressor', 'Thumbnail Text', 'YouTube Earnings', 'Teleprompter'];
+  const chips = [['4K export', -360, -520], ['No upload', 380, -300], ['हिंदी', -400, 220], ['Free', 360, 520]];
+  x.save(); cam(z, rot); const pw = 560, ph = 1140, px = (W - pw) / 2, py = (H - ph) / 2;
+  x.shadowColor = 'rgba(60,0,30,.45)'; x.shadowBlur = 90; x.shadowOffsetY = 50; rr(px, py, pw, ph, 80); x.fillStyle = '#111'; x.fill(); x.shadowColor = 'transparent';
+  rr(px + 20, py + 20, pw - 40, ph - 40, 62); x.fillStyle = C.paper; x.fill(); x.save(); x.clip();
+  T('Creator Bench', px + 60, py + 130, 'italic 400 64px IS', C.green, { al: 'left' }); const off = (lt * 260) % (tools.length * 130);
+  for (let k = -1; k < 14; k++) { const i = ((k + Math.floor(off / 130)) % tools.length + tools.length) % tools.length, y = py + 220 + k * 130 - (off % 130);
+    rr(px + 50, y, pw - 100, 110, 26); x.fillStyle = i % 4 === 0 ? C.green : '#fff'; x.fill(); rr(px + 72, y + 25, 60, 60, 16); x.fillStyle = [C.lime, C.mag, C.yel, C.blue][i % 4]; x.fill();
+    T(tools[i], px + 152, y + 56, '800 32px IT', i % 4 === 0 ? '#fff' : C.ink, { al: 'left' }); }
+  x.restore(); rr(px + pw / 2 - 70, py + 40, 140, 38, 19); x.fillStyle = '#111'; x.fill(); x.restore();
+  chips.forEach(([s, dx, dy], i) => { const p = eBack(inv(.3 + i * .25, .6 + i * .25, lt)); if (p <= 0) return; const bob = Math.sin(t * 2.6 + i) * 18; x.save(); x.translate(W / 2 + dx * 1.05, H / 2 + dy + bob); x.scale(cl(p, 0, 1.2), cl(p, 0, 1.2)); x.rotate((i % 2 ? 1 : -1) * .08);
+    x.font = (s === 'हिंदी' ? '800 50px MK' : '900 46px IT'); const tw = x.measureText(s).width; rr(-tw / 2 - 34, -50, tw + 68, 100, 50); x.fillStyle = i % 2 ? C.lime : '#fff'; x.fill(); T(s, 0, 4, x.font, C.ink); x.restore(); }); }
+function collage(t) {   // 12.0 – 13.5: speed flashes
+  const L = [['MATCH CUT', C.yel, C.ink], ['MAP ANIMATOR', C.blue, '#fff'], ['CARTOONS', C.lime, C.ink], ['AI IMAGE CHECK', C.orange, '#fff'], ['MOTION PROMPTS', C.ink, C.lime], ['+ 23 MORE', C.mag, '#fff']];
+  const i = Math.min(5, Math.floor((t - 12) / .25)), lt = t - 12 - i * .25, [w, b, f] = L[i]; bg(b); x.save(); cam(1.12 - lt * .5, (i % 2 ? 1 : -1) * .03);
+  T(w, W / 2, 960, fitFont(w, '400 #px AN', 960, 230), f); x.restore(); }
+function final(t) {   // 13.5 – 15: clean end frame
+  const lt = t - 13.5; bg(C.paper); const p = eBack(inv(0, .35, lt)); x.save(); x.translate(W / 2, 760); x.scale(cl(p, 0, 1.15), cl(p, 0, 1.15)); rr(-150, -150, 300, 300, 80); x.fillStyle = C.green; x.fill(); leaf(0, 0, 9, C.lime); x.restore();
+  const q = eOut(inv(.25, .55, lt)); T('Creator Bench', W / 2, 1040 + (1 - q) * 40, 'italic 400 120px IS', C.green, { a: q });
+  const r = eOut(inv(.45, .75, lt)); rr(W / 2 - 330, 1150 + (1 - r) * 30, 660, 110, 55); x.globalAlpha = r; x.fillStyle = C.ink; x.fill(); T('creatorbenchtool.com', W / 2, 1207 + (1 - r) * 30, '800 50px IT', '#fff'); x.globalAlpha = 1;
+  T('Free. No sign-up. No watermark.', W / 2, 1340, '500 40px IT', '#6b6b6b', { a: eOut(inv(.65, .95, lt)) }); }
+// ---------- 60 s additions ----------
+function paying(lt) {   // "Still paying for 5 apps?"
+  bg('#120608'); const W4 = [['STILL', '#fff'], ['PAYING', '#fff'], ['FOR', '#fff'], ['5 APPS?', C.mag]];
+  W4.forEach(([w, c], i) => { const t0 = i * .5, p = inv(t0, t0 + .18, lt); if (p <= 0) return; const k = lerp(1.8, 1, eOut(p)); x.save(); x.translate(W / 2, 560 + i * 250); x.scale(k, k); T(w, 0, 0, '400 230px AN', c, { a: cl(p * 2) }); x.restore(); });
+  const s = inv(2.2, 2.45, lt); if (s > 0) { x.strokeStyle = C.lime; x.lineWidth = 26; x.lineCap = 'round'; x.beginPath(); x.moveTo(160, 1320); x.lineTo(160 + 760 * eOut(s), 1290); x.stroke(); }
+  if (lt > 2.5) T('stop.', W / 2, 1560, 'italic 400 170px IS', C.lime, { a: eOut(inv(2.5, 2.7, lt)) }); }
+function feat(lt, n, title, sub, col, ink, demo) {   // shared frame for the six feature showcases
+  bg(col); const ex = eIn(inv(4.6, 5, lt)); x.save(); cam(1, 0, -ex * 1100, 0);
+  const a = eOut(inv(0, .3, lt)); T(`0${n} / 06`, 120, 230, '700 40px JB', ink, { al: 'left', a: a * .7 });
+  x.save(); x.beginPath(); x.rect(0, 260, W, 200); x.clip(); T(title, 120, 360 + (1 - a) * 200, fitFont(title, '400 #px AN', 860, 170), ink, { al: 'left' }); x.restore();
+  T(sub, 120, 490, '500 44px IT', ink, { al: 'left', a: eOut(inv(.25, .5, lt)) * .85 });
+  const d = eBack(inv(.3, .7, lt)); x.save(); x.translate(W / 2, 1150); x.scale(cl(d, 0, 1.1), cl(d, 0, 1.1)); x.translate(-W / 2, -1150);
+  x.shadowColor = 'rgba(0,0,0,.28)'; x.shadowBlur = 70; x.shadowOffsetY = 36; rr(90, 640, 900, 1020, 60); x.fillStyle = '#111'; x.fill(); x.shadowColor = 'transparent';
+  rr(110, 660, 860, 980, 44); x.save(); x.clip(); demo(lt, 110, 660, 860, 980); x.restore(); x.restore(); x.restore(); }
+function sky(X, Y, w, h, top = '#7FB6E8', bot = '#F6D8A6') { const g = x.createLinearGradient(0, Y, 0, Y + h); g.addColorStop(0, top); g.addColorStop(1, bot); x.fillStyle = g; x.fillRect(X, Y, w, h); }
+function blob(cx, cy, s, col, t, seed, mode) { const dk = 'rgba(0,0,0,.35)', b = mode === 'dance' ? Math.abs(Math.sin(t * 7 + seed)) * 30 : Math.abs(Math.sin(t * 4 + seed)) * 10; x.save(); x.translate(cx, cy - b * s); x.scale(s, s); x.lineCap = 'round';
+  [[-1, .4 + (mode === 'dance' ? Math.sin(t * 7 + seed) * .9 + 1.4 : 0)], [1, 2.4 + Math.sin(t * 9 + seed) * .6]].forEach(([d, a]) => { x.strokeStyle = col; x.lineWidth = 18; x.beginPath(); x.moveTo(d * 70, -60); x.quadraticCurveTo(d * 120, -60 + Math.cos(a) * 40, d * (70 + Math.sin(a) * 90), -60 + Math.cos(a) * 90); x.stroke(); });
+  [-1, 1].forEach(d => { x.strokeStyle = col; x.lineWidth = 18; x.beginPath(); x.moveTo(d * 30, 0); x.lineTo(d * 38, 70 + b * 0); x.stroke(); });
+  x.fillStyle = col; x.strokeStyle = dk; x.lineWidth = 7; x.beginPath(); x.ellipse(0, -70, 95, 90, 0, 0, 7); x.fill(); x.stroke();
+  [-32, 32].forEach(o => { x.fillStyle = '#fff'; x.beginPath(); x.ellipse(o, -95, 24, 27, 0, 0, 7); x.fill(); x.fillStyle = '#111'; x.beginPath(); x.arc(o + 5, -92, 11, 0, 7); x.fill(); });
+  x.strokeStyle = dk; x.lineWidth = 7; x.beginPath(); x.arc(0, -55, 26, .2, Math.PI - .2); x.stroke(); x.restore(); }
+const D_captions = (lt, X, Y, w, h) => { sky(X, Y, w, h, '#2A2F45', '#8A5A6A'); x.fillStyle = '#20232f'; x.fillRect(X, Y + h * .62, w, h * .38);
+  x.fillStyle = '#E8B48A'; x.beginPath(); x.ellipse(X + w / 2, Y + h * .45, 150, 175, 0, 0, 7); x.fill(); x.fillStyle = '#2b1a14'; x.beginPath(); x.ellipse(X + w / 2, Y + h * .34, 165, 110, 0, Math.PI, 0); x.fill(); x.fillStyle = '#3a4a8a'; x.beginPath(); x.ellipse(X + w / 2, Y + h * .86, 280, 190, 0, Math.PI, 0); x.fill();
+  const words = ['ye', 'website', 'FREE', 'mein', 'captions', 'bana', 'deti', 'hai!'], i = Math.floor(cl((lt - .7) / .42, 0, words.length - 1)), grp = Math.floor(i / 3) * 3;
+  if (lt > .7) { const line = words.slice(grp, grp + 3); x.font = '400 92px AN'; let tot = line.reduce((a, s) => a + x.measureText(s.toUpperCase()).width, 0) + 30 * (line.length - 1), cx = X + w / 2 - tot / 2;
+    line.forEach((s, k) => { const on = grp + k === i, ww = x.measureText(s.toUpperCase()).width; x.save(); x.lineWidth = 16; x.strokeStyle = '#000'; x.lineJoin = 'round'; x.font = '400 92px AN'; x.textBaseline = 'middle'; const sc = on ? 1.12 : 1;
+      x.translate(cx + ww / 2, Y + h * .8); x.scale(sc, sc); x.textAlign = 'center'; x.strokeText(s.toUpperCase(), 0, 0); x.fillStyle = on ? C.yel : '#fff'; x.fillText(s.toUpperCase(), 0, 0); x.restore(); cx += ww + 30; }); }
+  rr(X + 30, Y + 30, 250, 60, 30); x.fillStyle = 'rgba(0,0,0,.5)'; x.fill(); T('● REC  00:0' + Math.floor(lt), X + 155, Y + 61, '700 28px JB', '#fff'); };
+const D_voice = (lt, X, Y, w, h) => { x.fillStyle = '#0E0F14'; x.fillRect(X, Y, w, h); const n = 46, bw = w * .8 / n;
+  for (let i = 0; i < n; i++) { const amp = (Math.sin(i * .5 + lt * 9) * .5 + .5) * (Math.sin(i * .17 - lt * 4) * .5 + .5) * (lt > .5 ? 1 : lt * 2); const bh = 30 + amp * 360; rr(X + w * .1 + i * bw, Y + h * .38 - bh / 2, bw * .6, bh, bw * .3); x.fillStyle = i / n < (lt / 4.5) ? C.lime : '#3a3f4b'; x.fill(); }
+  const V = [['Ananya', 'हिंदी'], ['Rohan', 'हिंदी'], ['Michael', 'US'], ['Emma', 'UK']]; V.forEach(([nm, l], i) => { const p = eBack(inv(1 + i * .3, 1.3 + i * .3, lt)); if (p <= 0) return; const cx = X + 70 + (i % 2) * 400, cy = Y + h * .66 + Math.floor(i / 2) * 150;
+    x.save(); x.translate(cx + 180, cy); x.scale(cl(p, 0, 1.1), cl(p, 0, 1.1)); rr(-180, -55, 360, 110, 30); x.fillStyle = i === 0 ? C.lime : '#1f232d'; x.fill(); T(nm, -150, -12, '800 40px IT', i === 0 ? C.ink : '#fff', { al: 'left' }); T(l, -150, 28, l === 'हिंदी' ? '800 30px MK' : '700 26px JB', i === 0 ? C.green : '#9aa3ad', { al: 'left' }); x.restore(); }); };
+const D_cartoon = (lt, X, Y, w, h) => { sky(X, Y, w, h); x.fillStyle = '#5E8F3A'; x.fillRect(X, Y + h * .64, w, h * .36); for (let i = 0; i < 220; i++) { x.strokeStyle = 'rgba(40,80,20,.6)'; x.lineWidth = 3; const gx = X + rnd(i) * w, gy = Y + h * .64 + rnd(i + 3) * h * .36; x.beginPath(); x.moveTo(gx, gy); x.lineTo(gx + 3, gy - 18); x.stroke(); }
+  [[.25, '#3FE0F0', 'dance', .9], [.55, '#FFD21F', 'wave', .7], [.8, '#FF3DC8', 'dance', 1.05]].forEach(([fx, col, m, s], i) => { const p = eBack(inv(.6 + i * .35, .9 + i * .35, lt)); if (p <= 0) return; x.fillStyle = 'rgba(0,0,0,.2)'; x.beginPath(); x.ellipse(X + w * fx, Y + h * .8 + 70 * s, 80 * s, 14 * s, 0, 0, 7); x.fill(); blob(X + w * fx, Y + h * .8, s * cl(p, 0, 1.1), col, lt, i * 2, m); }); };
+const D_match = (lt, X, Y, w, h) => { const k = Math.floor(lt * 6); x.fillStyle = k % 2 ? '#EDE7DA' : '#F5F1E8'; x.fillRect(X, Y, w, h); x.save(); x.translate(X + w / 2, Y + h / 2); x.rotate((rnd(k) - .5) * .12); x.scale(1 + rnd(k + 1) * .5, 1 + rnd(k + 1) * .5);
+  for (let r = -9; r <= 9; r++) { x.fillStyle = 'rgba(30,30,30,.35)'; x.fillRect(-w * .45, r * 46 - 6, w * .9 * (.6 + rnd(k * 9 + r) * .4), 12); }
+  const word = ['VIRAL', 'FREE', 'CREATORS', 'TRENDING', 'VIRAL', 'NOW'][k % 6]; x.font = `400 ${120 + rnd(k) * 40}px ` + (k % 3 === 0 ? 'AN' : k % 3 === 1 ? 'IT' : 'IS'); const tw = x.measureText(word).width; x.fillStyle = C.yel; x.fillRect(-tw / 2 - 20, -80, tw + 40, 150); x.fillStyle = '#111'; x.textAlign = 'center'; x.textBaseline = 'middle'; x.fillText(word, 0, 0); x.restore();
+  T('THE MORNING BENCH', X + w / 2, Y + 70, '400 54px AN', '#111', { a: .8 }); };
+const D_map = (lt, X, Y, w, h) => { x.fillStyle = '#9CC9E8'; x.fillRect(X, Y, w, h); x.fillStyle = '#E9E2CF'; [[.2, .3, 280, 200], [.7, .25, 330, 240], [.62, .7, 260, 300], [.15, .75, 200, 220]].forEach(([fx, fy, a, b], i) => { x.beginPath(); for (let k = 0; k <= 30; k++) { const an = k / 30 * 6.28, r = 1 + .18 * Math.sin(an * 3 + i); const px = X + w * fx + Math.cos(an) * a * r, py = Y + h * fy + Math.sin(an) * b * r; k ? x.lineTo(px, py) : x.moveTo(px, py); } x.fill(); });
+  const P = [[.62, .72, 'Delhi'], [.72, .3, 'Dubai'], [.2, .28, 'Paris']], p = eIO(inv(.5, 4.2, lt)), seg = p * 2, si = Math.min(1, Math.floor(seg)), f = seg - si;
+  x.strokeStyle = '#D6453D'; x.lineWidth = 9; x.setLineDash([22, 16]); x.beginPath(); x.moveTo(X + w * P[0][0], Y + h * P[0][1]); for (let i = 1; i <= si; i++) x.lineTo(X + w * P[i][0], Y + h * P[i][1]);
+  const ax = lerp(P[si][0], P[si + 1][0], si < 2 ? f : 0), ay = lerp(P[si][1], P[si + 1][1], si < 2 ? f : 0); if (si < 2) x.lineTo(X + w * ax, Y + h * ay); x.stroke(); x.setLineDash([]);
+  P.forEach(([fx, fy, nm], i) => { if (i > si + (f > .98 ? 1 : 0) && i > 0) return; x.fillStyle = '#D6453D'; x.beginPath(); x.arc(X + w * fx, Y + h * fy, 16, 0, 7); x.fill(); rr(X + w * fx - 80, Y + h * fy - 80, 160, 56, 28); x.fillStyle = '#111'; x.fill(); T(nm, X + w * fx, Y + h * fy - 51, '800 30px IT', '#fff'); });
+  x.save(); x.translate(X + w * ax, Y + h * ay); T('✈', 0, 0, '60px sans-serif', '#111'); x.restore(); };
+const D_bg = (lt, X, Y, w, h) => { const sp = eIO(inv(.6, 2.0, lt)); for (let yy = 0; yy < h; yy += 40) for (let xx = 0; xx < w; xx += 40) { x.fillStyle = ((xx + yy) / 40) % 2 ? '#ddd' : '#fff'; x.fillRect(X + xx, Y + yy, 40, 40); }
+  x.save(); x.beginPath(); x.rect(X + w * sp, Y, w, h); x.clip(); sky(X, Y, w, h, '#C97A4A', '#6A3A2A'); x.fillStyle = '#4a2a1a'; for (let i = 0; i < 6; i++) x.fillRect(X + i * 160, Y + h * .5 + rnd(i) * 80, 40, h); x.restore();
+  blob(X + w / 2, Y + h * .62, 1.3, '#3FE0F0', lt, 3, 'wave'); x.strokeStyle = '#fff'; x.lineWidth = 6; x.beginPath(); x.moveTo(X + w * sp, Y); x.lineTo(X + w * sp, Y + h); x.stroke();
+  const m = eOut(inv(2.4, 3.6, lt)); if (lt > 2.2) { rr(X + 60, Y + h - 220, w - 120, 160, 30); x.fillStyle = 'rgba(14,15,20,.92)'; x.fill(); T('AI or real?', X + 100, Y + h - 175, '800 38px IT', '#fff', { al: 'left' }); rr(X + 100, Y + h - 130, w - 200, 26, 13); x.fillStyle = '#333'; x.fill(); rr(X + 100, Y + h - 130, (w - 200) * .92 * m, 26, 13); x.fillStyle = C.lime; x.fill(); T(Math.round(92 * m) + '% real', X + w - 100, Y + h - 175, '700 34px JB', C.lime, { al: 'right' }); } };
+function prompts(lt) {   // Motion Prompts mini gallery
+  bg(C.ink); T('MOTION PROMPTS', W / 2, 300, '400 150px AN', '#fff', { a: eOut(inv(0, .3, lt)) }); T('copy · paste · animate', W / 2, 420, 'italic 400 64px IS', C.lime, { a: eOut(inv(.2, .5, lt)) });
+  const tiles = 6, tw = 420, th = 420; for (let i = 0; i < tiles; i++) { const c = i % 2, r = Math.floor(i / 2), X = 90 + c * 480, Y = 560 + r * 460, p = eBack(inv(.4 + i * .15, .75 + i * .15, lt)); if (p <= 0) continue;
+    x.save(); x.translate(X + tw / 2, Y + th / 2); x.scale(cl(p, 0, 1.1), cl(p, 0, 1.1)); x.translate(-tw / 2, -th / 2); rr(0, 0, tw, th, 34); x.fillStyle = [C.paper, '#0E0F14', C.green, '#07080C', C.mag, C.paper][i]; x.fill(); x.save(); x.clip(); const q = (lt * .6 + i * .3) % 1;
+      if (i === 0) for (let b = 0; b < 6; b++) { const bh = (40 + b * 45) * eOut(cl(q * 2 - b * .1)); x.fillStyle = b === 5 ? C.mag : C.green; x.fillRect(50 + b * 55, 360 - bh, 40, bh); }
+      if (i === 1) { x.strokeStyle = C.lime; x.lineWidth = 8; x.beginPath(); for (let k = 0; k <= 30 * q; k++) { const px = 40 + k * 11.5, py = 330 - Math.pow(k / 30, 1.8) * 240 - Math.sin(k) * 12; k ? x.lineTo(px, py) : x.moveTo(px, py); } x.stroke(); }
+      if (i === 2) for (let k = 0; k < 10; k++) { const a = lt * 3 + k / 10 * 6.28; x.fillStyle = k % 3 ? C.lime : '#fff'; x.beginPath(); x.arc(210 + Math.cos(a) * 110, 210 + Math.sin(a) * 110, 14, 0, 7); x.fill(); }
+      if (i === 3) for (let k = 0; k < 120; k++) { const a = rnd(k) * 6.28, r = 40 + rnd(k + 2) * 170 * (1 - q); x.fillStyle = k % 7 ? '#fff' : C.mag; x.beginPath(); x.arc(210 + Math.cos(a) * r, 210 + Math.sin(a) * r, 4, 0, 7); x.fill(); }
+      if (i === 4) { T('STOP', 210, 150, '400 110px AN', '#fff', { a: cl(q * 4) }); T('SCROLLING', 210, 270, '400 90px AN', C.yel, { a: cl(q * 4 - 1) }); }
+      if (i === 5) { const pts = [[90, 140], [330, 140], [330, 300], [90, 300]]; pts.forEach(([px, py], k) => { if (q * 4 < k) return; rr(px - 60, py - 36, 120, 72, 18); x.fillStyle = k % 2 ? '#fff' : C.green; x.fill(); x.strokeStyle = '#111'; x.lineWidth = 3; x.stroke(); }); }
+      x.restore(); x.restore(); } }
+function cta(lt) {   // Link in bio
+  bg(C.lime); const p = eBack(inv(0, .25, lt)); x.save(); x.translate(W / 2, 760); x.scale(cl(p, 0, 1.15), cl(p, 0, 1.15)); T('LINK', 0, -140, '400 300px AN', C.ink); T('IN BIO', 0, 160, '400 300px AN', C.ink); x.restore();
+  const b = Math.sin(lt * 8) * 18; x.strokeStyle = C.ink; x.lineWidth = 22; x.lineCap = 'round'; x.lineJoin = 'round'; x.beginPath(); x.moveTo(W / 2, 1180 + b); x.lineTo(W / 2, 1400 + b); x.moveTo(W / 2 - 80, 1320 + b); x.lineTo(W / 2, 1405 + b); x.lineTo(W / 2 + 80, 1320 + b); x.stroke();
+  T('comment "TOOLS" for the link', W / 2, 1560, '800 54px IT', C.ink, { a: eOut(inv(.5, .8, lt)) }); }
+// ---------- master ----------
+// [start, scene, timeOffset]: old scenes keep their own clock via an offset; new ones get local time
+const M = (fn, orig) => t0 => t => fn(orig + (t - t0)), L = fn => t0 => t => fn(t - t0);
+const FEAT = (n, title, sub, col, ink, demo) => L(lt => feat(lt, n, title, sub, col, ink, demo));
+const PLAN = [[0, M(hook, 0)], [1, L(paying)], [4, M(words, 1)], [5.5, M(grid, 2.5)],
+  [7.5, FEAT(1, 'AI CAPTIONS', 'Hindi · Hinglish · English, word by word', C.paper, C.ink, D_captions)],
+  [12.5, FEAT(2, 'AI VOICEOVER', '14 natural voices, हिंदी too', C.lime, C.ink, D_voice)],
+  [17.5, FEAT(3, 'CARTOON TREND', 'the viral trend, no After Effects', C.blue, '#fff', D_cartoon)],
+  [22.5, FEAT(4, 'HEADLINE MATCH CUT', 'type a sentence, get the reel', C.yel, C.ink, D_match)],
+  [27.5, FEAT(5, 'MAP ANIMATOR', 'travel routes in 4K', C.orange, '#fff', D_map)],
+  [32.5, FEAT(6, 'BACKGROUND + AI CHECK', 'cut-outs and AI image detection', C.green, '#fff', D_bg)],
+  [37.5, M(nos, 4.5)], [40, M(hindi, 7)], [42.5, L(prompts)], [47.5, M(phone, 9.5)], [50, M(collage, 12)], [51.5, L(cta)], [54, M(final, 13.5)]];
+const SCENES = PLAN.map(([t0, mk]) => [t0, mk(t0)]);
+const grain = (() => { const g = document.createElement('canvas'); g.width = g.height = 256; const c = g.getContext('2d'), d = c.createImageData(256, 256); for (let i = 0; i < d.data.length; i += 4) { const v = rnd(i * .37) * 255; d.data[i] = d.data[i + 1] = d.data[i + 2] = v; d.data[i + 3] = 255; } c.putImageData(d, 0, 0); return g; })();
+window.render = t => {
+  x.setTransform(1, 0, 0, 1, 0, 0); x.globalAlpha = 1; x.filter = 'none'; let k = 0; for (let i = 0; i < SCENES.length; i++) if (t >= SCENES[i][0]) k = i; SCENES[k][1](t); if (t > DUR - .3) { x.fillStyle = `rgba(244,241,234,${(t - DUR + .3) / .3 * 0})`; }
+  const cut = SCENES.map(s => s[0]).concat([4.5, 5, 50.25, 50.5, 50.75, 51, 51.25]).find(c => c > 0 && t >= c && t < c + 2 / 30);   // RGB split on cuts
+  if (cut !== undefined) { x.save(); x.globalCompositeOperation = 'screen'; x.globalAlpha = .4; x.drawImage(cv, 14, 0); x.globalCompositeOperation = 'multiply'; x.drawImage(cv, -14, 0); x.restore(); }
+  x.save(); x.globalAlpha = .06; x.globalCompositeOperation = 'overlay'; x.translate(-(Math.floor(t * 24) * 53) % 256, -(Math.floor(t * 24) * 97) % 256); x.fillStyle = x.createPattern(grain, 'repeat'); x.fillRect(0, 0, W + 512, H + 512); x.restore();
+};
+window.ready = Promise.all(['500 40px IT', '800 40px IT', '900 40px IT', 'italic 400 40px IS', '700 40px JB', '400 40px AN', '800 40px MK'].map(f => document.fonts.load(f, f.includes('MK') ? 'हिंदी' : 'A'))).then(() => { window.DURATION = DUR; });
+</script></body></html>
