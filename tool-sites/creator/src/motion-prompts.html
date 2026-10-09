@@ -1,0 +1,98 @@
+<!--meta
+slug: motion-prompts
+title: Motion Prompts: free AI prompts for viral motion graphics
+name: Motion Prompts
+desc: Free copy-paste prompts for motion graphics videos: kinetic text, app UI animations, animated charts, particles and characters. Paste into Claude or ChatGPT, get a ready animation. Previews for every prompt.
+-->
+<style>
+.mp-bar { display: flex; flex-wrap: wrap; gap: 8px; align-items: center }
+.mp-bar button { padding: 8px 14px; border-radius: 99px; border: 1px solid var(--line-2); background: var(--surface-2); color: var(--ink); cursor: pointer; font: 500 14px var(--body) }
+.mp-bar button[aria-pressed="true"] { background: var(--ink); color: var(--surface); border-color: var(--ink) }
+.mp-bar .sp { flex: 1 }
+.mp-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(230px, 1fr)); gap: 16px; margin-top: 16px }
+.mp-card { border: 1px solid var(--line); border-radius: 16px; overflow: hidden; background: var(--surface); cursor: pointer; text-align: left; padding: 0; color: var(--ink); transition: transform .15s, box-shadow .15s }
+.mp-card:hover { transform: translateY(-3px); box-shadow: 0 12px 30px rgba(0,0,0,.12) }
+.mp-card video, .mp-card img { display: block; width: 100%; aspect-ratio: 1; object-fit: cover; background: #111 }
+.mp-card div { padding: 12px 14px; display: flex; justify-content: space-between; align-items: center; gap: 8px }
+.mp-card b { font: 600 15px var(--body) } .mp-tag { font: 500 12px var(--mono); color: var(--ink-3); white-space: nowrap }
+.mp-modal { position: fixed; inset: 0; background: rgba(10,10,12,.72); display: grid; place-items: center; z-index: 100; padding: 16px }
+.mp-modal[hidden] { display: none }
+.mp-box { background: var(--surface); border-radius: 20px; max-width: 980px; width: 100%; max-height: 92vh; overflow: auto; display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1.1fr) }
+@media (max-width: 760px) { .mp-box { grid-template-columns: 1fr } }
+.mp-box video { width: 100%; aspect-ratio: 1; display: block; background: #111 }
+.mp-side { padding: 22px; display: grid; gap: 12px; align-content: start }
+.mp-side h2 { margin: 0 } .mp-side pre { white-space: pre-wrap; font: 400 13.5px/1.55 var(--mono); background: var(--surface-2); border: 1px solid var(--line); border-radius: 12px; padding: 14px; margin: 0; max-height: 46vh; overflow: auto }
+.mp-x { justify-self: end; border: 0; background: var(--surface-2); border-radius: 99px; width: 36px; height: 36px; cursor: pointer; font-size: 18px; color: var(--ink) }
+</style>
+<div>
+  <h1>Motion prompts, <em>free to copy</em></h1>
+  <p class="lede">Prompts for the motion graphics you see in viral Reels and Shorts: slamming text, app UI demos, animated charts, particles and characters. Copy a prompt, paste it into Claude or ChatGPT, and you get a ready animation as a single web page you can screen record or drop into your edit.</p>
+</div>
+<div class="ad-slot" data-slot="top"></div>
+<div class="panel">
+  <div class="mp-bar" id="mp-cats" role="group" aria-label="Category"></div>
+  <div class="mp-grid" id="mp-grid"></div>
+</div>
+<div class="mp-modal" id="mp-modal" hidden role="dialog" aria-modal="true" aria-labelledby="mp-title">
+  <div class="mp-box">
+    <video id="mp-video" muted loop playsinline autoplay></video>
+    <div class="mp-side">
+      <button type="button" class="mp-x" id="mp-close" aria-label="Close">✕</button>
+      <span class="mp-tag" id="mp-cat"></span>
+      <h2 id="mp-title"></h2>
+      <pre id="mp-prompt"></pre>
+      <div class="row"><button type="button" class="btn" id="mp-copy">Copy prompt</button><span class="hint" id="mp-copied"></span></div>
+      <p class="hint">Paste into Claude or ChatGPT. Open the HTML file it gives you in a browser, then screen record it, or ask for a different size, colors or text.</p>
+    </div>
+  </div>
+</div>
+<div class="ad-slot" data-slot="mid"></div>
+<section class="copy" id="how">
+  <h2>How to turn a prompt into a video</h2>
+  <p>1. Copy a prompt and paste it into Claude or ChatGPT. 2. Save the reply as a file ending in <code>.html</code> and open it in your browser. 3. Record the screen (on a phone, use the built-in screen recorder; on a Mac, press Shift + Command + 5). 4. Trim it, add music, and add captions with Auto Captions. Change any words, colors or timing by asking the AI in plain English.</p>
+</section>
+<section class="copy" id="faq">
+  <h2>Questions</h2>
+  <details><summary>Are these prompts free to use commercially?</summary><p>Yes. Every prompt and preview here was written and made by Creator Bench. Use them in client work, monetised videos and ads.</p></details>
+  <details><summary>Which AI should I paste them into?</summary><p>Any AI that writes code works. Claude gives the most polished motion; ChatGPT and Gemini work too. Ask for changes in plain words, like "make it 9:16" or "use my brand colors".</p></details>
+  <details><summary>How often are new prompts added?</summary><p>We add new prompts regularly, based on what's trending on Reels and Shorts.</p></details>
+</section>
+<script>
+(() => {
+  const $ = id => document.getElementById(id);
+  const BASE = 'Create a single self-contained HTML file with a 1080×1080 <canvas> animation that loops every 6 seconds, drawn with plain JavaScript (no libraries). Make the animation a pure function of time so it can be recorded frame by frame, and fade everything out in the last 0.4 s so the loop restarts cleanly. ';
+  const P = [
+    ['slam', 'Words that slam in', 'Kinetic type', BASE + 'Background: warm off-white (#F4F1EA). Stack five words in the centre, one per line, in a tall condensed font (Anton from Google Fonts), 130 px, near-black: "STOP", "EDITING", "LIKE", "IT\'S", "2015." Each word slams in 0.55 s after the previous one: it starts at 2.4× scale and transparent, then scales down to 1× with an ease-out over 0.28 s, with a tiny horizontal camera shake while it lands. The second word sits on a solid magenta (#E5157A) bar with white text. Hold the finished stack, then fade out.'],
+    ['type', 'Typewriter with marker highlight', 'Kinetic type', BASE + 'Background: very dark navy (#0E0F14). Type the line "The best edit is the one" character by character on the left (Inter Tight bold, 70 px, white) over 1.5 s, then type "nobody notices." on the next line over 0.9 s. Show a lime (#DCEF80) blinking text cursor while typing. At 3.0 s, sweep a yellow (#FFE14D) slanted marker highlight left to right behind the second line over 0.6 s and switch that line\'s text to near-black as the highlight passes. Hold, then fade out.'],
+    ['split', 'Split-text reveal', 'Kinetic type', BASE + 'Background: deep green (#1F4D3A). Show the word "MANUAL" huge in the centre (Anton, 250 px, white). At 1.4 s, split it horizontally through the middle: the top half slides up and the bottom half slides down by 150 px each with an ease-in-out over 0.8 s, clipping each half. In the gap, reveal the word "creator" in an elegant italic serif (Instrument Serif italic, 230 px, lime #DCEF80) with a thin lime line drawing out from the centre. At 2.4 s fade in a small caption below: "the new way to work". Hold, then fade out.'],
+    ['notif', 'Phone notification stack', 'Phone', BASE + 'Background: light beige (#E9E4DA). Draw a modern phone in the centre (420×840, rounded corners, black bezel, dynamic-island pill, soft drop shadow) with a blue-to-magenta vertical gradient wallpaper and a large "9:41" clock. Starting at 0.5 s, four notification cards slide down and stack one below another every 0.7 s with a slight overshoot (back easing): white rounded cards with a coloured app-icon square, a bold app name and a one-line message: "Creator Bench – Your captions are ready ✓", "Studio – 1,000 new subscribers", "Reels – Your reel hit 50K views", "Payments – ₹12,480 credited". Hold, then fade out.'],
+    ['search', 'Search bar to results', 'Product UI', BASE + 'Background: soft white (#F7F7F5). A large pill-shaped search bar (white, soft shadow, magnifier icon) drops in at the top third. Type the query "free ai captions" into it over 1.2 s with a magenta blinking cursor. Then three result rows cascade in from below, 0.18 s apart, each fading and sliding up 30 px: the first result is highlighted in deep green with a lime icon ("Auto Captions – AI word-by-word captions"), the others are white ("Caption Formatter – Line breaks that stick", "Text to SRT – Script to subtitles"). Use Inter Tight. Hold, then fade out.'],
+    ['price', 'Pricing toggle with rolling numbers', 'Product UI', BASE + 'Background: near-black (#0E0F14). At the top, a pill toggle with "Monthly" and "Yearly"; a lime knob sits on Monthly. Below, three pricing cards rise in one after another: Starter (Free), Pro (₹499, white card, magenta price) and Team (₹1,499). At 2.0 s the knob slides to Yearly and every price counts up smoothly to the yearly amount (₹4,990 and ₹14,990), with "per month" switching to "per year". A small magenta badge "2 months free" pops onto the Pro card with a bounce. Each card has a "Choose" button. Hold, then fade out.'],
+    ['bars', 'Bar chart growing with counters', 'Charts', BASE + 'Background: off-white (#F4F1EA). Title top-left: "Views this week" (Inter Tight bold). Draw light horizontal gridlines. Seven bars for Mon–Sun with values 32, 48, 41, 67, 88, 120, 156 (thousand) grow from the baseline one after another (0.18 s stagger, ease-out over 0.9 s); bars are deep green, the last one magenta, with rounded tops. A monospace counter above each bar counts up with its height ("156K"). When the last bar finishes, a magenta "+387%" fades in at the top right. Hold, then fade out.'],
+    ['line', 'Glowing line chart', 'Charts', BASE + 'Background: near-black (#0E0F14) with faint horizontal gridlines. Title: "Subscribers". A rising, slightly wobbly line (about 40 points, accelerating upward) draws itself from left to right over 3 s in lime (#DCEF80), 7 px thick, with a soft lime-to-transparent gradient fill underneath. A white dot with a lime glow rides the tip of the line, and a white pill label above the dot counts the value up from 1,200 to 48,300 in a monospace font. Hold, then fade out.'],
+    ['particles', 'Particles form a word, then burst', 'Particles', BASE + 'Background: almost black (#07080C). Sample the word "VIRAL" (Anton, 300 px) on an offscreen canvas every 10 px to get target points. Each point is a small dot (mostly white, every 5th lime, every 9th magenta) that starts scattered around the edges of the frame and flies into its place in the word with an ease-in-out between 0.3 s and 2.0 s, with a subtle shimmer. At 3.6 s the dots burst outward from the centre with random spread and fade. Fade out at the end.'],
+    ['orbit', 'Loader that becomes a checkmark', 'Particles', BASE + 'Background: deep green (#1F4D3A). Twelve dots (lime and white) orbit the centre in a circle of radius 160 px, pulsing in size, with the caption "Rendering…" below (Inter Tight bold, white). At 3.0 s the orbit shrinks into the centre, and a lime circle pops in with a bounce, then a deep-green checkmark draws itself inside it stroke by stroke. The caption changes to "Export ready". Hold, then fade out.'],
+    ['character', 'Waving blob character', 'Characters', BASE + 'Scene: light blue sky (#BFE3F2) with a flat green ground. A cute round cyan blob character (darker teal outline, two big googly eyes with pupils, a small smile, noodle arms and legs) bounces gently in place with a soft shadow that shrinks as it rises. Its right arm waves quickly and it blinks every 2.4 s. At 1.0 s a white speech bubble pops in next to it with a bounce, and the text "hi, creator!" types into the bubble. Keep everything drawn with canvas shapes. Hold, then fade out.'],
+    ['flow', 'Flow diagram that connects itself', 'Diagrams', BASE + 'Background: off-white (#F4F1EA). Six rounded boxes appear one by one with a bounce, laid out in a U shape: top row "Idea", "Script", "Record"; bottom row (right to left) "Edit", "Captions", "Post". Alternate deep-green and white boxes with a thin dark outline; "Post" is magenta. After each box appears, a dashed arrow draws from it to the next box, with the dashes slowly flowing along the line and an arrowhead appearing at the end. Finally, fade in "your content workflow" in an italic serif in magenta at the bottom. Hold, then fade out.'],
+  ];
+  const CATS = ['All', ...new Set(P.map(p => p[2]))]; let cat = 'All', paused = matchMedia('(prefers-reduced-motion: reduce)').matches;
+  $('mp-cats').innerHTML = CATS.map(c => `<button type="button" data-c="${c}" aria-pressed="${c === 'All'}">${c}${c === 'All' ? '' : ` <span class="mp-tag">${P.filter(p => p[2] === c).length}</span>`}</button>`).join('') + '<span class="sp"></span><button type="button" id="mp-pause" aria-pressed="false">Pause previews</button>';
+  const io = 'IntersectionObserver' in window ? new IntersectionObserver(es => es.forEach(e => { const v = e.target; if (e.isIntersecting && !paused) v.play().catch(() => {}); else v.pause(); }), { rootMargin: '100px' }) : null;
+  function grid() {
+    $('mp-grid').innerHTML = P.filter(p => cat === 'All' || p[2] === cat).map(([id, title, c]) => `<button type="button" class="mp-card" data-id="${id}"><video src="vendor/motion/${id}.mp4" poster="vendor/motion/${id}.jpg" muted loop playsinline preload="none" aria-hidden="true"></video><div><b>${title}</b><span class="mp-tag">${c}</span></div></button>`).join('');
+    document.querySelectorAll('.mp-card video').forEach(v => io ? io.observe(v) : (!paused && v.play().catch(() => {})));
+  }
+  $('mp-cats').onclick = e => { const b = e.target.closest('button'); if (!b) return;
+    if (b.id === 'mp-pause') { paused = !paused; b.setAttribute('aria-pressed', paused); b.textContent = paused ? 'Play previews' : 'Pause previews'; document.querySelectorAll('.mp-card video').forEach(v => paused ? v.pause() : v.play().catch(() => {})); return; }
+    cat = b.dataset.c; document.querySelectorAll('#mp-cats button[data-c]').forEach(x => x.setAttribute('aria-pressed', x === b)); grid(); };
+  let last = null;
+  function open(id) { const p = P.find(x => x[0] === id); if (!p) return; last = document.activeElement; $('mp-title').textContent = p[1]; $('mp-cat').textContent = p[2] + ' · Prompt'; $('mp-prompt').textContent = p[3];
+    $('mp-video').src = `vendor/motion/${id}.mp4`; $('mp-video').poster = `vendor/motion/${id}.jpg`; $('mp-copied').textContent = ''; $('mp-modal').hidden = false; $('mp-close').focus({ preventScroll: true }); document.querySelector('.mp-box').scrollTop = 0; history.replaceState(null, '', '#' + id); }
+  function close() { $('mp-modal').hidden = true; $('mp-video').pause(); history.replaceState(null, '', location.pathname); if (last) last.focus(); }
+  $('mp-grid').onclick = e => { const c = e.target.closest('.mp-card'); if (c) open(c.dataset.id); };
+  $('mp-close').onclick = close; $('mp-modal').onclick = e => { if (e.target.id === 'mp-modal') close(); };
+  document.addEventListener('keydown', e => { if (e.key === 'Escape' && !$('mp-modal').hidden) close(); });
+  $('mp-copy').onclick = async () => { const t = $('mp-prompt').textContent; try { await navigator.clipboard.writeText(t); } catch (e) { const r = document.createRange(); r.selectNodeContents($('mp-prompt')); getSelection().removeAllRanges(); getSelection().addRange(r); document.execCommand('copy'); } $('mp-copied').textContent = 'Copied. Paste it into Claude or ChatGPT.'; };
+  grid(); if (location.hash) open(location.hash.slice(1));
+})();
+</script>
