@@ -9,6 +9,8 @@ desc: Free AI text to speech in English and Hindi for YouTube, Reels and Shorts.
 .av-voices button { text-align: left; padding: 10px 12px; border-radius: 12px; border: 2px solid var(--line-2); background: var(--surface-2); color: var(--ink); cursor: pointer; display: grid; gap: 2px }
 .av-voices button[aria-pressed="true"] { border-color: var(--green-2); box-shadow: 0 0 0 3px var(--tile) }
 .av-voices b { font: 600 15px var(--body) } .av-voices small { color: var(--ink-3); font-size: 12px }
+.av-note { margin: 0 0 4px; padding: 10px 14px; border-radius: 12px; background: var(--surface-2); border: 1px solid var(--line); font-size: 14px }
+.av-note.warn { background: #FFF4D6; border-color: #F2C76B; color: #5a4200 }
 .av-bar { height: 8px; border-radius: 99px; background: var(--surface-2); border: 1px solid var(--line); overflow: hidden } .av-bar i { display: block; height: 100%; width: 0; background: var(--green-2); transition: width .2s }
 </style>
 <div>
@@ -17,6 +19,7 @@ desc: Free AI text to speech in English and Hindi for YouTube, Reels and Shorts.
 </div>
 <div class="ad-slot" data-slot="top"></div>
 <div class="panel">
+  <p class="av-note" id="av-note">✨ Works best in <b>Google Chrome</b> on a computer or Android phone.</p>
   <h2>Your script</h2>
   <textarea id="av-text" rows="7" aria-label="Script">Every video comes with the same boring jobs. Timing the script, writing captions, resizing thumbnails. Creator Bench does all of it for free, right in your browser.</textarea>
   <p class="hint" id="av-count"></p>
@@ -53,6 +56,8 @@ desc: Free AI text to speech in English and Hindi for YouTube, Reels and Shorts.
   const isHindi = v => v[0] === 'h';
   const UA = navigator.userAgent, MOBILE = /iPhone|iPad|iPod|Android|Mobile/i.test(UA) || (navigator.maxTouchPoints > 1 && /Macintosh/.test(UA)), SAFARI = /Safari/.test(UA) && !/Chrome|Chromium|CriOS|Edg|Android/.test(UA), GPU_OK = !MOBILE && !SAFARI;
   let voice = 'am_michael', worker = null, out = null;
+  const IOS = /iPhone|iPad|iPod/.test(UA) || (navigator.maxTouchPoints > 1 && /Macintosh/.test(UA)), WEAK = SAFARI || IOS;   // WebKit stalls on long voice jobs
+  if (WEAK) { $('av-note').classList.add('warn'); $('av-note').innerHTML = IOS ? '⚠️ iPhone and iPad browsers may stop partway through. For best results, use <b>Google Chrome</b> on a computer or an Android phone.' : '⚠️ Safari may stop partway through. For best results, open this page in <b>Google Chrome</b>.'; }
   let dog = null, lastBeat = 0; const beat = () => { lastBeat = Date.now(); };
   function watch(limitMs, onStall) { clearInterval(dog); if (!limitMs) return; beat(); dog = setInterval(() => { if (Date.now() - lastBeat > limitMs) { clearInterval(dog); onStall(); } }, 3000); }
 
@@ -112,7 +117,7 @@ desc: Free AI text to speech in English and Hindi for YouTube, Reels and Shorts.
     $('av-go').disabled = true; $('av-dl').disabled = true; $('av-bar').style.width = '0%'; $('av-status').textContent = 'Loading the voice model…';
     if (!worker) worker = new Worker(URL.createObjectURL(new Blob([G2P_SRC, WORKER], { type: 'text/javascript' })), { type: 'module' });
     worker.onerror = e => { e.preventDefault && e.preventDefault(); worker = null; $('av-status').textContent = "The voice model couldn't load. Check your connection and try again."; $('av-go').disabled = false; };
-    const stall = () => { try { worker.terminate(); } catch (e) {} worker = null; $('av-go').disabled = false; $('av-status').textContent = MOBILE ? 'Your phone stopped responding while preparing the voice. Close other apps and tabs, then try a shorter script, or use a computer for long scripts.' : 'The voice stopped responding. Reload the page and try again with a shorter script.'; };
+    const stall = () => { try { worker.terminate(); } catch (e) {} worker = null; $('av-go').disabled = false; $('av-status').textContent = WEAK ? 'Safari stopped responding. Please open this page in Google Chrome on a computer or Android phone.' : MOBILE ? 'Your phone stopped responding while preparing the voice. Close other apps and tabs, then try a shorter script, or use a computer for long scripts.' : 'The voice stopped responding. Reload the page and try again with a shorter script.'; };
     watch(150000, stall);
     worker.onmessage = ({ data }) => { beat();
       if (data.type === 'load') { $('av-status').textContent = data.p > .995 && data.t > 5e6 ? 'Preparing the voice (first time can take up to a minute on phones)…' : `Downloading the voice model (one time only)… ${Math.round(data.p * 100)}%`; $('av-bar').style.width = data.p * 40 + '%'; }
