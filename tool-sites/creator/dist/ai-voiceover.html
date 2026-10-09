@@ -286,12 +286,11 @@ details p { margin: 10px 0 0 }
   $('av-text').oninput = count; count();
   const WORKER = `
     // everything loads from our own site (CDNs can be slow or blocked on some networks)
-    let BASE = '', tts = null, enPhon = null;
+    let BASE = '', tts = null, KP = null;
     // Hindi voices: Devanagari and Hinglish words go through HindiG2P, English words through eSpeak (en)
     async function hindiPhonemes(text) {
       const toks = text.match(/[\\u0900-\\u097F]+|[A-Za-z']+|\\d+(?:[.,]\\d+)*|[,.!?;:—…-]|\\s+/g) || [], out = []; let eng = [];
-      const flush = async () => { if (!eng.length) return; if (!enPhon) enPhon = (await import(BASE + 'vendor/phonemizer.js')).phonemize;
-        out.push(HindiG2P.indianEnglish((await enPhon(eng.join(' '), 'en')).join(' '))); eng = []; };
+      const flush = async () => { if (!eng.length) return; out.push(HindiG2P.indianEnglish(await KP(eng.join(' '), 'b'))); eng = []; };   // the voice engine's own English phonemizer (no second copy to load)
       for (const t of toks) {
         if (/^\\s+$/.test(t)) continue;
         if (/[\\u0900-\\u097F]/.test(t)) { await flush(); out.push(HindiG2P.devanagari(t)); }
@@ -305,7 +304,7 @@ details p { margin: 10px 0 0 }
     self.onmessage = async ({ data }) => {
       try {
         if (!tts) {
-          BASE = data.base; const K = await import(BASE + 'vendor/kokoro.web.js'); K.env.wasmPaths = BASE + 'vendor/ort/';   // WASM + q8 (92 MB) on every device: the WebGPU fp32 model is 326 MB and stalls on many machines
+          BASE = data.base; const K = await import(BASE + 'vendor/kokoro.web.js'); KP = K.phonemize; K.env.wasmPaths = BASE + 'vendor/ort/';   // WASM + q8 (92 MB) on every device: the WebGPU fp32 model is 326 MB and stalls on many machines
           const files = {};
           const load = () => K.KokoroTTS.from_pretrained('onnx-community/Kokoro-82M-v1.0-ONNX', { dtype: 'q8', device: 'wasm',
             progress_callback: p => { if (p.status === 'progress' && p.total) { files[p.file] = [p.loaded, p.total]; const v = Object.values(files); const tot = v.reduce((a, x) => a + x[1], 0); self.postMessage({ type: 'load', p: v.reduce((a, x) => a + x[0], 0) / tot, t: tot }); } } });
