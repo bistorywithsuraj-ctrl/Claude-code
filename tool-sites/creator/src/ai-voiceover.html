@@ -42,7 +42,7 @@ desc: Free AI text to speech in English and Hindi for YouTube, Reels and Shorts.
   <h2>Questions</h2>
   <details><summary>Can I use the voiceover in monetised YouTube videos?</summary><p>Yes. The Kokoro model is Apache 2.0 licensed, which allows commercial use, and the audio you generate is yours. Disclose AI voices where a platform asks you to.</p></details>
   <details><summary>How long can the script be?</summary><p>There is no hard limit. A laptop generates roughly a minute of audio in under a minute; phones are slower. Very long scripts are best done in parts.</p></details>
-  <details><summary>Does it speak Hindi?</summary><p>Yes. Pick one of the four Hindi voices (Ananya, Kavya, Arjun or Rohan). They read हिंदी in Devanagari, Hinglish typed in English letters (like "aap kaise ho"), and the English words people mix in. Devanagari gives the most accurate pronunciation.</p></details>
+  <details><summary>Does it speak Hindi?</summary><p>Yes. Pick one of the four Hindi voices (Ananya, Vaishnavi, Arjun or Rohan). They read हिंदी in Devanagari, Hinglish typed in English letters (like "aap kaise ho"), and the English words people mix in. Devanagari gives the most accurate pronunciation.</p></details>
 </section>
 <script src="vendor/lame.min.js"></script>
 <script>
@@ -50,7 +50,7 @@ desc: Free AI text to speech in English and Hindi for YouTube, Reels and Shorts.
   const $ = id => document.getElementById(id);
   const VOICES = [['af_heart', 'Heart', 'US female · warm'], ['af_bella', 'Bella', 'US female · bright'], ['af_nicole', 'Nicole', 'US female · soft'], ['am_michael', 'Michael', 'US male · calm'],
     ['am_fenrir', 'Fenrir', 'US male · deep'], ['am_puck', 'Puck', 'US male · lively'], ['bf_emma', 'Emma', 'UK female · clear'], ['bf_isabella', 'Isabella', 'UK female · warm'], ['bm_george', 'George', 'UK male · narrator'], ['bm_fable', 'Fable', 'UK male · storyteller'],
-    ['hf_alpha', 'Ananya', 'हिंदी female · warm'], ['hf_beta', 'Kavya', 'हिंदी female · bright'], ['hm_omega', 'Arjun', 'हिंदी male · calm'], ['hm_psi', 'Rohan', 'हिंदी male · lively']];
+    ['hf_alpha', 'Ananya', 'हिंदी female · warm'], ['hf_beta', 'Vaishnavi', 'हिंदी female · bright'], ['hm_omega', 'Arjun', 'हिंदी male · calm'], ['hm_psi', 'Rohan', 'हिंदी male · lively']];
   const EN_SAMPLE = 'Every video comes with the same boring jobs. Timing the script, writing captions, resizing thumbnails. Creator Bench does all of it for free, right in your browser.';
   const HI_SAMPLE = 'नमस्ते दोस्तों! अब वॉइसओवर के लिए पैसे देने की ज़रूरत नहीं। बस अपनी script लिखिए, आवाज़ चुनिए, और download कीजिए। Hinglish bhi chalega, jaise ye line.';
   const isHindi = v => v[0] === 'h';
