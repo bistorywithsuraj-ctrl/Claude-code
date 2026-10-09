@@ -333,7 +333,7 @@ write('404.html', full(f'Page not found · {NAME}', 'This page does not exist. T
 # ---------- self-hosted libraries ----------
 import shutil
 (DIST / 'vendor').mkdir(exist_ok=True)
-for f in (HERE / 'shared' / 'vendor').iterdir(): shutil.copy(f, DIST / 'vendor' / f.name)
+for f in (HERE / 'shared' / 'vendor').iterdir(): (shutil.copytree(f, DIST / 'vendor' / f.name, dirs_exist_ok=True) if f.is_dir() else shutil.copy(f, DIST / 'vendor' / f.name))
 
 # ---------- crawl files ----------
 if not PREVIEW and 'example.com' not in SITE_URL: (DIST / 'CNAME').write_text(SITE_URL.split('://', 1)[1] + '\n')

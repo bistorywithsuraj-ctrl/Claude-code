@@ -285,12 +285,12 @@ details p { margin: 10px 0 0 }
   const count = () => { const w = $('av-text').value.trim().split(/\s+/).filter(Boolean).length; $('av-count').textContent = `${w} words · about ${Math.max(1, Math.round(w / 2.5))} seconds of audio`; };
   $('av-text').oninput = count; count();
   const WORKER = `
-    import { KokoroTTS } from 'https://cdn.jsdelivr.net/npm/kokoro-js@1.2.1/dist/kokoro.web.js';
-    let tts = null, enPhon = null;
+    // everything loads from our own site (CDNs can be slow or blocked on some networks)
+    let BASE = '', tts = null, enPhon = null;
     // Hindi voices: Devanagari and Hinglish words go through HindiG2P, English words through eSpeak (en)
     async function hindiPhonemes(text) {
       const toks = text.match(/[\\u0900-\\u097F]+|[A-Za-z']+|\\d+(?:[.,]\\d+)*|[,.!?;:—…-]|\\s+/g) || [], out = []; let eng = [];
-      const flush = async () => { if (!eng.length) return; if (!enPhon) enPhon = (await import('https://cdn.jsdelivr.net/npm/phonemizer@1.2.1/dist/phonemizer.js')).phonemize;
+      const flush = async () => { if (!eng.length) return; if (!enPhon) enPhon = (await import(BASE + 'vendor/phonemizer.js')).phonemize;
         out.push(HindiG2P.indianEnglish((await enPhon(eng.join(' '), 'en')).join(' '))); eng = []; };
       for (const t of toks) {
         if (/^\\s+$/.test(t)) continue;
@@ -305,11 +305,11 @@ details p { margin: 10px 0 0 }
     self.onmessage = async ({ data }) => {
       try {
         if (!tts) {
-          let device = 'wasm'; if (data.gpu) try { if (navigator.gpu && await navigator.gpu.requestAdapter()) device = 'webgpu'; } catch (e) {}
+          BASE = data.base; const K = await import(BASE + 'vendor/kokoro.web.js'); K.env.wasmPaths = BASE + 'vendor/ort/';   // WASM + q8 (92 MB) on every device: the WebGPU fp32 model is 326 MB and stalls on many machines
           const files = {};
-          const load = d => KokoroTTS.from_pretrained('onnx-community/Kokoro-82M-v1.0-ONNX', { dtype: d === 'webgpu' ? 'fp32' : 'q8', device: d,
+          const load = () => K.KokoroTTS.from_pretrained('onnx-community/Kokoro-82M-v1.0-ONNX', { dtype: 'q8', device: 'wasm',
             progress_callback: p => { if (p.status === 'progress' && p.total) { files[p.file] = [p.loaded, p.total]; const v = Object.values(files); const tot = v.reduce((a, x) => a + x[1], 0); self.postMessage({ type: 'load', p: v.reduce((a, x) => a + x[0], 0) / tot, t: tot }); } } });
-          try { tts = await load(device); } catch (e) { if (device === 'wasm') throw e; tts = await load('wasm'); }
+          tts = await load();
         }
         self.postMessage({ type: 'ready' });
         const parts = data.text.replace(/\\s+/g, ' ').match(/[^.!?।]+[.!?।]*["')\\]]*\\s*/g) || [data.text];
@@ -347,7 +347,7 @@ details p { margin: 10px 0 0 }
         watch(0); $('av-status').textContent = `Done: ${(out.f.length / out.sr).toFixed(1)} seconds. Play it, then download.`; $('av-go').disabled = false; $('av-dl').disabled = false; $('av-bar').style.width = '100%'; }
       if (data.type === 'error') { watch(0); $('av-status').textContent = 'Something went wrong: ' + data.message; $('av-go').disabled = false; }
     };
-    worker.postMessage({ text, voice, speed: +$('av-speed').value, gpu: GPU_OK });
+    worker.postMessage({ text, voice, speed: +$('av-speed').value, base: new URL('.', location.href).href });
   };
   $('av-dl').onclick = () => { if (!out) return; const fmt = $('av-fmt').value, blob = fmt === 'mp3' ? mp3(out.f, out.sr) : wav(out.f, out.sr), a = document.createElement('a'); a.href = URL.createObjectURL(blob); a.download = `voiceover-${voice}.${fmt}`; a.click(); };
 })();
