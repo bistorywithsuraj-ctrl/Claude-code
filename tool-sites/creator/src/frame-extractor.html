@@ -59,14 +59,22 @@ desc: Upload a video and extract frames as JPG or PNG images, every few seconds 
   <p>Your browser plays the video privately on your device. For each moment you ask for, the tool jumps to that point, draws the picture onto a hidden canvas and saves it as an image. Nothing is uploaded, so even long or private videos are safe to use.</p>
   <p>Use "Every N seconds" for a contact sheet or storyboard, "Fixed number" to get evenly spaced thumbnails options, or pause the player and press "Save this exact frame" to grab a precise moment for a thumbnail.</p>
 </section>
+<!--seo-guide--><section class="copy" id="guide">
+<h2>How to get a frame from a video</h2>
+<ol><li>Upload a video.</li><li>Choose every few seconds or a set number of frames, the format (JPG, PNG or WebP) and the size.</li><li>Save the frame you want, or download them all as a ZIP.</li></ol>
+<h2>Uses</h2>
+<ul><li><b>Thumbnails:</b> find your best expression, then remove the background with the <a href="background-remover.html">Background Remover</a>.</li><li><b>Storyboards</b> and B-roll reference.</li><li><b>Sharp stills</b> from action clips, sports or pets.</li></ul>
+<h2>Tip</h2><p>PNG keeps full quality; JPG is smaller for sharing.</p>
+</section><!--/seo-guide-->
 <section class="copy" id="faq">
   <h2>Questions</h2>
   <details><summary>Is my video uploaded to a server?</summary><p>No. The video is opened and processed in your browser, and the frames are created on your device.</p></details>
   <details><summary>Which video formats work?</summary><p>Any format your browser can play. MP4 (H.264) and WebM work almost everywhere. Some iPhone HEVC videos only play in Safari.</p></details>
   <details><summary>Can I extract every single frame?</summary><p>Set the gap to one frame, for example 0.04 seconds for 25 fps video. Each run is limited to 300 frames so your browser doesn't run out of memory, so work through long videos in sections.</p></details>
   <details><summary>Which image format should I choose?</summary><p>JPG for small files and sharing, PNG for the best quality or for editing, WebP for small files with good quality.</p></details>
-  <details><summary>Can I use a frame as a YouTube thumbnail?</summary><p>Yes, if the video is yours. Extract at original size, then add text in your editor. YouTube thumbnails are 1280 × 720.</p></details>
-</section>
+  <details><summary>Can I use a frame as a YouTube thumbnail?</summary><p>Yes, if the video is yours. Extract at original size, then add text in your editor. YouTube thumbnails are 1280 × 720.</p></details><!--seo-faq-->
+  <details><summary>Will the frame be blurry?</summary><p>Frames are taken at the video's original resolution. Fast motion can still blur in the video itself, so extract several frames and pick the sharpest.</p></details>
+<!--/seo-faq--></section>
 <script src="vendor/jszip.min.js"></script>
 <script>
 (() => {

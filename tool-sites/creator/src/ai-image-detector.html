@@ -47,12 +47,24 @@ desc: Check if an image is AI-generated. Scans hidden metadata from ChatGPT, Mid
   <p><b>2. AI detector model.</b> A SwinV2 image classifier (Apache 2.0) trained to tell AI images from real photos runs in your browser and gives a probability.</p>
   <p><b>Be careful with the result.</b> No detector is perfect. Screenshots, heavy compression, filters and images saved from social media (which removes metadata) all make detection harder. Treat the model's score as a hint, not proof.</p>
 </section>
+<!--seo-guide--><section class="copy" id="guide">
+<h2>How to check if an image is AI-generated</h2>
+<ol><li><b>Upload or drop the image</b> (JPG, PNG or WebP). It is checked on your device.</li><li><b>Wait a few seconds</b> while the detector analyses it.</li><li><b>Read the score:</b> the higher it is, the more likely the image was made by AI.</li></ol>
+<h2>Signs of an AI image you can check yourself</h2>
+<ul><li>Hands, teeth, ears and jewellery with odd shapes.</li><li>Text in the background that looks like real letters but isn't.</li><li>Too-perfect skin, glossy lighting and blurry, melted backgrounds.</li><li>Patterns that don't continue properly, like fences, tiles or hair.</li><li>No original source when you reverse-search it.</li></ul>
+<h2>Use it responsibly</h2>
+<p>No detector is 100% accurate. Treat the score as one clue, together with the visual signs above and where the image came from, especially before sharing news or accusing someone.</p>
+<h2>हिंदी में</h2>
+<p>Photo upload kijiye aur kuch seconds mein dekhiye ki wo AI se bani hai ya asli. Photo kahin upload nahi hoti. Score sirf ek sanket hai, poori tarah final faisla nahi.</p>
+</section><!--/seo-guide-->
 <section class="copy" id="faq">
   <h2>Questions</h2>
   <details><summary>Can it detect ChatGPT and Midjourney images?</summary><p>Often, yes. Original downloads from ChatGPT, DALL-E, Firefly and many other tools carry Content Credentials or other markers in the file. If the image was screenshotted or re-uploaded to social media, those markers are usually gone and only the model's estimate is left.</p></details>
   <details><summary>Is my image uploaded?</summary><p>No. Both checks run in your browser. The detector model is downloaded once and then cached.</p></details>
-  <details><summary>Why does a real photo sometimes score as AI?</summary><p>Heavy editing, beauty filters, HDR and upscaling can look "AI-like" to a model. That is why we show the file evidence separately and never claim 100% certainty.</p></details>
-</section>
+  <details><summary>Why does a real photo sometimes score as AI?</summary><p>Heavy editing, beauty filters, HDR and upscaling can look "AI-like" to a model. That is why we show the file evidence separately and never claim 100% certainty.</p></details><!--seo-faq-->
+  <details><summary>Can it detect Midjourney, DALL·E and Gemini images?</summary><p>It is trained to spot common traits of AI-generated images in general, not one specific generator. Results are probabilities, not proof.</p></details>
+  <details><summary>Is my photo uploaded?</summary><p>No. The detector runs in your browser.</p></details>
+<!--/seo-faq--></section>
 <script>
 (() => {
   const $ = id => document.getElementById(id); let file = null, worker = null;

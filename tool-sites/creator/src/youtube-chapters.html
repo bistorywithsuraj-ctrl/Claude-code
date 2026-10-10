@@ -37,12 +37,21 @@ desc: Turn section lengths into YouTube chapter timestamps, or check yours again
   </ul>
   <p>If any rule is broken, YouTube quietly ignores all of your chapters. This tool checks each rule and tells you what to change.</p>
 </section>
+<!--seo-guide--><section class="copy" id="guide">
+<h2>YouTube's chapter rules</h2>
+<ul><li>The first timestamp must be <b>0:00</b>.</li><li>At least <b>3 chapters</b>.</li><li>Each chapter at least <b>10 seconds</b> long.</li><li>Timestamps go in the description, in order, one per line.</li></ul>
+<p>If any rule breaks, YouTube silently ignores all your chapters. This tool builds timestamps that follow the rules, or checks the ones you already have.</p>
+<h2>Why chapters help</h2>
+<ul><li>Viewers jump to what they want instead of leaving.</li><li>Chapters can appear in Google search results as "key moments".</li><li>They make long tutorials easier to rewatch.</li></ul>
+<h2>Tip</h2><p>Get paragraph timings from the <a href="script-timer.html">Script Timer</a>, then turn them into chapters here.</p>
+</section><!--/seo-guide-->
 <section class="copy" id="faq">
   <h2>Questions</h2>
   <details><summary>Why aren't my YouTube chapters showing?</summary><p>Usually because the first timestamp isn't 0:00, there are fewer than three, one chapter is shorter than 10 seconds, or automatic chapters were turned off. Paste yours in "Check my timestamps" to find the problem.</p></details>
   <details><summary>Where do chapters go?</summary><p>In the video description, as a list of timestamps followed by titles. They can be anywhere in the description, but most creators put them near the top.</p></details>
-  <details><summary>Do chapters help my video rank?</summary><p>They can appear as "key moments" in Google search and help viewers find what they want, which often improves watch time.</p></details>
-</section>
+  <details><summary>Do chapters help my video rank?</summary><p>They can appear as "key moments" in Google search and help viewers find what they want, which often improves watch time.</p></details><!--seo-faq-->
+  <details><summary>Why are my chapters not showing?</summary><p>Usually the first timestamp is not 0:00, there are fewer than three, or one is shorter than 10 seconds. Paste them into the checker to see which rule fails.</p></details>
+<!--/seo-faq--></section>
 <script>
 (() => {
   const $ = id => document.getElementById(id);

@@ -50,11 +50,17 @@ desc: Compress a video for WhatsApp or email, or turn a 16:9 video into 9:16 for
   <h2>How it works</h2>
   <p>Your browser plays the video once and records it again at the size and bitrate you choose, so a one-minute video takes about a minute. Keep this tab open while it converts. Nothing is uploaded, and there is no watermark.</p>
 </section>
+<!--seo-guide--><section class="copy" id="guide">
+<h2>Compress a video for WhatsApp, email or Discord</h2>
+<p>Pick a target (WhatsApp under 16 MB, email under 25 MB, Discord under 8 MB) or your own quality and resolution, and the tool picks the right bitrate. You can also turn a 16:9 video into 9:16 with a blurred background for Reels, Shorts and TikTok.</p>
+<h2>Tips</h2><ul><li>720p is plenty for phones and saves a lot of space.</li><li>Shorter clips keep more quality at the same size.</li><li>Convert landscape YouTube clips to 9:16 to repurpose them as Shorts.</li></ul>
+</section><!--/seo-guide-->
 <section class="copy" id="faq">
   <h2>Questions</h2>
   <details><summary>How do I turn a YouTube video into a Reel?</summary><p>Choose "9:16 blur fill": your full landscape video sits in the middle of a vertical frame with a soft blurred copy behind it. Choose "9:16 crop" to fill the screen by cutting the sides.</p></details>
-  <details><summary>Why is the output WebM?</summary><p>Some browsers can only record WebM. Chrome, Edge and Safari on recent versions save MP4. YouTube, TikTok and WhatsApp accept both.</p></details>
-</section>
+  <details><summary>Why is the output WebM?</summary><p>Some browsers can only record WebM. Chrome, Edge and Safari on recent versions save MP4. YouTube, TikTok and WhatsApp accept both.</p></details><!--seo-faq-->
+  <details><summary>Is my video uploaded to a server?</summary><p>No. Compression happens in your browser.</p></details>
+<!--/seo-faq--></section>
 <script>
 (() => {
   const $ = id => document.getElementById(id), v = $('vc-video'), cv = $('vc-canvas'), g = cv.getContext('2d');

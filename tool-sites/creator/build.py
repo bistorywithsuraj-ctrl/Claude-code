@@ -233,9 +233,9 @@ def head(title, desc, path, extra=''):
 {FONTS}{ads}
 <style>{BASE_CSS}</style>{extra}'''
 
-def full(title, desc, path, content, extra='', active=None, rail_html=None):
+def full(title, desc, path, content, extra='', active=None, rail_html=None, lang='en'):
     rail_part = rail_html if rail_html is not None else rail()
-    return (f'<!doctype html>\n<html lang="en">\n<head>\n{head(title, desc, path, extra)}\n</head>\n<body>\n<div class="app">{sidebar(active)}'
+    return (f'<!doctype html>\n<html lang="{lang}">\n<head>\n{head(title, desc, path, extra)}\n</head>\n<body>\n<div class="app">{sidebar(active)}'
             f'<div class="main">{topbar(active)}<div class="wrap"><main class="content">{content}</main>{rail_part}</div>{FOOT}</div></div>\n{SHELL_JS}\n</body>\n</html>\n')
 
 def clean_links(doc):
@@ -349,9 +349,9 @@ for g in GUIDES:
             f'<section class="copy"><h2>More guides</h2><ul>{more}</ul></section>')
     extra = bc_ld + ld({'@context': 'https://schema.org', '@type': 'Article', 'headline': g['h1'], 'description': g['desc'], 'datePublished': g['date'], 'dateModified': g['date'],
                         'author': {'@type': 'Person', 'name': AUTHOR, 'url': AUTHOR_URL}, 'publisher': {'@type': 'Organization', 'name': NAME, 'logo': {'@type': 'ImageObject', 'url': SITE_URL + '/logo.png'}},
-                        'mainEntityOfPage': f'{SITE_URL}/{g["slug"]}'})
+                        'mainEntityOfPage': f'{SITE_URL}/{g["slug"]}', 'inLanguage': 'hi-IN' if g.get('lang') == 'hi' else 'en'})
     if g['faq']: extra += ld({'@context': 'https://schema.org', '@type': 'FAQPage', 'mainEntity': [{'@type': 'Question', 'name': q, 'acceptedAnswer': {'@type': 'Answer', 'text': a}} for q, a in g['faq']]})
-    write(f'{g["slug"]}.html', full(g['title'], g['desc'], f'/{g["slug"]}', main, extra, active='guides'))
+    write(f'{g["slug"]}.html', full(g['title'], g['desc'], f'/{g["slug"]}', main, extra, active='guides', lang=g.get('lang', 'en')))
 if GUIDES:
     bc_vis, bc_ld = crumbs([('Guides', None)])
     items = ''.join(f'<a class="tool-card" href="{g["slug"]}.html"><span class="tile">{ic("list")}</span><h3>{html.escape(g["h1"])}</h3><p>{html.escape(g["desc"])}</p><span class="go">{ic("arrow")}</span></a>' for g in GUIDES)
