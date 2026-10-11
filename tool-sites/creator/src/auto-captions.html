@@ -2,13 +2,17 @@
 slug: auto-captions
 title: Free Auto Captions Generator: Hindi, Hinglish & English captions for Reels
 name: Auto Captions Generator
-desc: Free AI auto captions for Reels, Shorts and TikTok in Hindi, Hinglish and English. Word-by-word animated captions, 10 styles, export SRT or a captioned video. Runs in your browser, no upload, no watermark.
+desc: Free AI auto captions for Reels, Shorts and TikTok in Hindi, Hinglish and English. Word-by-word animated captions, 11 styles, a podcast-style reel frame, export SRT or a captioned video. Runs in your browser, no upload, no watermark.
 -->
-<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Anton&family=Bangers&family=Montserrat:wght@800;900&family=Baloo+2:wght@700;800&family=Hind:wght@500;600&display=swap">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Anton&family=Bangers&family=Montserrat:wght@800;900&family=Baloo+2:wght@700;800&family=Hind:wght@500;600&family=Instrument+Serif&family=Tiro+Devanagari+Hindi&display=swap">
 <style>
 .ac-stage { position: relative; background: #111; border-radius: 12px; overflow: hidden; display: grid; place-items: center; min-height: 240px }
 .ac-stage video { display: block; max-width: 100%; max-height: 70vh }
 .ac-stage canvas { position: absolute; pointer-events: none }
+.ac-stage.frame { padding: 12px 0 }
+.ac-stage.frame canvas { position: static; height: min(70vh, 640px); width: auto; aspect-ratio: 9 / 16; border-radius: 8px }
+.ac-stage.frame video { position: absolute; width: 1px; height: 1px; opacity: 0 }
+.ac-ctl { display: flex; gap: 8px; align-items: center } .ac-ctl input { flex: 1 } .ac-ctl span { font: 500 12px var(--mono); font-variant-numeric: tabular-nums; min-width: 84px; text-align: right }
 .ac-empty { color: #bbb; padding: 40px 20px; text-align: center; font-size: 14px }
 .ac-cues { display: grid; gap: 6px; max-height: 420px; overflow-y: auto; padding-right: 4px }
 .ac-cue { display: grid; grid-template-columns: 92px minmax(0, 1fr); gap: 8px; align-items: center }
@@ -28,11 +32,12 @@ desc: Free AI auto captions for Reels, Shorts and TikTok in Hindi, Hinglish and 
 .ac-styles .s-neon { font: 900 16px Montserrat, Arial Black, sans-serif; color: #fff; text-shadow: 0 0 6px #FF3DCB, 0 0 14px #FF3DCB }
 .ac-styles .s-type { font: 800 16px Montserrat, Arial Black, sans-serif } .ac-styles .s-type i { opacity: .25; font-style: normal }
 .ac-styles .s-comic { font: 400 21px Bangers, Impact, sans-serif; letter-spacing: .04em; color: #FFE14D; -webkit-text-stroke: 1px #000 }
+.ac-styles .s-rev { font: 400 22px "Instrument Serif", "Tiro Devanagari Hindi", Georgia, serif } .ac-styles .s-rev i { opacity: .4; font-style: normal }
 .ac-styles .s-out { font: 400 21px Anton, Impact, sans-serif; text-transform: uppercase; color: transparent; -webkit-text-stroke: 1px #fff } .ac-styles .s-out b { color: #FFE14D; -webkit-text-stroke: 0; font-weight: 400 }
 </style>
 <div>
   <h1>Auto captions, <em>no upload</em></h1>
-  <p class="lede">Drop in a Reel, Short or TikTok. AI transcribes it right in your browser, you fix any word, pick one of 10 animated caption styles, and download an SRT file or the finished video with captions burned in.</p>
+  <p class="lede">Drop in a Reel, Short or TikTok. AI transcribes it right in your browser, you fix any word, pick one of 11 animated caption styles or a podcast-style reel frame, and download an SRT file or the finished video with captions burned in.</p>
 </div>
 <div class="ad-slot" data-slot="top"></div>
 <div class="panel">
@@ -49,6 +54,7 @@ desc: Free AI auto captions for Reels, Shorts and TikTok in Hindi, Hinglish and 
 <div class="panel">
   <h2>Preview</h2>
   <div class="ac-stage" id="ac-stage"><div class="ac-empty" id="ac-empty">Your video appears here with live captions.</div><video id="ac-video" controls playsinline hidden></video><canvas id="ac-overlay" hidden></canvas></div>
+  <div class="ac-ctl" id="ac-ctl" hidden><button type="button" class="btn ghost" id="ac-play">▶ Play</button><input id="ac-seek" type="range" min="0" max="1000" value="0" aria-label="Seek"><span id="ac-time">0:00</span></div>
   <div class="row"><button type="button" class="btn" id="ac-export" disabled>Export captioned video</button><button type="button" class="btn ghost" id="ac-srt" disabled>Download SRT</button><button type="button" class="btn ghost" id="ac-vtt" disabled>VTT</button><button type="button" class="btn ghost" id="ac-txt" disabled>Text</button></div>
   <div class="toast" id="ac-msg" role="status"></div>
 </div>
@@ -66,6 +72,7 @@ desc: Free AI auto captions for Reels, Shorts and TikTok in Hindi, Hinglish and 
       <button type="button" data-s="type" aria-pressed="false"><span class="s-type">Type<i>writer</i></span></button>
       <button type="button" data-s="comic" aria-pressed="false"><span class="s-comic">COMIC!</span></button>
       <button type="button" data-s="out" aria-pressed="false"><span class="s-out">Out<b>line</b></span></button>
+      <button type="button" data-s="reveal" aria-pressed="false"><span class="s-rev">Spoken <i>reveal</i></span></button>
     </div>
     <div class="row">
       <label style="flex:1">Words per caption <select id="ac-wpc"><option value="1">1 · punchy</option><option value="3" selected>Up to 3</option><option value="5">Up to 5</option><option value="8">Full lines</option></select></label>
@@ -74,6 +81,15 @@ desc: Free AI auto captions for Reels, Shorts and TikTok in Hindi, Hinglish and 
     <div class="row">
       <label style="flex:1">Size <input id="ac-size" type="range" min="60" max="160" value="100"></label>
       <label style="flex:1">Highlight <input id="ac-hi" type="color" value="#FFE14D" style="height:44px;padding:4px"></label>
+    </div>
+    <div class="row">
+      <label style="flex:2">Layout <select id="ac-layout"><option value="full" selected>Captions on the video</option><option value="frame">Reel frame · title, video, captions (9:16)</option></select></label>
+      <label style="flex:1">Background <select id="ac-bg" disabled><option value="#000000" selected>Black</option><option value="blur">Blurred video</option><option value="#FFFFFF">White</option></select></label>
+    </div>
+    <div id="ac-frame-opts" hidden>
+      <label>Title on top <textarea id="ac-title" rows="2" maxlength="200">🇮🇳 Your hook goes here. Say what this video is about ⚡</textarea></label>
+      <label>Small text at the bottom <input id="ac-foot" value="Link in bio 🔗" maxlength="60"></label>
+      <p class="hint">Podcast and talking-head style: your video sits in the middle of a 9:16 frame, with a title above and captions below. Works with landscape or vertical clips.</p>
     </div>
   </div>
   <div class="panel">
@@ -95,6 +111,8 @@ desc: Free AI auto captions for Reels, Shorts and TikTok in Hindi, Hinglish and 
 <li><b>Choose how Hindi is written.</b> Hinglish (English letters, like "aap kaise ho") is what most Indian creators use on Reels. Devanagari (हिंदी) looks great for news and devotional content. You can switch any time.</li>
 <li><b>Pick a style.</b> Bold pop, karaoke, boxed, neon, comic and more. The spoken word is highlighted as it is said.</li>
 <li><b>Fix any word,</b> then export a captioned video or download SRT/VTT for YouTube, Premiere or CapCut.</li></ol>
+<h2>Podcast-style reel frame (title on top, captions below)</h2>
+<p>Set <b>Layout</b> to <b>Reel frame</b> to turn a landscape podcast, interview or talking-head clip into a 9:16 Reel: a black (or blurred, or white) frame with your hook as a title at the top, the video in the middle, captions underneath and a small "Link in bio" line. Pair it with the <b>Spoken reveal</b> style, where each word turns from grey to white as it is said. It works with Hindi, Hinglish and English captions.</p>
 <h2>Why captions matter so much on short video</h2>
 <p>Most people scroll Reels and Shorts with the sound off, especially on the metro, in class or at work. Captions keep them watching, and watch time is what the algorithm rewards. Word-by-word captions also make talking-head videos feel faster and more energetic, which is why almost every big creator uses them.</p>
 <h2>Tips for captions that look professional</h2>
@@ -114,6 +132,7 @@ desc: Free AI auto captions for Reels, Shorts and TikTok in Hindi, Hinglish and 
   <details><summary>Does it work for Hindi and Hinglish?</summary><p>Yes. Choose "Best · Hindi &amp; Hinglish", set Language to Hindi, then pick whether captions should be written in Hinglish (English letters, like "aap kaise ho") or हिंदी (Devanagari). You can switch between them after the captions are made. You can also edit any line by hand.</p></details>
   <details><summary>How do I add the captions to Instagram or YouTube?</summary><p>For Reels and TikTok, export the captioned video and upload it. For YouTube, download the SRT file and add it under Subtitles in YouTube Studio, or upload the captioned video.</p></details>
   <details><summary>Why is the first run slow?</summary><p>The AI model has to download once. After that it loads from your browser's cache in a few seconds. A phone works, but a computer is much faster.</p></details><!--seo-faq-->
+  <details><summary>How do I make a podcast reel with a title on top and captions below?</summary><p>Choose Layout: Reel frame, type your hook in the Title box and pick the Spoken reveal style. Your landscape clip is placed in the middle of a 9:16 frame and the export is ready for Reels and Shorts.</p></details>
   <details><summary>Is this better than CapCut auto captions?</summary><p>It is free with no watermark, works in the browser without installing an app, supports Hinglish written in English letters, and never uploads your video. CapCut has more editing features; many creators caption here and edit in CapCut.</p></details>
   <details><summary>Can I get captions for long YouTube videos?</summary><p>Yes. Long videos take longer on a phone, so a laptop is best for videos over 10 minutes. Download the SRT file and upload it to YouTube Studio as subtitles.</p></details>
   <details><summary>Why are some words wrong?</summary><p>Background music, noise and fast speech confuse any AI. Choose the larger model for better accuracy and fix words by typing in the caption list before export.</p></details>
@@ -244,10 +263,13 @@ desc: Free AI auto captions for Reels, Shorts and TikTok in Hindi, Hinglish and 
     type:  { f: S => `800 ${S * .85}px Montserrat, "Arial Black", "Baloo 2", Hind, sans-serif`, shadow: 1, mark: 'type' },
     comic: { f: S => `400 ${S * 1.2}px Bangers, Impact, "Baloo 2", Hind, sans-serif`, up: 1, stroke: .14, mark: 'comic', pop: 1 },
     out:   { f: S => `400 ${S * 1.2}px Anton, Impact, "Baloo 2", Hind, sans-serif`, up: 1, mark: 'fill' },
+    reveal: { f: S => `400 ${S * .72}px "Instrument Serif", "Tiro Devanagari Hindi", Georgia, serif`, mark: 'reveal', lh: 1.15 },
   };
-  function drawCaption(g, W, H, t) {
+  const FRAME = () => $('ac-layout').value === 'frame', FW = 1080, FH = 1920;
+  let ink = '#FFFFFF';
+  function drawCaption(g, W, H, t, yAt) {
     const c = cues.find(c => t >= c.s - .02 && t <= c.e + .15); if (!c) return;
-    const st = ST[style] || ST.pop, S = Math.min(W, H) * .085 * (+$('ac-size').value / 100), hi = $('ac-hi').value, y = H * +$('ac-pos').value;
+    const st = ST[style] || ST.pop, S = Math.min(W, H) * .085 * (+$('ac-size').value / 100), hi = $('ac-hi').value, y = yAt ?? H * +$('ac-pos').value;
     const p = Math.min(1, (t - c.s) / .12), scale = st.pop ? .82 + .18 * (1 - Math.pow(1 - p, 3)) + (p < 1 ? Math.sin(p * Math.PI) * .06 : 0) : 1;
     const words = c.words.map(w => st.up ? w.t.toUpperCase() : st.low ? w.t.toLowerCase() : w.t);
     let cur = -1; c.words.forEach((w, i) => { if (t >= w.s - .02) cur = i; });
@@ -266,11 +288,12 @@ desc: Free AI auto captions for Reels, Shorts and TikTok in Hindi, Hinglish and 
         if (st.mark === 'said' && said) col = hi;
         if (st.mark === 'grow' && active) { col = st.alt && i % 2 ? '#3BE37A' : hi; k = 1.18; }
         if (st.mark === 'comic') col = i % 2 ? '#FFFFFF' : hi;
+        if (st.mark === 'reveal') col = said ? ink : ink === '#FFFFFF' ? 'rgba(255,255,255,.42)' : 'rgba(17,17,17,.32)';
         g.save(); g.translate(cx, yy); if (st.mark === 'comic') g.rotate(((i * 37) % 7 - 3) * .025 + (active ? Math.sin(t * 20) * .03 : 0)); if (st.mark === 'comic' && active) k = 1.12;
         if (st.mark === 'type') { const a = Math.min(1, (t - w.s) / .08); g.globalAlpha = a; k = .9 + .1 * a; }
         g.scale(k, k);
         if (st.mark === 'box' && active) { g.fillStyle = hi; const pw = S * .18; g.beginPath(); g.roundRect(-raw[i] / 2 - pw, -S * .55, raw[i] + pw * 2, S * 1.1, S * .2); g.fill(); col = '#111111'; }
-        if (st.shadow && !(st.mark === 'box' && active)) { g.shadowColor = 'rgba(0,0,0,.7)'; g.shadowBlur = S * .22; g.shadowOffsetY = S * .04; }
+        if ((st.shadow || (st.mark === 'reveal' && yAt == null)) && !(st.mark === 'box' && active)) { g.shadowColor = 'rgba(0,0,0,.7)'; g.shadowBlur = S * .22; g.shadowOffsetY = S * .04; }
         if (st.neon) { g.shadowColor = hi; g.shadowBlur = S * (active ? .9 : .45); }
         if (st.stroke) { g.lineWidth = S * st.stroke; g.strokeStyle = '#000'; g.strokeText(words[i], -raw[i] / 2, 0); }
         if (st.mark === 'fill' && !active) { g.lineWidth = Math.max(2, S * .05); g.strokeStyle = '#FFFFFF'; g.shadowColor = 'rgba(0,0,0,.6)'; g.shadowBlur = S * .15; g.strokeText(words[i], -raw[i] / 2, 0); }
@@ -278,9 +301,35 @@ desc: Free AI auto captions for Reels, Shorts and TikTok in Hindi, Hinglish and 
         g.restore(); x += ws[i] + space; }); });
     g.restore();
   }
-  function fitOverlay() { const r = video.getBoundingClientRect(), sr = $('ac-stage').getBoundingClientRect(); ov.width = video.videoWidth || r.width; ov.height = video.videoHeight || r.height;
+  // Reel frame: 9:16 canvas with a title, the video in the middle, captions under it and a footer line
+  function wrapText(g, text, maxW) { const out = [];
+    text.split('\n').forEach(par => { let line = ''; par.split(/\s+/).filter(Boolean).forEach(w => { const tryL = line ? line + ' ' + w : w; if (line && g.measureText(tryL).width > maxW) { out.push(line); line = w; } else line = tryL; }); if (line) out.push(line); });
+    return out; }
+  function drawFrame(g, W, H, t) {
+    const bg = $('ac-bg').value; ink = bg === '#FFFFFF' ? '#111111' : '#FFFFFF';
+    const vw = video.videoWidth || 16, vh = video.videoHeight || 9, k = Math.min(W / vw, H * .4 / vh), dw = vw * k, dh = vh * k, dx = (W - dw) / 2, dy = H * .485 - dh / 2;
+    g.save(); g.fillStyle = bg === 'blur' ? '#000' : bg; g.fillRect(0, 0, W, H);
+    if (bg === 'blur' && video.videoWidth) { const c = Math.max(W / vw, H / vh); g.filter = 'blur(40px) brightness(.45)'; g.drawImage(video, (W - vw * c) / 2, (H - vh * c) / 2, vw * c, vh * c); g.filter = 'none'; if (g.filter !== 'none') { g.fillStyle = 'rgba(0,0,0,.6)'; g.fillRect(0, 0, W, H); } }
+    if (video.videoWidth) g.drawImage(video, dx, dy, dw, dh);
+    const tf = W * .052, mx = W * .06; g.font = `400 ${tf}px "Instrument Serif", "Tiro Devanagari Hindi", Georgia, serif`; g.fillStyle = ink; g.textBaseline = 'alphabetic';
+    const tl = wrapText(g, $('ac-title').value.trim(), W - mx * 2).slice(0, 6), lh = tf * 1.18, ty = Math.max(H * .07, dy - H * .045 - lh * tl.length);
+    tl.forEach((l, i) => g.fillText(l, mx, ty + lh * (i + .8)));
+    const ft = $('ac-foot').value.trim(); if (ft) { g.font = `400 ${W * .03}px "Instrument Serif", "Tiro Devanagari Hindi", Georgia, serif`; g.globalAlpha = .9; g.fillText(ft, mx, H * .845); g.globalAlpha = 1; }
+    g.restore();
+    drawCaption(g, W, H, t, Math.min(H * .79, dy + dh + H * .085));
+  }
+  const clock = s => `${Math.floor(s / 60)}:${String(Math.floor(s % 60)).padStart(2, '0')}`;
+  function setLayout() { const f = FRAME(); $('ac-stage').classList.toggle('frame', f); $('ac-frame-opts').hidden = !f; $('ac-bg').disabled = !f; $('ac-ctl').hidden = !f || video.hidden; video.controls = !f;
+    if (f) { ov.removeAttribute('style'); ov.width = FW; ov.height = FH; } else if (video.videoWidth) fitOverlay(); }
+  $('ac-layout').onchange = () => { if (FRAME() && style === 'pop') { const b = document.querySelector('#ac-styles [data-s="reveal"]'); b.click(); if ($('ac-wpc').value === '3') { $('ac-wpc').value = '5'; $('ac-wpc').onchange(); } }
+    if (FRAME()) ['400 40px "Instrument Serif"', '400 40px "Tiro Devanagari Hindi"'].forEach(f => document.fonts.load(f, 'Aa हिंदी').catch(() => {})); setLayout(); };
+  $('ac-play').onclick = () => video.paused ? video.play() : video.pause();
+  video.addEventListener('play', () => $('ac-play').textContent = '❚❚ Pause'); video.addEventListener('pause', () => $('ac-play').textContent = '▶ Play');
+  $('ac-seek').oninput = () => { if (video.duration) video.currentTime = $('ac-seek').value / 1000 * video.duration; };
+  $('ac-overlay').addEventListener('click', () => FRAME() && $('ac-play').onclick());
+  function fitOverlay() { if (FRAME()) return setLayout(); const r = video.getBoundingClientRect(), sr = $('ac-stage').getBoundingClientRect(); ov.width = video.videoWidth || r.width; ov.height = video.videoHeight || r.height;
     ov.style.width = r.width + 'px'; ov.style.height = r.height + 'px'; ov.style.left = (r.left - sr.left) + 'px'; ov.style.top = (r.top - sr.top) + 'px'; }
-  (function loop() { if (!ov.hidden && video.videoWidth) { octx.clearRect(0, 0, ov.width, ov.height); drawCaption(octx, ov.width, ov.height, video.currentTime);
+  (function loop() { if (!ov.hidden && video.videoWidth) { octx.clearRect(0, 0, ov.width, ov.height); if (FRAME()) { drawFrame(octx, ov.width, ov.height, video.currentTime); if (video.duration && document.activeElement !== $('ac-seek')) $('ac-seek').value = video.currentTime / video.duration * 1000; $('ac-time').textContent = clock(video.currentTime) + ' / ' + clock(video.duration || 0); } else { ink = '#FFFFFF'; drawCaption(octx, ov.width, ov.height, video.currentTime); }
       const c = cues.find(c => video.currentTime >= c.s && video.currentTime <= c.e); cues.forEach(x => x.row && x.row.classList.toggle('on', x === c)); }
     requestAnimationFrame(loop); })();
   window.addEventListener('resize', () => video.videoWidth && fitOverlay());
@@ -299,7 +348,7 @@ desc: Free AI auto captions for Reels, Shorts and TikTok in Hindi, Hinglish and 
   $('ac-file').onchange = e => { file = e.target.files[0]; if (!file) return; if (url) URL.revokeObjectURL(url); url = URL.createObjectURL(file);
     video.src = url; video.hidden = false; ov.hidden = false; $('ac-empty').hidden = true; $('ac-go').disabled = false; words = []; rawWords = []; cues = []; renderCues(); enable(false);
     $('ac-status').textContent = `${file.name} loaded. Press Generate captions.`; };
-  video.addEventListener('loadedmetadata', fitOverlay);
+  video.addEventListener('loadedmetadata', () => { fitOverlay(); $('ac-ctl').hidden = !FRAME(); });
   $('ac-go').onclick = async () => {
     $('ac-go').disabled = true; $('ac-bar').style.width = '0%';
     try {
@@ -325,7 +374,7 @@ desc: Free AI auto captions for Reels, Shorts and TikTok in Hindi, Hinglish and 
   $('ac-wpc').onchange = () => words.length && regroup();
   // ---------- export: play once, record canvas + audio ----------
   $('ac-export').onclick = async () => {
-    const cv = document.createElement('canvas'); cv.width = video.videoWidth; cv.height = video.videoHeight; const g = cv.getContext('2d');
+    const fr = FRAME(), cv = document.createElement('canvas'); cv.width = fr ? FW : video.videoWidth; cv.height = fr ? FH : video.videoHeight; const g = cv.getContext('2d');
     const types = ['video/mp4;codecs=avc1,mp4a.40.2', 'video/mp4', 'video/webm;codecs=vp9,opus', 'video/webm']; const mime = types.find(m => window.MediaRecorder && MediaRecorder.isTypeSupported(m));
     if (!mime || !cv.captureStream) { $('ac-msg').textContent = "This browser can't record video. Use Chrome, Edge or Safari on a computer, or download the SRT."; return; }
     const stream = cv.captureStream(30); try { const ac = new AudioContext(), src = ac.createMediaElementSource(video), dst = ac.createMediaStreamDestination(); src.connect(dst); src.connect(ac.destination); dst.stream.getAudioTracks().forEach(t => stream.addTrack(t)); } catch (e) {}
@@ -334,7 +383,7 @@ desc: Free AI auto captions for Reels, Shorts and TikTok in Hindi, Hinglish and 
       $('ac-msg').textContent = `Saved ${ext.toUpperCase()} with captions.`; $('ac-export').disabled = false; };
     $('ac-export').disabled = true; $('ac-msg').textContent = 'Recording… keep this tab open until the video ends.';
     video.currentTime = 0; await video.play(); rec.start(250);
-    const step = () => { g.drawImage(video, 0, 0, cv.width, cv.height); drawCaption(g, cv.width, cv.height, video.currentTime); if (!video.ended && !video.paused) requestAnimationFrame(step); else rec.stop(); }; step();
+    const step = () => { if (fr) drawFrame(g, cv.width, cv.height, video.currentTime); else { ink = '#FFFFFF'; g.drawImage(video, 0, 0, cv.width, cv.height); drawCaption(g, cv.width, cv.height, video.currentTime); } if (!video.ended && !video.paused) requestAnimationFrame(step); else rec.stop(); }; step();
   };
 })();
 </script>

@@ -3,13 +3,15 @@ C = {}
 
 C['auto-captions'] = dict(
 title='Free Auto Captions Generator: Hindi, Hinglish & English captions for Reels',
-desc='Free AI auto captions for Reels, Shorts and TikTok in Hindi, Hinglish and English. Word-by-word animated captions, 10 styles, export SRT or a captioned video. Runs in your browser, no upload, no watermark.',
+desc='Free AI auto captions for Reels, Shorts and TikTok in Hindi, Hinglish and English. Word-by-word animated captions, 11 styles, a podcast-style reel frame, export SRT or a captioned video. Runs in your browser, no upload, no watermark.',
 guide='''<h2>How to add auto captions to a Reel or Short</h2>
 <ol><li><b>Choose your video.</b> Any MP4, MOV or WebM from your phone or camera works. It stays on your device.</li>
 <li><b>Pick the model.</b> "Fastest" is perfect for English and six European languages. For Hindi or Hinglish speech, choose "Best · Hindi &amp; Hinglish" and set Language to Hindi.</li>
 <li><b>Choose how Hindi is written.</b> Hinglish (English letters, like "aap kaise ho") is what most Indian creators use on Reels. Devanagari (हिंदी) looks great for news and devotional content. You can switch any time.</li>
 <li><b>Pick a style.</b> Bold pop, karaoke, boxed, neon, comic and more. The spoken word is highlighted as it is said.</li>
 <li><b>Fix any word,</b> then export a captioned video or download SRT/VTT for YouTube, Premiere or CapCut.</li></ol>
+<h2>Podcast-style reel frame (title on top, captions below)</h2>
+<p>Set <b>Layout</b> to <b>Reel frame</b> to turn a landscape podcast, interview or talking-head clip into a 9:16 Reel: a black (or blurred, or white) frame with your hook as a title at the top, the video in the middle, captions underneath and a small "Link in bio" line. Pair it with the <b>Spoken reveal</b> style, where each word turns from grey to white as it is said. It works with Hindi, Hinglish and English captions.</p>
 <h2>Why captions matter so much on short video</h2>
 <p>Most people scroll Reels and Shorts with the sound off, especially on the metro, in class or at work. Captions keep them watching, and watch time is what the algorithm rewards. Word-by-word captions also make talking-head videos feel faster and more energetic, which is why almost every big creator uses them.</p>
 <h2>Tips for captions that look professional</h2>
@@ -21,7 +23,8 @@ guide='''<h2>How to add auto captions to a Reel or Short</h2>
 <ul><li>Captions so big they cover your face. Use the size slider.</li><li>Using the English-only model for Hindi speech. Pick the Hindi model instead.</li><li>Uploading a 4K file from a phone and waiting. Captions work just as well on a smaller copy; use the <a href="video-compressor.html">Video Compressor</a> first if your phone is slow.</li></ul>
 <h2>हिंदी और Hinglish में captions</h2>
 <p>Hindi videos ke liye "Best · Hindi &amp; Hinglish" model chuniye aur Language mein Hindi select kijiye. Captions ko English letters (Hinglish) ya Devanagari में लिख सकते हैं। Sab kuch aapke phone ya laptop par hi hota hai, video kahin upload nahi hoti.</p>''',
-faq=[('Is this better than CapCut auto captions?', 'It is free with no watermark, works in the browser without installing an app, supports Hinglish written in English letters, and never uploads your video. CapCut has more editing features; many creators caption here and edit in CapCut.'),
+faq=[('How do I make a podcast reel with a title on top and captions below?', 'Choose Layout: Reel frame, type your hook in the Title box and pick the Spoken reveal style. Your landscape clip is placed in the middle of a 9:16 frame and the export is ready for Reels and Shorts.'),
+('Is this better than CapCut auto captions?', 'It is free with no watermark, works in the browser without installing an app, supports Hinglish written in English letters, and never uploads your video. CapCut has more editing features; many creators caption here and edit in CapCut.'),
 ('Can I get captions for long YouTube videos?', 'Yes. Long videos take longer on a phone, so a laptop is best for videos over 10 minutes. Download the SRT file and upload it to YouTube Studio as subtitles.'),
 ('Why are some words wrong?', 'Background music, noise and fast speech confuse any AI. Choose the larger model for better accuracy and fix words by typing in the caption list before export.'),
 ('Does it work on iPhone?', 'Yes, it works in mobile browsers. For long videos, Chrome on a computer is fastest.')])
