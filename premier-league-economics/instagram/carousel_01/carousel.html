@@ -1,0 +1,210 @@
+<!doctype html>
+<html><head><meta charset="utf-8">
+<title>Greenback carousel 01</title>
+<style>
+@font-face{font-family:DS;src:url(fonts/dm-serif-display-latin-400-normal.woff2)}
+@font-face{font-family:DS;src:url(fonts/dm-serif-display-latin-400-italic.woff2);font-style:italic}
+@font-face{font-family:IT;src:url(fonts/inter-tight-latin-800-normal.woff2);font-weight:800}
+@font-face{font-family:IT;src:url(fonts/inter-tight-latin-700-normal.woff2);font-weight:700}
+@font-face{font-family:IT;src:url(fonts/inter-tight-latin-500-normal.woff2);font-weight:500}
+@font-face{font-family:MONO;src:url(fonts/jetbrains-mono-latin-700-normal.woff2);font-weight:700}
+@font-face{font-family:PEN;src:url(fonts/caveat-latin-700-normal.woff2);font-weight:700}
+:root{--parch:#F3ECDA;--parch2:#E8DFC6;--ink:#173A24;--ink2:#3E5A47;--mute:#7E8A78;--green:#2F6B45;
+  --mint:#E1EED4;--red:#B8322A;--cream:#FAF4E4}
+*{box-sizing:border-box;margin:0;padding:0}
+body{background:#555;color:var(--ink)}
+.slide{width:1080px;height:1350px;position:relative;overflow:hidden;background:var(--parch);margin:0 auto 40px;padding:0 88px}
+/* parchment + engraving texture */
+.slide::before{content:"";position:absolute;inset:0;pointer-events:none;
+  background:
+   radial-gradient(ellipse at 50% 40%,transparent 55%,rgba(120,95,40,.16) 100%),
+   repeating-linear-gradient(115deg,rgba(23,58,36,.025) 0 1px,transparent 1px 7px),
+   radial-gradient(circle at 18% 22%,rgba(255,255,255,.45),transparent 40%)}
+.slide>*{position:relative}
+.dark{background:var(--ink);color:var(--cream)}
+.dark::before{background:repeating-linear-gradient(115deg,rgba(255,255,255,.025) 0 1px,transparent 1px 7px),radial-gradient(ellipse at 50% 40%,transparent 50%,rgba(0,0,0,.35) 100%)}
+/* frame like a banknote border */
+.frame{position:absolute!important;inset:28px;border:2px solid rgba(23,58,36,.55);pointer-events:none}
+.frame::after{content:"";position:absolute;inset:8px;border:1px solid rgba(23,58,36,.35)}
+.dark .frame{border-color:rgba(250,244,228,.35)}.dark .frame::after{border-color:rgba(250,244,228,.2)}
+/* top bar */
+.top{position:absolute!important;left:72px;right:72px;top:64px;display:flex;align-items:center;justify-content:space-between}
+.brand{display:flex;align-items:center;gap:14px;font:400 34px DS;letter-spacing:2px}
+.brand img{width:58px;height:58px;border-radius:50%}
+.tag{font:700 19px MONO;letter-spacing:3px;color:var(--ink2);border:1.5px solid currentColor;padding:7px 12px}
+.dark .tag{color:#b9c9bb}
+.foot{position:absolute!important;left:72px;right:72px;bottom:62px;display:flex;justify-content:space-between;align-items:center;font:700 19px MONO;letter-spacing:3px;color:var(--mute)}
+.dark .foot{color:#93a897}
+.pg{font:700 19px MONO}
+.swipe{font:700 40px PEN;letter-spacing:0;color:var(--red)}
+.dark .swipe{color:#F08A7E}
+/* rule with diamond, from the banner */
+.rule{display:flex;align-items:center;gap:14px;margin:30px 0;color:var(--ink)}
+.rule::before,.rule::after{content:"";flex:1;height:2px;background:currentColor;opacity:.7}
+.rule i{width:14px;height:14px;background:currentColor;transform:rotate(45deg)}
+.dark .rule{color:var(--cream)}
+/* type */
+.kicker{font:700 22px MONO;letter-spacing:4px;color:var(--green);text-transform:uppercase}
+.dark .kicker{color:#9fd3ad}
+h1{font:400 112px/1.0 DS;letter-spacing:-1.5px}
+h2{font:400 84px/1.04 DS;letter-spacing:-1px}
+em{font-style:italic}
+p{font:500 34px/1.42 IT;color:var(--ink2)}
+.dark p{color:#cdd9cf}
+.pen{font:700 46px/1.1 PEN;color:var(--red)}
+.circ{position:relative;display:inline-block;margin:0 22px}
+.circ::after{content:"";position:absolute;inset:-10px -22px;border:3.5px solid var(--red);border-radius:50%;transform:rotate(-3deg)}
+.under{background:linear-gradient(transparent 78%,rgba(184,50,42,.85) 78%,rgba(184,50,42,.85) 88%,transparent 88%)}
+.note{background:var(--cream);border:1.5px solid rgba(23,58,36,.45);box-shadow:6px 8px 0 rgba(23,58,36,.12);padding:34px 40px}
+.label{font:700 20px MONO;letter-spacing:3px;color:var(--mute)}
+.num{font:400 118px/1 DS;letter-spacing:-2px}
+.src{position:absolute!important;left:88px;right:88px;bottom:118px;font:500 19px/1.4 IT;color:var(--mute)}
+.dark .src{color:#86998a}
+.torn{background:var(--cream);color:var(--ink);padding:26px 40px;margin:0 -88px;
+  clip-path:polygon(0 8%,4% 2%,9% 7%,15% 1%,22% 6%,30% 0,38% 5%,46% 1%,55% 6%,63% 1%,71% 5%,80% 0,88% 6%,95% 2%,100% 7%,100% 93%,96% 99%,89% 94%,82% 100%,74% 95%,66% 99%,58% 94%,49% 100%,41% 95%,33% 99%,25% 94%,17% 100%,9% 95%,3% 99%,0 94%)}
+</style></head><body>
+
+<!-- 1 COVER -->
+<section class="slide dark" id="s1">
+  <div class="frame"></div>
+  <div class="top"><div class="brand"><img src="greenback_logo.jpg">GREENBACK</div><div class="tag">MONEY MACHINES</div></div>
+  <img src="greenback_logo.jpg" style="position:absolute;right:-170px;top:250px;width:620px;opacity:.07;border-radius:50%;filter:grayscale(1) brightness(2)">
+  <div style="padding-top:290px">
+    <div class="kicker">Follow the money · Premier League</div>
+    <h1 style="margin-top:30px">Most Premier League clubs <em class="under">lose money.</em></h1>
+    <div class="rule"><i></i></div>
+    <div style="font:400 64px/1.12 DS;font-style:italic;color:#e9e2cc;max-width:880px">So why is it the most valuable football league on Earth?</div>
+  </div>
+  <div class="foot"><span>@GREENBACKYT</span><span class="swipe">follow the trail →</span></div>
+</section>
+
+<!-- 2 CHELSEA -->
+<section class="slide" id="s2">
+  <div class="frame"></div>
+  <div class="top"><div class="brand"><img src="greenback_logo.jpg">GREENBACK</div><div class="tag">02 / 08</div></div>
+  <div style="padding-top:220px">
+    <div class="kicker">Exhibit A · March 2022</div>
+    <h2 style="margin-top:24px">The UK government froze Chelsea FC.</h2>
+    <p style="margin-top:28px;max-width:870px">Owner Roman Abramovich was sanctioned after Russia invaded Ukraine. No ticket sales, no shirt sales, no transfers. The club had to be sold, fast.</p>
+  </div>
+  <div style="display:flex;align-items:center;gap:30px;margin-top:70px">
+    <div class="note" style="flex:1;text-align:center"><div class="label">BOUGHT · 2003</div><div class="num" style="margin-top:10px">£140M</div></div>
+    <div style="font:400 80px DS">→</div>
+    <div class="note" style="flex:1;text-align:center;background:var(--ink);color:var(--cream)"><div class="label" style="color:#9fd3ad">SOLD · 2022</div><div class="num" style="margin-top:10px">£2.5B</div></div>
+  </div>
+  <div class="pen" style="margin:44px 0 0 560px;transform:rotate(-4deg)"><span class="circ">×18</span> &nbsp;in a forced sale!</div>
+  <div class="src">Sources: BBC, Reuters (May 2022). £2.5B purchase price inside a £4.25B total deal.</div>
+  <div class="foot"><span>@GREENBACKYT</span><span class="swipe">swipe →</span></div>
+</section>
+
+<!-- 3 THE 1980s -->
+<section class="slide dark" id="s3">
+  <div class="frame"></div>
+  <div class="top"><div class="brand"><img src="greenback_logo.jpg">GREENBACK</div><div class="tag">03 / 08</div></div>
+  <div style="padding-top:220px">
+    <div class="kicker">Rewind · the 1980s</div>
+    <h2 style="margin-top:24px">English football was nearly broke.</h2>
+    <p style="margin-top:28px;max-width:880px">Crowds were falling and stadiums were crumbling. After the Hillsborough disaster in 1989, every top-flight ground had to become all-seater. The clubs couldn't pay for it.</p>
+  </div>
+  <div class="torn" style="margin-top:80px">
+    <div class="label" style="padding-left:88px">TV MONEY FOR THE ENTIRE TOP DIVISION · ITV, 1988</div>
+    <div style="display:flex;align-items:baseline;gap:30px;padding-left:88px;margin-top:8px">
+      <div class="num">£11M</div><div style="font:500 30px IT;color:var(--ink2)">a season, shared by<br>every club.</div>
+    </div>
+  </div>
+  <div class="pen" style="margin-top:40px;color:#F08A7E;transform:rotate(-2deg)">Today one mid-table club gets ~10× that on its own.</div>
+  <div class="src">ITV deal: about £44M over four years, 1988–92.</div>
+  <div class="foot"><span>@GREENBACKYT</span><span class="swipe">swipe →</span></div>
+</section>
+
+<!-- 4 BREAKAWAY -->
+<section class="slide" id="s4">
+  <div class="frame"></div>
+  <div class="top"><div class="brand"><img src="greenback_logo.jpg">GREENBACK</div><div class="tag">04 / 08</div></div>
+  <div style="padding-top:220px">
+    <div class="kicker">1992 · The breakaway</div>
+    <h2 style="margin-top:24px">The big clubs quit and started their own league.</h2>
+    <p style="margin-top:28px;max-width:880px">Same players. Same stadiums. Only one thing changed: <b style="color:var(--ink)">who owned the TV rights.</b></p>
+  </div>
+  <div class="note" style="margin-top:70px;transform:rotate(-1deg)">
+    <div class="label">THE BUYER · A SATELLITE COMPANY LOSING FORTUNES</div>
+    <div style="font:400 68px/1.08 DS;margin-top:14px">Sky paid <span class="circ">£304M</span> for five years of live games.</div>
+    <div style="font:italic 400 38px/1.25 DS;color:var(--ink2);margin-top:18px">Football went behind a paywall. Fans hated it. Then they subscribed.</div>
+  </div>
+  <div class="foot"><span>@GREENBACKYT</span><span class="swipe">swipe →</span></div>
+</section>
+
+<!-- 5 THE AUCTION -->
+<section class="slide" id="s5">
+  <div class="frame"></div>
+  <div class="top"><div class="brand"><img src="greenback_logo.jpg">GREENBACK</div><div class="tag">05 / 08</div></div>
+  <div style="padding-top:220px">
+    <div class="kicker">The money machine</div>
+    <h2 style="margin-top:24px">Every few years, broadcasters bid against each other.</h2>
+  </div>
+  <div style="position:absolute;left:88px;right:88px;bottom:200px;height:560px;display:flex;align-items:flex-end;gap:34px;border-bottom:2px solid var(--ink)">
+    <div style="width:220px;text-align:center"><div style="font:400 46px DS;margin-bottom:12px">£304M</div><div style="height:30px;background:var(--green)"></div></div>
+    <div style="width:220px;text-align:center"><div style="font:400 46px DS;margin-bottom:12px">£6.7B</div><div style="height:430px;background:var(--ink);position:relative"><div class="pen" style="position:absolute;left:0;right:0;top:20px;color:#F08A7E;font-size:64px">×22</div></div></div>
+    <div style="flex:1;padding-bottom:70px;font:italic 400 44px/1.2 DS;color:var(--ink2)">UK rights only. The money from overseas is now even bigger.</div>
+  </div>
+  <div style="position:absolute;left:88px;bottom:160px;display:flex;gap:34px" class="label"><span style="width:220px;text-align:center">1992–97</span><span style="width:220px;text-align:center">2025–29</span></div>
+  <div class="src" style="bottom:110px">UK live rights per cycle (Sky 1992–97: 5 seasons; 2025–29: 4 seasons).</div>
+  <div class="foot"><span>@GREENBACKYT</span><span class="swipe">swipe →</span></div>
+</section>
+
+<!-- 6 THE WORLD -->
+<section class="slide dark" id="s6">
+  <div class="frame"></div>
+  <div class="top"><div class="brand"><img src="greenback_logo.jpg">GREENBACK</div><div class="tag">06 / 08</div></div>
+  <div style="padding-top:220px">
+    <div class="kicker">The world is watching</div>
+    <h2 style="margin-top:24px">3pm in London is 10am in New York.</h2>
+    <p style="margin-top:28px;max-width:880px">For 2022–25, foreign broadcasters paid more for the Premier League than British ones did. That had never happened before.</p>
+  </div>
+  <div class="torn" style="margin-top:90px">
+    <div style="padding-left:88px;display:flex;align-items:center;gap:36px">
+      <div class="num" style="font-size:150px">$2.7B</div>
+      <div style="font:italic 400 40px/1.2 DS;color:var(--ink2)">NBC's US deal alone,<br>over six years.</div>
+    </div>
+  </div>
+  <div class="foot"><span>@GREENBACKYT</span><span class="swipe">swipe →</span></div>
+</section>
+
+<!-- 7 THE SECRET -->
+<section class="slide" id="s7">
+  <div class="frame"></div>
+  <div class="top"><div class="brand"><img src="greenback_logo.jpg">GREENBACK</div><div class="tag">07 / 08</div></div>
+  <div style="padding-top:220px">
+    <div class="kicker">The real secret</div>
+    <h2 style="margin-top:24px">It shares the money <em class="under">almost equally.</em></h2>
+    <p style="margin-top:28px;max-width:880px">All 20 clubs sell their TV rights as one package. So even the worst team gets rich, and every match stays worth watching.</p>
+  </div>
+  <div style="display:flex;gap:30px;margin-top:70px">
+    <div class="note" style="flex:1"><div class="label">CHAMPIONS</div><div class="num" style="color:var(--green);margin-top:10px">£175M</div></div>
+    <div class="note" style="flex:1"><div class="label">FINISHED LAST</div><div class="num" style="margin-top:10px">£110M</div></div>
+  </div>
+  <div class="pen" style="margin:34px 0 0 380px;transform:rotate(-3deg)">↑ last place still banks £110M</div>
+  <div class="src">Approximate central payments from the league, 2023–24 season.</div>
+  <div class="foot"><span>@GREENBACKYT</span><span class="swipe">swipe →</span></div>
+</section>
+
+<!-- 8 TAKEAWAY + CTA -->
+<section class="slide dark" id="s8">
+  <div class="frame"></div>
+  <div class="top"><div class="brand"><img src="greenback_logo.jpg">GREENBACK</div><div class="tag">08 / 08</div></div>
+  <div style="padding-top:230px;text-align:center">
+    <div style="font:italic 400 70px/1.1 DS;color:#e9e2cc">The Premier League wasn't a football idea.</div>
+    <div class="rule" style="margin:40px 120px"><i></i></div>
+    <h1 style="font-size:120px">It was a <span class="under">TV idea.</span></h1>
+  </div>
+  <div style="position:absolute;left:88px;right:88px;bottom:150px;display:flex;align-items:center;gap:36px">
+    <img src="greenback_logo.jpg" style="width:200px;height:200px;border-radius:50%;box-shadow:0 0 0 6px rgba(250,244,228,.15)">
+    <div>
+      <div style="font:400 44px/1.15 DS">Money leaves a trail.<br><em>Greenback follows it.</em></div>
+      <div style="font:700 21px MONO;letter-spacing:3px;color:#9fd3ad;margin-top:16px">FOLLOW · SAVE · SEND TO A CHELSEA FAN</div>
+    </div>
+  </div>
+  <div class="foot"><span>@GREENBACKYT</span><span>FULL EPISODE ON YOUTUBE</span></div>
+</section>
+
+</body></html>
