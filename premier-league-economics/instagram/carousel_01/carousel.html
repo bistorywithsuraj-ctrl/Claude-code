@@ -46,8 +46,8 @@ body{background:#555;color:var(--ink)}
 /* type */
 .kicker{font:700 22px MONO;letter-spacing:4px;color:var(--green);text-transform:uppercase}
 .dark .kicker{color:#9fd3ad}
-h1{font:400 112px/1.0 DS;letter-spacing:-1.5px}
-h2{font:400 84px/1.04 DS;letter-spacing:-1px}
+h1{font:400 112px/1.1 DS;letter-spacing:-1.5px}
+h2{font:400 84px/1.12 DS;letter-spacing:-1px}
 em{font-style:italic}
 p{font:500 34px/1.42 IT;color:var(--ink2)}
 .dark p{color:#cdd9cf}
@@ -55,7 +55,8 @@ p{font:500 34px/1.42 IT;color:var(--ink2)}
 .circ{position:relative;display:inline-block;margin:0 22px}
 .circ::after{content:"";position:absolute;inset:-10px -22px;border:3.5px solid var(--red);border-radius:50%;transform:rotate(-3deg)}
 .under{background:linear-gradient(transparent 78%,rgba(184,50,42,.85) 78%,rgba(184,50,42,.85) 88%,transparent 88%)}
-.hy{background:linear-gradient(176deg,transparent 30%,var(--yellow) 30%,var(--yellow) 90%,transparent 90%);color:var(--ink);padding:0 12px;margin:0 -6px;box-decoration-break:clone;-webkit-box-decoration-break:clone}
+.hy{display:inline-block;background:var(--yellow);color:var(--ink);line-height:1.02;padding:0 .14em .08em;margin:.04em 0;border-radius:3px 6px 4px 7px;transform:rotate(-1.2deg);box-shadow:3px 4px 0 rgba(0,0,0,.12)}
+p .hy,b.hy{line-height:1.25;padding:0 .3em;transform:rotate(-.6deg)}
 .or{color:var(--orange)}
 .cut{position:absolute!important;filter:drop-shadow(10px 14px 0 rgba(15,38,24,.22));z-index:3}
 .cap{position:absolute!important;z-index:4;font:700 36px/1 PEN;color:var(--red);transform:rotate(-5deg)}
@@ -89,7 +90,7 @@ p{font:500 34px/1.42 IT;color:var(--ink2)}
   <div style="padding-top:220px">
     <img class="cut" src="cutouts/abramovich.png" style="right:56px;top:190px;width:320px;transform:rotate(3deg)"><div class="cap" style="right:90px;top:580px">Roman Abramovich</div>
     <div class="kicker">Exhibit A · March 2022</div>
-    <h2 style="margin-top:24px;max-width:560px;font-size:72px">The UK government <span class="hy">froze</span> Chelsea FC.</h2>
+    <h2 style="margin-top:24px;max-width:560px;font-size:64px">The UK government <span class="hy">froze</span> Chelsea FC.</h2>
     <p style="margin-top:24px;max-width:540px;font-size:31px">Its owner was sanctioned after Russia invaded Ukraine. No tickets, no shirts, no transfers. It had to be sold, fast.</p>
   </div>
   <div style="display:flex;align-items:center;gap:30px;margin-top:56px">
