@@ -9,19 +9,19 @@
 @font-face{font-family:IT;src:url(fonts/inter-tight-latin-500-normal.woff2);font-weight:500}
 @font-face{font-family:MONO;src:url(fonts/jetbrains-mono-latin-700-normal.woff2);font-weight:700}
 @font-face{font-family:PEN;src:url(fonts/caveat-latin-700-normal.woff2);font-weight:700}
-:root{--yellow:#FFD60A;--orange:#E8650A;--parch:#F3ECDA;--parch2:#E8DFC6;--ink:#173A24;--ink2:#3E5A47;--mute:#7E8A78;--green:#2F6B45;
-  --mint:#E1EED4;--red:#B8322A;--cream:#FAF4E4}
+:root{--yellow:#FFD60A;--orange:#E56605;--parch:#EEEBE6;--parch2:#E2DED6;--ink:#173A24;--ink2:#3E5A47;--mute:#7E8A78;--green:#2F6B45;
+  --mint:#E1EED4;--red:#B8322A;--cream:#F7F5F1}
 *{box-sizing:border-box;margin:0;padding:0}
 body{background:#555;color:var(--ink)}
 .slide{width:1080px;height:1350px;position:relative;overflow:hidden;background:var(--parch);margin:0 auto 40px;padding:0 88px}
 /* parchment + engraving texture */
 .slide::before{content:"";position:absolute;inset:0;pointer-events:none;
   background:
-   radial-gradient(ellipse at 50% 40%,transparent 55%,rgba(120,95,40,.16) 100%),
+   radial-gradient(ellipse at 50% 40%,transparent 55%,rgba(40,50,45,.12) 100%),
    repeating-linear-gradient(115deg,rgba(23,58,36,.025) 0 1px,transparent 1px 7px),
    radial-gradient(circle at 18% 22%,rgba(255,255,255,.45),transparent 40%)}
 .slide>*{position:relative}
-.dark{background:var(--ink);color:var(--cream)}
+.dark{background:#065039;color:var(--cream)}
 .dark::before{background:repeating-linear-gradient(115deg,rgba(255,255,255,.025) 0 1px,transparent 1px 7px),radial-gradient(ellipse at 50% 40%,transparent 50%,rgba(0,0,0,.35) 100%)}
 /* frame like a banknote border */
 .frame{position:absolute!important;inset:28px;border:2px solid rgba(23,58,36,.55);pointer-events:none}
@@ -45,7 +45,7 @@ body{background:#555;color:var(--ink)}
 .dark .rule{color:var(--cream)}
 /* type */
 .kicker{font:700 22px MONO;letter-spacing:4px;color:var(--green);text-transform:uppercase}
-.dark .kicker{color:#9fd3ad}
+.dark .kicker{color:#BFE3D2}
 h1{font:400 112px/1.1 DS;letter-spacing:-1.5px}
 h2{font:400 84px/1.12 DS;letter-spacing:-1px}
 em{font-style:italic}
@@ -96,7 +96,7 @@ p .hy,b.hy{line-height:1.25;padding:0 .3em;transform:rotate(-.6deg)}
   <div style="display:flex;align-items:center;gap:30px;margin-top:56px">
     <div class="note" style="flex:1;text-align:center"><div class="label">BOUGHT · 2003</div><div class="num" style="margin-top:10px">£140M</div></div>
     <div style="font:400 80px DS">→</div>
-    <div class="note" style="flex:1;text-align:center;background:var(--ink);color:var(--cream)"><div class="label" style="color:#9fd3ad">SOLD · 2022</div><div class="num" style="margin-top:10px">£2.5B</div></div>
+    <div class="note" style="flex:1;text-align:center;background:#065039;color:var(--cream)"><div class="label" style="color:#BFE3D2">SOLD · 2022</div><div class="num" style="margin-top:10px">£2.5B</div></div>
   </div>
   <div class="pen" style="margin:30px 0 0 500px;transform:rotate(-4deg)"><span class="circ" style="color:var(--orange)">×18</span> &nbsp;in a forced sale!</div>
   <div class="src">Sources: BBC, Reuters (May 2022). £2.5B purchase price inside a £4.25B total deal. Photo: Marina Lystseva, GFDL 1.2, via Wikimedia Commons.</div>
@@ -153,7 +153,7 @@ p .hy,b.hy{line-height:1.25;padding:0 .3em;transform:rotate(-.6deg)}
   </div>
   <div style="position:absolute;left:88px;right:88px;bottom:200px;height:560px;display:flex;align-items:flex-end;gap:34px;border-bottom:2px solid var(--ink)">
     <div style="width:220px;text-align:center"><div style="font:400 46px DS;margin-bottom:12px">£304M</div><div style="height:30px;background:var(--green)"></div></div>
-    <div style="width:220px;text-align:center"><div style="font:400 46px DS;margin-bottom:12px">£6.7B</div><div style="height:430px;background:var(--ink);position:relative"><div class="pen" style="position:absolute;left:0;right:0;top:20px;color:var(--yellow);font-size:64px">×22</div></div></div>
+    <div style="width:220px;text-align:center"><div style="font:400 46px DS;margin-bottom:12px">£6.7B</div><div style="height:430px;background:#065039;position:relative"><div class="pen" style="position:absolute;left:0;right:0;top:20px;color:var(--yellow);font-size:64px">×22</div></div></div>
     <div style="flex:1;padding-bottom:70px;font:italic 400 44px/1.2 DS;color:var(--ink2)">UK rights only. The money from overseas is now even bigger.</div>
   </div>
   <div style="position:absolute;left:88px;bottom:160px;display:flex;gap:34px" class="label"><span style="width:220px;text-align:center">1992–97</span><span style="width:220px;text-align:center">2025–29</span></div>
@@ -210,7 +210,7 @@ p .hy,b.hy{line-height:1.25;padding:0 .3em;transform:rotate(-.6deg)}
     <img src="greenback_logo.jpg" style="width:200px;height:200px;border-radius:50%;box-shadow:0 0 0 6px rgba(250,244,228,.15)">
     <div>
       <div style="font:400 44px/1.15 DS">Money leaves a trail.<br><em>Greenback follows it.</em></div>
-      <div style="font:700 21px MONO;letter-spacing:3px;color:#9fd3ad;margin-top:16px">FOLLOW · SAVE · SEND TO A CHELSEA FAN</div>
+      <div style="font:700 21px MONO;letter-spacing:3px;color:#BFE3D2;margin-top:16px">FOLLOW · SAVE · SEND TO A CHELSEA FAN</div>
     </div>
   </div>
   <div class="foot"><span>@GREENBACKYT</span><span>FULL EPISODE ON YOUTUBE</span></div>
