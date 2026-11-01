@@ -12,3 +12,9 @@ Full episode on YouTube: link in bio.
 #PremierLeague #FootballBusiness #SportsBusiness #Chelsea #MoneyExplained #Economics #FootballFinance #Explained #Greenback
 
 **First comment (to drive replies):** Which club do you think is most overpriced right now? 👇
+
+## Photo credits (required by the licences, keep them on the slides)
+- Roman Abramovich: Marina Lystseva, GFDL 1.2, via Wikimedia Commons (slide 2)
+- Rupert Murdoch: Eva Rinaldi, CC BY-SA 2.0, via Wikimedia Commons (slide 4)
+
+Cutouts made with rembg + BiRefNet (MIT licence), duotone banknote-green, white paper edge.
