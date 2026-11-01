@@ -3,28 +3,31 @@
 ## Description (paste into Instagram)
 
 ```
-Most Premier League clubs lose money. So why is it the richest football league on Earth? 🧾
+Most Premier League clubs lose money.
+So why is it the richest league on Earth? 🧾
 
-In 1988 ITV paid £11M a season for the whole Football League, all 92 clubs. This cycle, UK rights alone are worth £6.7B. Here's how a league that "loses money" turned into the biggest money machine in football. Swipe →
+1988: £11M a season for ALL 92 clubs
+Today: £6.7B for UK TV rights alone
+
+Swipe to follow the money →
+
+━━━━━━━━━━
+✅ FACT CHECK
+💸 14 of 20 clubs lost money (2024–25): FT, Deloitte
+📈 £6.8B revenue, #1 league: Deloitte
+🔵 Chelsea £140M → £2.5B: BBC, Sky Sports
+📺 £44M for 1988–92: The Times
+🛰️ £304M (Sky + BBC), 1992: The Times
+🌍 Overseas > UK rights (2022–25): Inside World Football
+🇺🇸 NBC ~$2.7B, 2022–28: New York Times
+⚖️ Liverpool £175M vs Southampton £109M: Premier League
+Spotted an error? Comment 👇
+━━━━━━━━━━
 
 Money leaves a trail. Greenback follows it.
-Full episode on YouTube: link in bio.
+Full episode: link in bio
 
-Fact check
-✓ 14 of 20 PL clubs made a pre-tax loss in 2024–25: Financial Times; Deloitte Annual Review of Football Finance (2026)
-✓ PL revenue £6.8B, the most of any football league: Deloitte (2026)
-✓ Chelsea bought for £140M incl. debt, sold for £2.5B in a £4.25B deal: BBC (2003), Sky Sports (2022)
-✓ ITV paid £44M for Football League rights, 1988–92: The Times (1991); Soccer & Society (2019)
-✓ Sky and the BBC won 1992–97 rights for £304M: The Times (1992)
-✓ UK rights 2025–29 £6.7B incl. BBC highlights: Premier League (2023); Swiss Ramble (2023)
-✓ Overseas rights beat UK rights for the first time in 2022–25 (£5.3B vs £5.1B): Inside World Football (2022)
-✓ NBC's 2022–28 US deal reported at $2.7B: New York Times via SportBusiness (2021)
-✓ 2024–25 central payments: Liverpool £174.9M, Southampton £109.2M: Premier League (2025)
-✓ 3pm London = 10am New York most weeks (11am around clock changes): IANA time zones (2026)
-✓ Per-season and inflation maths: ONS CPI (2026)
-Spotted an error? Comment and we'll correct it, pinned.
-
-Photos: Roman Abramovich by Marina Lystseva (GFDL 1.2); Rupert Murdoch by Eva Rinaldi (CC BY-SA 2.0); gavel via Wikimedia Commons. Logos belong to their owners, used for editorial reference.
+📷 Abramovich: M. Lystseva (GFDL) · Murdoch: E. Rinaldi (CC BY-SA)
 
 #PremierLeague #FootballBusiness #MoneyExplained #Economics #Greenback
 ```
